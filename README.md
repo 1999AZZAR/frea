@@ -32,14 +32,17 @@ GEMINI_API_KEY=your_api_key_here
 
 ## How to Run
 
-Navigate to the `code` directory and execute the `main.py` file:
+Navigate to the `code` directory and execute the python file:
 
 ```bash
 cd code
-python main.py
+python code.py
 ```
 
-Follow the on-screen instructions to interact with Frea. You can exit the chat by typing `exit` or clear the screen with `clear`.
+- you can list the file using `ls` command on the terminal.
+- replace `code` with the actual python code name you want to run.
+- for `frea_voice_text.py` u can enable the voice output by adding `-v` on the command line
+- Follow the on-screen instructions to interact with Frea. You can exit the chat by typing `exit` or clear the screen with `clear`.
 
 ## Additional Notes
 
@@ -47,4 +50,4 @@ Follow the on-screen instructions to interact with Frea. You can exit the chat b
 - Refer to Frea respectfully as "Master" when needed.
 - Keep interactions concise, avoiding excessive preambles.
 
-Feel free to customize the `GeminiChatConfig` class in `main.py` to modify Frea's behavior or adjust the chat instructions. Enjoy chatting with Frea!
+Feel free to customize the `GeminiChatConfig` class in the python code it self to modify Frea's behavior or adjust the chat instructions. Enjoy chatting with Frea!
