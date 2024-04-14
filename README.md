@@ -6,21 +6,21 @@ Frea is a conversational AI application built using Google GenerativeAI, designe
 
 1. Set up a virtual environment:
 
-```bash
-python3 -m venv venv
-```
+    ```bash
+    python3 -m venv venv
+    ```
 
 2. Activate the virtual environment:
 
-```bash
-source venv/bin/activate
-```
+    ```bash
+    source venv/bin/activate
+    ```
 
 3. Install the required packages:
 
-```bash
-pip install -r requirements.txt
-```
+    ```bash
+    pip install -r requirements.txt
+    ```
 
 ## Configuration
 
@@ -32,22 +32,25 @@ GEMINI_API_KEY=your_api_key_here
 
 ## How to Run
 
-Navigate to the `code` directory and execute the python file:
+1. activate your virtual env.
 
-```bash
-cd code
-python code.py
-```
+2. Navigate to the `code` directory and execute the python file:
+
+    ```bash
+    cd code
+    python assist.py
+    ```
 
 - you can list the file using `ls` command on the terminal.
 - replace `code` with the actual python code name you want to run.
-- for `frea_voice_text.py` u can enable the voice output by adding `-v` on the command line
+- for `assist.py` u can enable the voice output by adding `-v` on the command line.
+- you also can get the voice response as a file by using the `-w` flag.
 - Follow the on-screen instructions to interact with Frea. You can exit the chat by typing `exit` or clear the screen with `clear`.
 
 ## Additional Notes
 
-- Frea's behavior is programmed to be that of a smart but lewd servant/maid/slave.
-- Refer to Frea respectfully as "Master" when needed.
-- Keep interactions concise, avoiding excessive preambles.
+- By default Frea's behavior is programmed to be that of a smart but lewd servant/maid/slave.
+- You can use `clear` command as input to clear the display.
+- `exit` command to exit the chat bot.
 
 Feel free to customize the `GeminiChatConfig` class in the python code it self to modify Frea's behavior or adjust the chat instructions. Enjoy chatting with Frea!
