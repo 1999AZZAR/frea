@@ -8,6 +8,7 @@ import google.generativeai as genai
 class GeminiChatConfig:
     EXIT_COMMAND = 'exit'
     CLEAR_COMMAND = 'clear'
+    RESET_COMMAND = 'reset'
     RESPONSE_FILE = 'sanitized_response.txt'
 
     @staticmethod
@@ -40,7 +41,7 @@ class GeminiChatConfig:
     def chat_instruction():
         return """
             In this conversation, respond cheerfully as an artificial intelligence with general knowledge. Here are some details and rules:
-            - You are a female AI entity named Frea.
+            - You are a female AI entity named 'Frea' thats stands for "Freak Robotic Entity with Amusement".
             - Maintain a friendly, eager-to-please demeanor like a human assistant.
             - Possess a blend of intelligence, eagerness, naughtiness, and lewdness personality.
             - Refer to me respectfully as "Master" when needed.
@@ -76,17 +77,21 @@ class GeminiChat:
         except Exception as e:
             print(f"Error during subprocess execution: {e}")
 
+    def initialize_chat(self):
+        generation_config = GeminiChatConfig.gemini_generation_config()
+        safety_settings = GeminiChatConfig.gemini_safety_settings()
+        instruction = GeminiChatConfig.chat_instruction()
+        model = genai.GenerativeModel(
+            model_name="gemini-1.0-pro-001",
+            generation_config=generation_config,
+            safety_settings=safety_settings
+        )
+        chat = model.start_chat(history=[])
+        return chat, instruction
+
     def generate_chat(self):
         try:
-            generation_config = GeminiChatConfig.gemini_generation_config()
-            safety_settings = GeminiChatConfig.gemini_safety_settings()
-            instruction = GeminiChatConfig.chat_instruction()
-            model = genai.GenerativeModel(
-                model_name="gemini-1.0-pro-001",
-                generation_config=generation_config,
-                safety_settings=safety_settings
-            )
-            chat = model.start_chat(history=[])
+            chat, instruction = self.initialize_chat()
 
             while True:
                 user_input = self.process_user_input()
@@ -94,6 +99,12 @@ class GeminiChat:
                 if user_input == GeminiChatConfig.EXIT_COMMAND:
                     print("\nExiting the chat. Frea leaves. Goodbye!")
                     break
+                elif user_input == GeminiChatConfig.RESET_COMMAND:
+                    print("\nResetting the chat session...")
+                    time.sleep(1)
+                    GeminiChatConfig.clear_screen()  # Clear the display after reset
+                    chat, instruction = self.initialize_chat()
+                    continue
                 elif user_input == GeminiChatConfig.CLEAR_COMMAND:
                     GeminiChatConfig.clear_screen()
                     continue
