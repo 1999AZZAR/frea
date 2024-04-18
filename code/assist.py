@@ -69,11 +69,11 @@ class GeminiChat:
         try:
             if self.enable_voice:
                 subprocess.run(f'echo "{sanitized_response}" | piper -m alba.onnx --output-raw | aplay -r 22050 -f S16_le -t raw - 2>/dev/null', shell=True)
-                time.sleep(1)
+                time.sleep(0.5)
             elif self.enable_file_output:
                 output_file = './voice_response.wav'
                 subprocess.run(f'echo "{sanitized_response}" | piper -m alba.onnx --output_file {output_file}', shell=True)
-                time.sleep(1)
+                time.sleep(0.5)
         except Exception as e:
             print(f"Error during subprocess execution: {e}")
 
@@ -102,7 +102,7 @@ class GeminiChat:
                 elif user_input == GeminiChatConfig.RESET_COMMAND:
                     print("\nResetting the chat session...")
                     time.sleep(1)
-                    GeminiChatConfig.clear_screen()  # Clear the display after reset
+                    GeminiChatConfig.clear_screen()
                     chat, instruction = self.initialize_chat()
                     continue
                 elif user_input == GeminiChatConfig.CLEAR_COMMAND:
