@@ -82,7 +82,7 @@ class GeminiChat:
         safety_settings = GeminiChatConfig.gemini_safety_settings()
         instruction = GeminiChatConfig.chat_instruction()
         model = genai.GenerativeModel(
-            model_name="gemini-1.0-pro-001",
+            model_name="gemini-1.5-pro-latest",
             generation_config=generation_config,
             safety_settings=safety_settings
         )
