@@ -5,6 +5,19 @@ import argparse
 from dotenv import load_dotenv
 import google.generativeai as genai
 
+# Color codes for terminal text
+class Color:
+    HEADER = '\033[95m'       # Light purple
+    OKBLUE = '\033[94m'       # Light blue
+    OKCYAN = '\033[96m'       # Light cyan
+    OKGREEN = '\033[92m'      # Light green
+    WARNING = '\033[93m'      # Yellow
+    FAIL = '\033[91m'         # Light red
+    ENDC = '\033[0m'          # End of color
+    BOLD = '\033[1m'          # Bold
+    UNDERLINE = '\033[4m'     # Underline
+    RESPONSE = '\033[97m'     # Yellowist white
+
 class GeminiChatConfig:
     EXIT_COMMAND = 'exit'
     CLEAR_COMMAND = 'clear'
@@ -81,7 +94,7 @@ class GeminiChat:
         GeminiChatConfig.initialize_genai_api()
 
     def process_user_input(self):
-        question = input("\nMaster: ")
+        question = input(f"{Color.OKCYAN}╭─ Master \n╰─> {Color.ENDC}")
         return question.strip().lower()
 
     def run_subprocess(self, sanitized_response):
@@ -94,7 +107,7 @@ class GeminiChat:
                 subprocess.run(f'echo "{sanitized_response}" | piper -m alba.onnx --output_file {output_file}', shell=True)
                 time.sleep(0.5)
         except Exception as e:
-            print(f"Error during subprocess execution: {e}")
+            print(f"{Color.FAIL}Error during subprocess execution: {e}{Color.ENDC}")
 
     def initialize_chat(self):
         generation_config = GeminiChatConfig.gemini_generation_config()
@@ -116,10 +129,10 @@ class GeminiChat:
                 user_input = self.process_user_input()
 
                 if user_input == GeminiChatConfig.EXIT_COMMAND:
-                    print("\nExiting the chat. Frea leaves. Goodbye!")
+                    print(f"\n{Color.WARNING}Exiting the chat. Frea leaves. Goodbye!{Color.ENDC}")
                     break
                 elif user_input == GeminiChatConfig.RESET_COMMAND:
-                    print("\nResetting the chat session...")
+                    print(f"\n{Color.WARNING}Resetting the chat session...{Color.ENDC}")
                     time.sleep(1)
                     GeminiChatConfig.clear_screen()
                     chat, instruction = self.initialize_chat()
@@ -130,17 +143,17 @@ class GeminiChat:
                 elif not user_input:
                     break
                 else:
-                    print(f'Loading...')
+                    # print(f'{Color.OKBLUE}Loading...{Color.ENDC}')
                     response = chat.send_message(instruction + user_input)
-                    print(f'Frea  : {response.text}')
+                    print(f'{Color.OKGREEN}\n╭─ Frea \n╰─> {Color.ENDC}{Color.RESPONSE}{response.text}{Color.ENDC}')
                     sanitized_response = response.text.replace('*', '')
                     self.run_subprocess(sanitized_response)
 
         except KeyboardInterrupt:
-            print("\nExiting the chat. Frea leaves. Goodbye!")
+            print(f"\n{Color.WARNING}Exiting the chat. Frea leaves. Goodbye!{Color.ENDC}")
 
         except Exception as e:
-            print(f"An unexpected error occurred: {e}")
+            print(f"{Color.FAIL}An unexpected error occurred: {e}{Color.ENDC}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='optional subprocess for voice output')

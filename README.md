@@ -52,5 +52,13 @@ GEMINI_API_KEY=your_api_key_here
 - By default Frea's behavior is programmed to be that of a smart but lewd servant/maid/slave.
 - You can use `clear` command as input to clear the display.
 - `exit` command to exit the chat bot.
+- `reset` command to reset the instance and clear the display.
+- you can incorporate frea to your bash terminal by doing [this step](alias.md).
+
+## demo
+
+![frea](demo/1.png)
+
+## customize
 
 Feel free to customize the `GeminiChatConfig` class in the python code it self to modify Frea's behavior or adjust the chat instructions. Enjoy chatting with Frea!
