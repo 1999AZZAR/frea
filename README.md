@@ -53,11 +53,13 @@ GEMINI_API_KEY=your_api_key_here
 - You can use `clear` command as input to clear the display.
 - `exit` command to exit the chat bot.
 - `reset` command to reset the instance and clear the display.
+- or you can use `run` followed by the command you whan to run at it will run on your ocal terminal
 - you can incorporate frea to your bash terminal by doing [this step](alias.md).
 
 ## demo
 
 ![frea](demo/1.png)
+![frea2](demo/2.png)
 
 ## customize
 

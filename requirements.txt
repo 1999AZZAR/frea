@@ -2,3 +2,4 @@ python-dotenv
 piper-tts
 wikipedia-api
 google.generativeai
+emoji
