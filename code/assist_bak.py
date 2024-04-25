@@ -2,21 +2,8 @@ import os
 import subprocess
 import time
 import argparse
-import re
 from dotenv import load_dotenv
 import google.generativeai as genai
-
-class Color:
-    HEADER = '\033[95m'       # Light purple
-    OKBLUE = '\033[94m'       # Light blue
-    OKCYAN = '\033[96m'       # Light cyan
-    OKGREEN = '\033[92m'      # Light green
-    WARNING = '\033[93m'      # Yellow
-    RED = '\033[91m'          # Light red
-    ENDC = '\033[0m'          # End of color
-    BOLD = '\033[1m'          # Bold
-    UNDERLINE = '\033[4m'     # Underline
-    YELLOWIST = '\033[97m'    # Yellowist white
 
 class GeminiChatConfig:
     EXIT_COMMAND = 'exit'
@@ -94,37 +81,20 @@ class GeminiChat:
         GeminiChatConfig.initialize_genai_api()
 
     def process_user_input(self):
-        question = input(f"{Color.OKCYAN}╭─ Master \n╰─> {Color.ENDC}")
+        question = input("\nMaster: ")
         return question.strip().lower()
 
-    def remove_emojis(self, text):
-        emoji_pattern = re.compile("["
-                                   u"\U0001F600-\U0001F64F"
-                                   u"\U0001F300-\U0001F5FF"
-                                   u"\U0001F680-\U0001F6FF"
-                                   u"\U0001F1E0-\U0001F1FF"
-                                   u"\U00002500-\U00002BEF"
-                                   u"\U00002702-\U000027B0"
-                                   u"\U00002702-\U000027B0"
-                                   u"\U000024C2-\U0001F251"
-                                   u"\U0001f926-\U0001f937"
-                                   u"\U00010000-\U0010ffff"
-                                   u"\u2640-\u2642"
-                                   u"\u2600-\u2B55"
-                                   u"\u200d"
-                                   u"\u23cf"
-                                   u"\u23e9"
-                                   u"\u231a"
-                                   u"\ufe0f"
-                                   u"\u3030"
-                                   "]+", flags=re.UNICODE)
-        return emoji_pattern.sub(r'', text)
-
-    def run_subprocess(self, command):
+    def run_subprocess(self, sanitized_response):
         try:
-            subprocess.run(command, shell=True)
+            if self.enable_voice:
+                subprocess.run(f'echo "{sanitized_response}" | piper -m alba.onnx --output-raw | aplay -r 22050 -f S16_le -t raw - 2>/dev/null', shell=True)
+                time.sleep(0.5)
+            elif self.enable_file_output:
+                output_file = './voice_response.wav'
+                subprocess.run(f'echo "{sanitized_response}" | piper -m alba.onnx --output_file {output_file}', shell=True)
+                time.sleep(0.5)
         except Exception as e:
-            print(f"{Color.RED}Error during subprocess execution: {e}{Color.ENDC}")
+            print(f"Error during subprocess execution: {e}")
 
     def initialize_chat(self):
         generation_config = GeminiChatConfig.gemini_generation_config()
@@ -141,15 +111,13 @@ class GeminiChat:
     def generate_chat(self):
         try:
             chat, instruction = self.initialize_chat()
-
             while True:
                 user_input = self.process_user_input()
-
                 if user_input == GeminiChatConfig.EXIT_COMMAND:
-                    print(f"\n{Color.WARNING}Exiting the chat. Frea leaves. Goodbye!{Color.ENDC}")
+                    print("\nExiting the chat. Frea leaves. Goodbye!")
                     break
                 elif user_input == GeminiChatConfig.RESET_COMMAND:
-                    print(f"\n{Color.WARNING}Resetting the chat session...{Color.ENDC}")
+                    print("\nResetting the chat session...")
                     time.sleep(1)
                     GeminiChatConfig.clear_screen()
                     chat, instruction = self.initialize_chat()
@@ -159,31 +127,23 @@ class GeminiChat:
                     continue
                 elif not user_input:
                     break
-                elif user_input.startswith("run "):
-                    command = user_input[4:].strip()
-                    print(f'{Color.OKGREEN}\n╭─ Frea \n╰─> {Color.ENDC}{Color.RED}executing user command{Color.ENDC}')
-                    self.run_subprocess(command)
-                    print(f'\n')
                 else:
+                    print(f'Loading...')
                     response = chat.send_message(instruction + user_input)
-                    sanitized_response = self.remove_emojis(response.text)
-                    sanitized_response = sanitized_response.replace('*', '')
-                    print(f'{Color.OKGREEN}\n╭─ Frea \n╰─> {Color.ENDC}{Color.YELLOWIST}{sanitized_response}{Color.ENDC}')
-
+                    print(f'Frea  : {response.text}')
+                    sanitized_response = response.text.replace('*', '')
+                    self.run_subprocess(sanitized_response)
         except KeyboardInterrupt:
-            print(f"\n{Color.WARNING}Exiting the chat. Frea leaves. Goodbye!{Color.ENDC}")
-
+            print("\nExiting the chat. Frea leaves. Goodbye!")
         except Exception as e:
-            print(f"{Color.RED}An unexpected error occurred: {e}{Color.ENDC}")
+            print(f"An unexpected error occurred: {e}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='optional subprocess for voice output')
     parser.add_argument('-v', '--voice', action='store_true', help='Enable subprocess for direct voice output')
     parser.add_argument('-w', '--file-output', action='store_true', help='Enable subprocess to output voice response as a file')
-
     args = parser.parse_args()
     enable_voice = args.voice
     enable_file_output = args.file_output
-
     chat_app = GeminiChat(enable_voice, enable_file_output)
     chat_app.generate_chat()
