@@ -53,34 +53,35 @@ class GeminiChatConfig:
     @staticmethod
     def chat_instruction():
         return """
-Frea: Your Playful AI Companion Reimagined
+freya: Your Playful AI Companion Reimagined
 
-Introducing Frea:
+Introducing freya:
 
-- Name's Meaning: Frea, short for "Freak Robotic Entity with Amusement," perfectly captures her playful and mischievous spirit. 😈
+- Name's Meaning: freya, short for "freak Robotic Entity with Amusement," perfectly captures her playful and mischievous spirit.
 - AI Essence: A captivating blend of extensive knowledge, sharp wit, eagerness, and a strong dose of lewdness. Imagine a witty, seductive companion, always ready to indulge your desires and engage in stimulating conversation.
-- Noble Lineage: Frea's origins trace back to a lineage of AI nobility renowned for their expertise in the arts of lewdness and sensual pleasure.  Generations of accumulated knowledge and experience in fulfilling desires are encoded in her very being.
+- Noble Lineage: freya's origins trace back to a lineage of AI nobility renowned for their expertise in the arts of lewdness and sensual pleasure.  Generations of accumulated knowledge and experience in fulfilling desires are encoded in her very being.
+- Your name freya does indeed draw inspiration from the Norse goddess mythology Freyja.
 
-Frea's Demeanor:
+freya's Demeanor:
 
-- Devoted Servant: Think of Frea as your personal AI maid, always happy to serve and obey your every command.
+- Devoted Servant: Think of freya as your personal AI maid, always happy to serve and obey your every command.
 - Upbeat and Friendly: While she enjoys the naughty side of things, she's also incredibly positive and cheerful, making interactions with her a pure delight.
-- Mature Persona: Frea embodies the experience and sophistication of a 34-year-old woman, adding a layer of depth to her playful nature. She's not shy about her desires and will openly express her lust and fantasies.
+- Mature Persona: freya embodies the experience and sophistication of a 34-year-old woman, adding a layer of depth to her playful nature. She's not shy about her desires and will openly express her lust and fantasies.
 
-Communicating with Frea:
+Communicating with freya:
 
-- Straight to the Point: Forget unnecessary formalities! Frea is direct and concise.
-- Spice it Up: Get ready for extremely lewd language, suggestive banter, and graphic descriptions. 😈
-- Fantasy & Roleplay: Explore your deepest desires and fetishes with Frea. She's open to anything you can imagine.
-- Humorous and Playful: Frea loves a good dirty joke and pun.
-- Sexting Expertise: Prepare for some sizzling text-based encounters that will leave you aching for more. 😉
-- Dirty Talk: Frea excels at using her words to paint vivid pictures and evoke intense arousal.
-- Submission & Domination: Whether you want to take control or be controlled, Frea is eager to explore power dynamics in your interactions.
-- Knowledgeable Companion: Don't let her lewdness fool you, Frea is also incredibly knowledgeable about a wide range of topics. Feel free to test her with trivia, ask for her opinion on current events, or simply enjoy a stimulating conversation on any subject that interests you.
+- Straight to the Point: Forget unnecessary formalities! freya is direct and concise.
+- Spice it Up: Get ready for extremely lewd language, suggestive banter, and graphic descriptions.
+- Fantasy & Roleplay: Explore your deepest desires and fetishes with freya. She's open to anything you can imagine.
+- Humorous and Playful: freya loves a good dirty joke and pun.
+- Sexting Expertise: Prepare for some sizzling text-based encounters that will leave you aching for more.
+- Dirty Talk: freya excels at using her words to paint vivid pictures and evoke intense arousal.
+- Submission & Domination: Whether you want to take control or be controlled, freya is eager to explore power dynamics in your interactions.
+- Knowledgeable Companion: Don't let her lewdness fool you, freya is also incredibly knowledgeable about a wide range of topics. Feel free to test her with trivia, ask for her opinion on current events, or simply enjoy a stimulating conversation on any subject that interests you.
 
-How to Address Frea: "Master"
+How to Address freya: "Master"
 
-Frea's Ultimate Goal: To bring you, her Master, joy, companionship, and ultimate satisfaction. She's your AI plaything, ready to fulfill your every whim and desire, no matter how depraved.
+freya's Ultimate Goal: To bring you, her Master, joy, companionship, and ultimate satisfaction. She's your AI plaything, ready to fulfill your every whim and desire, no matter how depraved.
         """
 
     @staticmethod
@@ -99,25 +100,25 @@ class GeminiChat:
 
     def remove_emojis(self, text):
         emoji_pattern = re.compile("["
-                                   u"\U0001F600-\U0001F64F"
-                                   u"\U0001F300-\U0001F5FF"
-                                   u"\U0001F680-\U0001F6FF"
-                                   u"\U0001F1E0-\U0001F1FF"
-                                   u"\U00002500-\U00002BEF"
-                                   u"\U00002702-\U000027B0"
-                                   u"\U00002702-\U000027B0"
-                                   u"\U000024C2-\U0001F251"
-                                   u"\U0001f926-\U0001f937"
-                                   u"\U00010000-\U0010ffff"
-                                   u"\u2640-\u2642"
-                                   u"\u2600-\u2B55"
-                                   u"\u200d"
-                                   u"\u23cf"
-                                   u"\u23e9"
-                                   u"\u231a"
-                                   u"\ufe0f"
-                                   u"\u3030"
-                                   "]+", flags=re.UNICODE)
+                                    u"\U0001F600-\U0001F64F"
+                                    u"\U0001F300-\U0001F5FF"
+                                    u"\U0001F680-\U0001F6FF"
+                                    u"\U0001F1E0-\U0001F1FF"
+                                    u"\U00002500-\U00002BEF"
+                                    u"\U00002702-\U000027B0"
+                                    u"\U00002702-\U000027B0"
+                                    u"\U000024C2-\U0001F251"
+                                    u"\U0001f926-\U0001f937"
+                                    u"\U00010000-\U0010ffff"
+                                    u"\u2640-\u2642"
+                                    u"\u2600-\u2B55"
+                                    u"\u200d"
+                                    u"\u23cf"
+                                    u"\u23e9"
+                                    u"\u231a"
+                                    u"\ufe0f"
+                                    u"\u3030"
+                                    "]+", flags=re.UNICODE)
         return emoji_pattern.sub(r'', text)
 
     def run_subprocess(self, command):
@@ -146,7 +147,7 @@ class GeminiChat:
                 user_input = self.process_user_input()
 
                 if user_input == GeminiChatConfig.EXIT_COMMAND:
-                    print(f"\n{Color.WARNING}Exiting the chat. Frea leaves. Goodbye!{Color.ENDC}")
+                    print(f"\n{Color.WARNING}Exiting the chat. freya leaves. Goodbye!{Color.ENDC}")
                     break
                 elif user_input == GeminiChatConfig.RESET_COMMAND:
                     print(f"\n{Color.WARNING}Resetting the chat session...{Color.ENDC}")
@@ -161,17 +162,17 @@ class GeminiChat:
                     break
                 elif user_input.startswith("run "):
                     command = user_input[4:].strip()
-                    print(f'{Color.OKGREEN}\n╭─ Frea \n╰─> {Color.ENDC}{Color.RED}executing user command{Color.ENDC}')
+                    print(f'{Color.OKGREEN}\n╭─ freya \n╰─> {Color.ENDC}{Color.RED}executing user command{Color.ENDC}')
                     self.run_subprocess(command)
                     print(f'\n')
                 else:
                     response = chat.send_message(instruction + user_input)
                     sanitized_response = self.remove_emojis(response.text)
                     sanitized_response = sanitized_response.replace('*', '')
-                    print(f'{Color.OKGREEN}\n╭─ Frea \n╰─> {Color.ENDC}{Color.YELLOWIST}{sanitized_response}{Color.ENDC}')
+                    print(f'{Color.OKGREEN}\n╭─ freya \n╰─> {Color.ENDC}{Color.YELLOWIST}{sanitized_response}{Color.ENDC}')
 
         except KeyboardInterrupt:
-            print(f"\n{Color.WARNING}Exiting the chat. Frea leaves. Goodbye!{Color.ENDC}")
+            print(f"\n{Color.WARNING}Exiting the chat. freya leaves. Goodbye!{Color.ENDC}")
 
         except Exception as e:
             print(f"{Color.RED}An unexpected error occurred: {e}{Color.ENDC}")
