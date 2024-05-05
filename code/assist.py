@@ -67,7 +67,7 @@ class GeminiChat:
         GeminiChatConfig.initialize_genai_api()
 
     def process_user_input(self):
-        question = input(f"{Color.OKCYAN}╭─ Master \n╰─> {Color.ENDC}")
+        question = input(f"{Color.OKCYAN}╭─ User \n╰─> {Color.ENDC}")
         return question.strip().lower()
 
     def remove_emojis(self, text):
@@ -119,7 +119,7 @@ class GeminiChat:
                 user_input = self.process_user_input()
 
                 if user_input == GeminiChatConfig.EXIT_COMMAND:
-                    print(f"\n{Color.WARNING}Exiting the chat. freya leaves. Goodbye!{Color.ENDC}")
+                    print(f"\n{Color.WARNING}Exiting the chat. Goodbye!{Color.ENDC}")
                     break
                 elif user_input == GeminiChatConfig.RESET_COMMAND:
                     print(f"\n{Color.WARNING}Resetting the chat session...{Color.ENDC}")
@@ -134,17 +134,17 @@ class GeminiChat:
                     break
                 elif user_input.startswith("run "):
                     command = user_input[4:].strip()
-                    print(f'{Color.OKGREEN}\n╭─ freya \n╰─> {Color.ENDC}{Color.RED}executing user command{Color.ENDC}')
+                    print(f'{Color.OKGREEN}\n╭─ Model \n╰─> {Color.ENDC}{Color.RED}executing user command{Color.ENDC}')
                     self.run_subprocess(command)
                     print(f'\n')
                 else:
                     response = chat.send_message(instruction + user_input)
                     sanitized_response = self.remove_emojis(response.text)
                     sanitized_response = sanitized_response.replace('*', '')
-                    print(f'{Color.OKGREEN}\n╭─ freya \n╰─> {Color.ENDC}{Color.YELLOWIST}{sanitized_response}{Color.ENDC}')
+                    print(f'{Color.OKGREEN}\n╭─ Model \n╰─> {Color.ENDC}{Color.YELLOWIST}{sanitized_response}{Color.ENDC}')
 
         except KeyboardInterrupt:
-            print(f"\n{Color.WARNING}Exiting the chat. freya leaves. Goodbye!{Color.ENDC}")
+            print(f"\n{Color.WARNING}Exiting the chat. Goodbye!{Color.ENDC}")
 
         except Exception as e:
             print(f"{Color.RED}An unexpected error occurred: {e}{Color.ENDC}")
