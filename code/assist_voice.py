@@ -10,7 +10,7 @@ class GeminiChatConfig:
     CLEAR_COMMAND = 'clear'
     RESET_COMMAND = 'reset'
     RESPONSE_FILE = 'sanitized_response.txt'
-    INSTRUCTION_FILE = './instructions/freya.txt'
+    INSTRUCTION_FILE = './instructions/medusa.txt'
 
     @staticmethod
     def initialize_genai_api():
