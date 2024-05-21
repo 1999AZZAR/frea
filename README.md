@@ -43,9 +43,11 @@ GEMINI_API_KEY=your_api_key_here
 
 - you can list the file using `ls` command on the terminal.
 - replace `code` with the actual python code name you want to run.
-- for `assist.py` u can enable the voice output by adding `-v` on the command line.
-- you also can get the voice response as a file by using the `-w` flag.
-- Follow the on-screen instructions to interact with Frea. You can exit the chat by typing `exit` or clear the screen with `clear`.
+- for `assist_voice.py`
+  - u can enable the voice output by adding `-v` on the command line.
+  - you also can get the voice response as a file by using the `-w` flag.
+- Follow the on-screen instructions to interact with Frea.
+- You can exit the chat by typing `exit` or clear the screen with `clear`.
 
 ## Additional Notes
 
