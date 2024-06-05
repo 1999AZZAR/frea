@@ -25,7 +25,7 @@ class GeminiChatConfig:
     EXIT_COMMAND = 'exit'
     CLEAR_COMMAND = 'clear'
     RESET_COMMAND = 'reset'
-    INSTRUCTION_FILE = './instructions/medusa.txt'  # Path to the instruction file
+    INSTRUCTION_FILE = './instructions/general.txt'  # Path to the instruction file
 
     @staticmethod
     def initialize_genai_api():
