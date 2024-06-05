@@ -60,6 +60,7 @@ GEMINI_API_KEY=your_api_key_here
 
 ## demo
 
+[![asciicast](https://asciinema.org/a/WBjtnAb4HIPa2w3oMiIJsfeB1.svg)](https://asciinema.org/a/WBjtnAb4HIPa2w3oMiIJsfeB1)
 ![frea](demo/1.png)
 ![frea2](demo/2.png)
 
