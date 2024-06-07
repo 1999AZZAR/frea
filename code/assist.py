@@ -6,26 +6,27 @@ import readline  # Module for enabling terminal history and navigation
 
 from dotenv import load_dotenv
 import google.generativeai as genai
+import threading  # Module for creating loading indicator
 
 class Color:
     # ANSI escape codes for terminal colors
-    HEADER = '\033[95m'       # Light purple
-    OKBLUE = '\033[94m'       # Light blue
-    OKCYAN = '\033[96m'       # Light cyan
-    OKGREEN = '\033[92m'      # Light green
-    WARNING = '\033[93m'      # Yellow
-    RED = '\033[91m'          # Light red
-    ENDC = '\033[0m'          # End of color
-    BOLD = '\033[1m'          # Bold
-    UNDERLINE = '\033[4m'     # Underline
-    YELLOWIST = '\033[97m'    # Yellowish white
+    HEADER      = '\033[95m' # Light purple
+    OKBLUE      = '\033[94m' # Light blue
+    OKCYAN      = '\033[96m' # Light cyan
+    OKGREEN     = '\033[92m' # Light green
+    WARNING     = '\033[93m' # Yellow
+    RED         = '\033[91m' # Light red
+    ENDC        = '\033[0m'  # End of color
+    BOLD        = '\033[1m'  # Bold
+    UNDERLINE   = '\033[4m'  # Underline
+    YELLOWIST   = '\033[97m' # Yellowish white
 
 class GeminiChatConfig:
     # Special commands for chat
-    EXIT_COMMAND = 'exit'
-    CLEAR_COMMAND = 'clear'
-    RESET_COMMAND = 'reset'
-    INSTRUCTION_FILE = './instructions/general.txt'  # Path to the instruction file
+    EXIT_COMMAND        = 'exit'
+    CLEAR_COMMAND       = 'clear'
+    RESET_COMMAND       = 'reset'
+    INSTRUCTION_FILE    = './instructions/general.txt'  # Path to the instruction file
 
     @staticmethod
     def initialize_genai_api():
@@ -130,6 +131,12 @@ class GeminiChat:
         return chat, instruction
 
     def generate_chat(self):
+        def loading_indicator():
+            while not stop_loading:
+                for char in "|/-\\":
+                    print(f"{Color.OKGREEN}\rProceeding... {char}{Color.ENDC}", end="")
+                    time.sleep(0.1)
+        
         try:
             chat, instruction = self.initialize_chat()
 
@@ -159,7 +166,16 @@ class GeminiChat:
                     print(f'\n')
                 else:
                     # Send user input to the language model and print the response
+                    stop_loading = False
+                    loading_thread = threading.Thread(target=loading_indicator)
+                    loading_thread.start()
+
                     response = chat.send_message(instruction + user_input)
+                    
+                    stop_loading = True
+                    loading_thread.join()
+                    print("\r" + " " * 20 + "\r", end="")  # Clear the loading indicator line
+                    
                     sanitized_response = self.remove_emojis(response.text)
                     sanitized_response = sanitized_response.replace('*', '')
                     print(f'{Color.OKGREEN}\n╭─ Model \n╰─> {Color.ENDC}{Color.YELLOWIST}{sanitized_response}{Color.ENDC}')
