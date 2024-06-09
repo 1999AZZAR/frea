@@ -10,16 +10,14 @@ import threading  # Module for creating loading indicator
 
 class Color:
     # ANSI escape codes for terminal colors
-    HEADER      = '\033[95m' # Light purple
     OKBLUE      = '\033[94m' # Light blue
     OKCYAN      = '\033[96m' # Light cyan
     OKGREEN     = '\033[92m' # Light green
     WARNING     = '\033[93m' # Yellow
     RED         = '\033[91m' # Light red
     ENDC        = '\033[0m'  # End of color
-    BOLD        = '\033[1m'  # Bold
-    UNDERLINE   = '\033[4m'  # Underline
     YELLOWIST   = '\033[97m' # Yellowish white
+    PURPLE      = '\033[35m' # Purple
 
 class GeminiChatConfig:
     # Special commands for chat
@@ -134,7 +132,7 @@ class GeminiChat:
         def loading_indicator():
             while not stop_loading:
                 for char in "|/-\\":
-                    print(f"{Color.OKGREEN}\rProceeding... {char}{Color.ENDC}", end="")
+                    print(f"{Color.PURPLE}\rProceeding... {char}{Color.ENDC}", end="")
                     time.sleep(0.1)
         
         try:
