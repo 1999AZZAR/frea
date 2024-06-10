@@ -1,12 +1,6 @@
-import os
-import subprocess
-import time
-import re
-import readline  # Module for enabling terminal history and navigation
-
+import os, subprocess, time, re, readline, termios, tty, sys, threading
 from dotenv import load_dotenv
 import google.generativeai as genai
-import threading  # Module for creating loading indicator
 
 class Color:
     # ANSI escape codes for terminal colors
@@ -18,6 +12,16 @@ class Color:
     ENDC        = '\033[0m'  # End of color
     YELLOWIST   = '\033[97m' # Yellowish white
     PURPLE      = '\033[35m' # Purple
+
+def cursor_hide():
+    """Hide the cursor in the terminal"""
+    sys.stdout.write("\033[?25l")
+    sys.stdout.flush()
+
+def cursor_show():
+    """Show the cursor in the terminal"""
+    sys.stdout.write("\033[?25h")
+    sys.stdout.flush()
 
 class GeminiChatConfig:
     # Special commands for chat
@@ -37,7 +41,7 @@ class GeminiChatConfig:
     def gemini_generation_config():
         # Configuration for the Gemini language model
         return {
-            'max_output_tokens': 2000,
+            'max_output_tokens': 2048,
             'temperature': 0.90,
             'candidate_count': 1,
             'top_k': 35,
@@ -69,7 +73,7 @@ class GeminiChatConfig:
 class GeminiChat:
     def __init__(self):
         GeminiChatConfig.initialize_genai_api()
-        readline.parse_and_bind("tab: complete")  # Bind the tab key for auto-completion
+        readline.parse_and_bind("tab: complete")
 
     def process_user_input(self):
         # Set delimiters for auto-completion and enable Vi editing mode
@@ -113,7 +117,7 @@ class GeminiChat:
         try:
             subprocess.run(command, shell=True)
         except Exception as e:
-            print(f"{Color.RED}Error during subprocess execution: {e}{Color.ENDC}")
+            print(f"{Color.RED}subprocess execution error: {e}{Color.ENDC}")
 
     def initialize_chat(self):
         # Initialize the chat session with the Gemini language model
@@ -130,11 +134,13 @@ class GeminiChat:
 
     def generate_chat(self):
         def loading_indicator():
+            cursor_hide()
             while not stop_loading:
-                for char in "|/-\\":
-                    print(f"{Color.PURPLE}\rProceeding... {char}{Color.ENDC}", end="")
+                for char in "⣾⣽⣻⢿⡿⣟⣯⣷":
+                    print(f"{Color.PURPLE}\r{char} Processing{Color.ENDC}", end="")
                     time.sleep(0.1)
-        
+            cursor_show()
+
         try:
             chat, instruction = self.initialize_chat()
 
@@ -143,10 +149,10 @@ class GeminiChat:
 
                 # Handle special commands
                 if user_input == GeminiChatConfig.EXIT_COMMAND:
-                    print(f"\n{Color.WARNING}Exiting the chat. Goodbye!{Color.ENDC}")
+                    print(f"\n{Color.WARNING}Exiting.... Goodbye!{Color.ENDC}")
                     break
                 elif user_input == GeminiChatConfig.RESET_COMMAND:
-                    print(f"\n{Color.WARNING}Resetting the chat session...{Color.ENDC}")
+                    print(f"\n{Color.WARNING}Resetting session...{Color.ENDC}")
                     time.sleep(1)
                     GeminiChatConfig.clear_screen()
                     chat, instruction = self.initialize_chat()
@@ -159,7 +165,7 @@ class GeminiChat:
                 elif user_input.startswith("run "):
                     # Run a subprocess command
                     command = user_input[4:].strip()
-                    print(f'{Color.OKGREEN}\n╭─ Model \n╰─> {Color.ENDC}{Color.RED}executing user command{Color.ENDC}')
+                    print(f'{Color.OKGREEN}\n╭─ Frea \n╰─> {Color.ENDC}{Color.RED}executing user command{Color.ENDC}')
                     self.run_subprocess(command)
                     print(f'\n')
                 else:
@@ -169,17 +175,17 @@ class GeminiChat:
                     loading_thread.start()
 
                     response = chat.send_message(instruction + user_input)
-                    
+
                     stop_loading = True
                     loading_thread.join()
-                    print("\r" + " " * 20 + "\r", end="")  # Clear the loading indicator line
-                    
+                    print("\r" + " " * 20 + "\r", end="")
+
                     sanitized_response = self.remove_emojis(response.text)
                     sanitized_response = sanitized_response.replace('*', '')
-                    print(f'{Color.OKGREEN}\n╭─ Model \n╰─> {Color.ENDC}{Color.YELLOWIST}{sanitized_response}{Color.ENDC}')
+                    print(f'{Color.OKGREEN}\n╭─ Frea \n╰─> {Color.ENDC}{Color.YELLOWIST}{sanitized_response}{Color.ENDC}')
 
         except KeyboardInterrupt:
-            print(f"\n{Color.WARNING}Exiting the chat. Goodbye!{Color.ENDC}")
+            print(f"\n{Color.WARNING}Exiting.... Goodbye!{Color.ENDC}")
 
         except Exception as e:
             print(f"{Color.RED}An unexpected error occurred: {e}{Color.ENDC}")
