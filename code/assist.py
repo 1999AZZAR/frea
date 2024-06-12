@@ -145,9 +145,22 @@ class GeminiChat:
 
         try:
             chat, instruction = self.initialize_chat()
+            user_input = ""
+            multiline_mode = False
 
             while True:
-                user_input = self.process_user_input()
+                if multiline_mode:
+                    print(f"{Color.OKCYAN}╰─> {Color.ENDC}", end="")
+                else:
+                    print(f"{Color.OKCYAN}╭─ User \n╰─> {Color.ENDC}", end="")
+                user_input_line = input()
+                if user_input_line.endswith("\\"):
+                    user_input += user_input_line.rstrip("\\") + "\n"
+                    multiline_mode = True
+                    continue
+                else:
+                    user_input += user_input_line
+                    multiline_mode = False
 
                 """Handle special commands"""
                 if user_input == GeminiChatConfig.EXIT_COMMAND:
@@ -159,6 +172,8 @@ class GeminiChat:
                     GeminiChatConfig.clear_screen()
                     chat, instruction = self.initialize_chat()
                     self.conversation_log = []
+                    user_input = ""
+                    multiline_mode = False
                     continue
                 elif user_input == GeminiChatConfig.CLEAR_COMMAND:
                     GeminiChatConfig.clear_screen()
@@ -197,6 +212,8 @@ class GeminiChat:
                     """Log the conversation"""
                     self.conversation_log.append(f"User: {user_input}")
                     self.conversation_log.append(f"Frea: {sanitized_response}")
+
+                user_input = ""
 
         except KeyboardInterrupt:
             print(f"\n{Color.WARNING}Exiting.... Goodbye!{Color.ENDC}")
