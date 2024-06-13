@@ -4,14 +4,51 @@ import google.generativeai as genai
 
 class Color:
     """ANSI escape codes for terminal colors"""
-    OKBLUE      = '\033[94m' # Light blue
-    OKCYAN      = '\033[96m' # Light cyan
-    OKGREEN     = '\033[92m' # Light green
-    WARNING     = '\033[93m' # Yellow
-    RED         = '\033[91m' # Light red
-    ENDC        = '\033[0m'  # End of color
-    YELLOWIST   = '\033[97m' # Yellowish white
-    PURPLE      = '\033[35m' # Purple
+    # Normal colors
+    BLACK        = '\033[30m' # Black
+    RED          = '\033[31m' # Red
+    GREEN        = '\033[32m' # Green
+    YELLOW       = '\033[33m' # Yellow
+    BLUE         = '\033[34m' # Blue
+    CYAN         = '\033[36m' # Cyan
+    WHITE        = '\033[37m' # White
+    PURPLE       = '\033[35m' # Purple
+
+    # Bright colors
+    BRIGHTBLACK  = '\033[90m' # Bright black
+    BRIGHTRED    = '\033[91m' # Bright red
+    BRIGHTGREEN  = '\033[92m' # Bright green
+    BRIGHTYELLOW = '\033[93m' # Bright yellow
+    BRIGHTBLUE   = '\033[94m' # Bright blue
+    BRIGHTCYAN   = '\033[96m' # Bright cyan
+    BRIGHTWHITE  = '\033[97m' # Bright white
+    BRIGHTPURPLE = '\033[95m' # Bright purple
+
+    # Dark colors
+    DARKRED      = '\033[31;2m' # Dark red
+    DARKGREEN    = '\033[32;2m' # Dark green
+    DARKYELLOW   = '\033[33;2m' # Dark yellow
+    DARKBLUE     = '\033[34;2m' # Dark blue
+    DARKCYAN     = '\033[36;2m' # Dark cyan
+    DARKPURPLE   = '\033[35;2m' # Dark purple
+
+    # Light colors
+    LIGHTRED     = '\033[91;1m' # Light red
+    LIGHTGREEN   = '\033[92;1m' # Light green
+    LIGHTYELLOW  = '\033[93;1m' # Light yellow
+    LIGHTBLUE    = '\033[94;1m' # Light blue
+    LIGHTCYAN    = '\033[96;1m' # Light cyan
+    LIGHTPURPLE  = '\033[95;1m' # Light purple
+
+    # Pastel colors
+    PASTELPINK   = '\033[95m'   # Pastel pink
+    PASTELBLUE   = '\033[94m'   # Pastel blue
+    PASTELGREEN  = '\033[92m'   # Pastel green
+    PASTELYELLOW = '\033[93m'   # Pastel yellow
+    PASTELPURPLE = '\033[95;1m' # Pastel purple
+
+    # End of color
+    ENDC        = '\033[0m'     # End of color
 
 def cursor_hide():
     """Hide the cursor in the terminal"""
@@ -29,7 +66,8 @@ class GeminiChatConfig:
     CLEAR_COMMAND       = 'clear'
     RESET_COMMAND       = 'reset'
     PRINT_COMMAND       = 'print'
-    INSTRUCTION_FILE    = './instructions/general.txt'  # Path to the instruction file
+    # Path to the model instruction
+    INSTRUCTION_FILE    = './instructions/general.txt'
 
     @staticmethod
     def initialize_genai_api():
@@ -83,15 +121,15 @@ class GeminiChat:
         readline.parse_and_bind("set editing-mode vi")
 
         try:
-            """Prompt for user input with colored prefix"""
-            question = input(f"{Color.OKCYAN}╭─ User \n╰─> {Color.ENDC}")
+            """Prompt for user input"""
+            question = input(f"{Color.BLUE}╭─ User \n╰─> {Color.ENDC}")
         except KeyboardInterrupt:
             print("\nKeyboard Interrupt")
             return ""
         return question.strip().lower()
 
     def remove_emojis(self, text):
-        """Remove emojis from the text"""
+        """Remove emojis from the model response"""
         emoji_pattern = re.compile("["
                                     u"\U0001F600-\U0001F64F"
                                     u"\U0001F300-\U0001F5FF"
@@ -119,7 +157,8 @@ class GeminiChat:
         try:
             subprocess.run(command, shell=True)
         except Exception as e:
-            print(f"{Color.RED}subprocess execution error: {e}{Color.ENDC}")
+            """error handling"""
+            print(f"{Color.BRIGHTYELLOW}\n╰─> {Color.ENDC}{Color.BRIGHTRED}subprocess execution error: {e}{Color.ENDC}")
 
     def initialize_chat(self):
         """Initialize the chat session"""
@@ -131,17 +170,22 @@ class GeminiChat:
             generation_config=generation_config,
             safety_settings=safety_settings
         )
+        """initiate chat model history"""
         chat = model.start_chat(history=[])
         return chat, instruction
 
     def generate_chat(self):
+        """model generation response flow"""
         def loading_indicator():
+            """loading indicator animation"""
             cursor_hide()
             while not stop_loading:
-                for char in "⣾⣽⣻⢿⡿⣟⣯⣷":
-                    print(f"{Color.PURPLE}\r{char} Processing{Color.ENDC}", end="")
-                    time.sleep(0.1)
+                loading = [' ∙∙∙∙∙ ', ' ●∙∙∙∙ ', ' ∙●∙∙∙ ', ' ∙∙●∙∙ ', ' ∙∙∙●∙ ', ' ∙∙∙∙● ']
+                for frame in loading:
+                    print(f"{Color.LIGHTPURPLE}\r{frame}Processing{Color.ENDC}", end="")
+                    time.sleep(0.15)
             cursor_show()
+            print("\r" + " " * 20 + "\r", end="")
 
         try:
             chat, instruction = self.initialize_chat()
@@ -149,10 +193,11 @@ class GeminiChat:
             multiline_mode = False
 
             while True:
+                """multiline automation"""
                 if multiline_mode:
-                    print(f"{Color.OKCYAN}╰─> {Color.ENDC}", end="")
+                    print(f"{Color.BLUE}╰─> {Color.ENDC}", end="")
                 else:
-                    print(f"{Color.OKCYAN}╭─ User \n╰─> {Color.ENDC}", end="")
+                    print(f"{Color.BLUE}╭─ User \n╰─> {Color.ENDC}", end="")
                 user_input_line = input()
                 if user_input_line.endswith("\\"):
                     user_input += user_input_line.rstrip("\\") + "\n"
@@ -164,10 +209,10 @@ class GeminiChat:
 
                 """Handle special commands"""
                 if user_input == GeminiChatConfig.EXIT_COMMAND:
-                    print(f"\n{Color.WARNING}Exiting.... Goodbye!{Color.ENDC}")
+                    print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.LIGHTRED}Exiting.... Goodbye!{Color.ENDC}")
                     break
                 elif user_input == GeminiChatConfig.RESET_COMMAND:
-                    print(f"\n{Color.WARNING}Resetting session...{Color.ENDC}")
+                    print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Resetting session...{Color.ENDC}")
                     time.sleep(0.5)
                     GeminiChatConfig.clear_screen()
                     chat, instruction = self.initialize_chat()
@@ -183,14 +228,14 @@ class GeminiChat:
                     with open("conversation_log.txt", "w") as file:
                         for line in self.conversation_log:
                             file.write(line + "\n")
-                    print(f"{Color.OKGREEN}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PURPLE}Conversation log saved to conversation_log.txt{Color.ENDC}\n")
+                    print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Conversation log saved to conversation_log.txt{Color.ENDC}\n")
                     continue
                 elif not user_input:
                     break
                 elif user_input.startswith("run "):
                     """Run a subprocess command"""
                     command = user_input[4:].strip()
-                    print(f'{Color.OKGREEN}\n╭─ Frea \n╰─> {Color.ENDC}{Color.RED}executing user command{Color.ENDC}')
+                    print(f'{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.LIGHTRED}executing user command{Color.ENDC}')
                     self.run_subprocess(command)
                     print(f'\n')
                 else:
@@ -203,11 +248,10 @@ class GeminiChat:
 
                     stop_loading = True
                     loading_thread.join()
-                    print("\r" + " " * 20 + "\r", end="")
 
                     sanitized_response = self.remove_emojis(response.text)
                     sanitized_response = sanitized_response.replace('*', '')
-                    print(f'{Color.OKGREEN}\n╭─ Frea \n╰─> {Color.ENDC}{Color.YELLOWIST}{sanitized_response}{Color.ENDC}')
+                    print(f'{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{sanitized_response}')
 
                     """Log the conversation"""
                     self.conversation_log.append(f"User: {user_input}")
@@ -216,10 +260,12 @@ class GeminiChat:
                 user_input = ""
 
         except KeyboardInterrupt:
-            print(f"\n{Color.WARNING}Exiting.... Goodbye!{Color.ENDC}")
+            print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.LIGHTRED}Exiting.... Goodbye!{Color.ENDC}")
 
         except Exception as e:
-            print(f"{Color.RED}An unexpected error occurred: {e}{Color.ENDC}")
+            """error handling"""
+            print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.BRIGHTRED}An unexpected error occurred: {e}{Color.ENDC}")
+            stop_loading = True
 
 if __name__ == "__main__":
     chat_app = GeminiChat()
