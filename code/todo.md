@@ -1,7 +1,0 @@
-- add multiline (auto) mode. (done)
-- adding conversational print. (done)
-- adding the auto save history uppon exit. (in progress)
-- adding the conversational history. (in progress)
-- add auto tittle generation on conversational history and print. (todo)
-- export history. (todo)
-- add inport history/conversational print data. (todo)
