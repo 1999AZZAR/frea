@@ -1,4 +1,4 @@
-import os, subprocess, time, re, readline, termios, tty, sys, threading
+import os, subprocess, time, re, readline, termios, tty, sys, threading, configparser
 from dotenv import load_dotenv
 import google.generativeai as genai
 
@@ -66,14 +66,62 @@ class GeminiChatConfig:
     CLEAR_COMMAND       = 'clear'
     RESET_COMMAND       = 'reset'
     PRINT_COMMAND       = 'print'
-    # Path to the model instruction
-    INSTRUCTION_FILE    = './instructions/general.txt'
+    RECONFIGURE_COMMAND = 'reconfigure'
+    HELP_COMMAND        = 'help'
+    CONFIG_FILE         = 'config.ini'
 
     @staticmethod
-    def initialize_genai_api():
-        """Load API key from environment variable"""
+    def initialize_config():
+        """Initialize the config.ini file"""
+        config = configparser.ConfigParser()
+        if not os.path.exists(GeminiChatConfig.CONFIG_FILE):
+            print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Configuration found. Creating configuration file.{Color.ENDC}\n")
+            config['DEFAULT'] = {
+                'API': input("Enter the API key: "),
+                'LoadingStyle': input("Enter the loading style (e.g., L1): "),
+                'InstructionFile': input("Enter the path to the instruction file: ")
+            }
+            with open(GeminiChatConfig.CONFIG_FILE, 'w') as configfile:
+                config.write(configfile)
+                print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Configuration saved successfully!{Color.ENDC}\n")
+        else:
+            config.read(GeminiChatConfig.CONFIG_FILE)
+        return config
+
+    @staticmethod
+    def reconfigure():
+        """Reconfigure the settings"""
+        config = configparser.ConfigParser()
+        config['DEFAULT'] = {
+            'API': input("Enter the new API key: "),
+            'LoadingStyle': input("Enter the new loading style (e.g., L1): "),
+            'InstructionFile': input("Enter the new path to the instruction file: ")
+        }
+        with open(GeminiChatConfig.CONFIG_FILE, 'w') as configfile:
+            config.write(configfile)
+        print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Configuration updated successfully!{Color.ENDC}\n")
+        multiline_mode = False
+        return config
+
+    @staticmethod
+    def display_help():
+        """Display help information"""
+        help_text = f"""
+        {Color.BRIGHTCYAN}Special Commands:{Color.ENDC}
+        {Color.BRIGHTYELLOW}{GeminiChatConfig.EXIT_COMMAND}{Color.ENDC} - Exit the application
+        {Color.BRIGHTYELLOW}{GeminiChatConfig.CLEAR_COMMAND}{Color.ENDC} - Clear the terminal screen
+        {Color.BRIGHTYELLOW}{GeminiChatConfig.RESET_COMMAND}{Color.ENDC} - Reset the chat session
+        {Color.BRIGHTYELLOW}{GeminiChatConfig.PRINT_COMMAND}{Color.ENDC} - Save the conversation log to a file
+        {Color.BRIGHTYELLOW}{GeminiChatConfig.RECONFIGURE_COMMAND}{Color.ENDC} - Reconfigure the settings
+        {Color.BRIGHTYELLOW}{GeminiChatConfig.HELP_COMMAND}{Color.ENDC} - Display this help information
+        """
+        multiline_mode = False
+        print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{help_text}")
+
+    @staticmethod
+    def initialize_genai_api(api_key):
+        """Load API key from config"""
         load_dotenv()
-        api_key = os.getenv('GEMINI_API_KEY')
         genai.configure(api_key=api_key)
 
     @staticmethod
@@ -99,9 +147,9 @@ class GeminiChatConfig:
         ]
 
     @staticmethod
-    def chat_instruction():
+    def chat_instruction(instruction_file):
         """Read the instruction file"""
-        with open(GeminiChatConfig.INSTRUCTION_FILE, 'r') as file:
+        with open(instruction_file, 'r') as file:
             return file.read()
 
     @staticmethod
@@ -111,7 +159,11 @@ class GeminiChatConfig:
 
 class GeminiChat:
     def __init__(self):
-        GeminiChatConfig.initialize_genai_api()
+        config = GeminiChatConfig.initialize_config()
+        self.api_key = config['DEFAULT']['API']
+        self.loading_style = config['DEFAULT']['LoadingStyle']
+        self.instruction_file = config['DEFAULT']['InstructionFile']
+        GeminiChatConfig.initialize_genai_api(self.api_key)
         readline.parse_and_bind("tab: complete")
         self.conversation_log = []  # Initialize conversation log
 
@@ -164,7 +216,7 @@ class GeminiChat:
         """Initialize the chat session"""
         generation_config = GeminiChatConfig.gemini_generation_config()
         safety_settings = GeminiChatConfig.gemini_safety_settings()
-        instruction = GeminiChatConfig.chat_instruction()
+        instruction = GeminiChatConfig.chat_instruction(self.instruction_file)
         model = genai.GenerativeModel(
             model_name="gemini-1.5-pro-latest",
             generation_config=generation_config,
@@ -176,14 +228,27 @@ class GeminiChat:
 
     def generate_chat(self):
         """model generation response flow"""
-        def loading_indicator():
-            """loading indicator animation"""
+        def loading_animation(use='L1'):
+            """loading animation"""
             cursor_hide()
             while not stop_loading:
-                loading = [' ∙∙∙∙∙ ', ' ●∙∙∙∙ ', ' ∙●∙∙∙ ', ' ∙∙●∙∙ ', ' ∙∙∙●∙ ', ' ∙∙∙∙● ']
-                for frame in loading:
-                    print(f"{Color.LIGHTPURPLE}\r{frame}Processing{Color.ENDC}", end="")
-                    time.sleep(0.15)
+                animations = {
+                    'L0': ([' 🙉 ', ' 🙈 ', ' 🙊 ', ' 🙈 '], 0.2),
+                    'L1': ([' ∙∙∙∙∙ ', ' ●∙∙∙∙ ', ' ∙●∙∙∙ ', ' ∙∙●∙∙ ', ' ∙∙∙●∙ ', ' ∙∙∙∙● '], 0.1),
+                    'L2': ([' ⣾ ', ' ⣽ ', ' ⣻ ', ' ⢿ ', ' ⡿ ', ' ⣟ ', ' ⣯ ', ' ⣷ '], 0.15),
+                    'L3': ([' 🌑 ', ' 🌒 ', ' 🌓 ', ' 🌔 ', ' 🌕 ', ' 🌖 ', ' 🌗 ', ' 🌘 '], 0.22),
+                    'L4': ([' ◐ ', ' ◓ ', ' ◑ ', ' ◒ '], 0.1),
+                    'L5': ([' ▖ ', ' ▘ ', ' ▝ ', ' ▗ '], 0.2),
+                    'L6': ([' ⠁ ', ' ⠂ ', ' ⠄ ', ' ⡀ ', ' ⢀ ', ' ⠠ ', ' ⠐ ', ' ⠈ '], 0.15),
+                    'L7': ([' ⣀ ', ' ⣤ ', ' ⣶ ', ' ⣾ ', ' ⣿ ', ' ⣷ ', ' ⣯ ', ' ⣟ '], 0.2),
+                    'L8': ([' 🕛 ', ' 🕐 ', ' 🕑 ', ' 🕒 ', ' 🕓 ', ' 🕔 ', ' 🕕 ', ' 🕖 ', ' 🕗 ', ' 🕘 ', ' 🕙 ', ' 🕚 '], 0.15),
+                    'L9': ([' 🔸 ', ' 🔹 ', ' 🔷 ', ' 🔶 '], 0.2)
+                }
+                if use in animations:
+                    frames, delay = animations[use]
+                    for frame in frames:
+                        print(f"{Color.LIGHTPURPLE}\r{frame}Processing{Color.ENDC}", end="")
+                        time.sleep(delay)
             cursor_show()
             print("\r" + " " * 20 + "\r", end="")
 
@@ -218,10 +283,22 @@ class GeminiChat:
                     chat, instruction = self.initialize_chat()
                     self.conversation_log = []
                     user_input = ""
-                    multiline_mode = False
                     continue
                 elif user_input == GeminiChatConfig.CLEAR_COMMAND:
                     GeminiChatConfig.clear_screen()
+                    continue
+                elif user_input == GeminiChatConfig.HELP_COMMAND:
+                    GeminiChatConfig.display_help()
+                    continue
+                elif user_input == GeminiChatConfig.RECONFIGURE_COMMAND:
+                    config = GeminiChatConfig.reconfigure()
+                    self.api_key = config['DEFAULT']['API']
+                    self.loading_style = config['DEFAULT']['LoadingStyle']
+                    self.instruction_file = config['DEFAULT']['InstructionFile']
+                    GeminiChatConfig.initialize_genai_api(self.api_key)
+                    chat, instruction = self.initialize_chat()
+                    self.conversation_log = []
+                    user_input = ""
                     continue
                 elif user_input == GeminiChatConfig.PRINT_COMMAND:
                     """Save conversation log to a file"""
@@ -241,7 +318,7 @@ class GeminiChat:
                 else:
                     """Send user input to the language model and print the response"""
                     stop_loading = False
-                    loading_thread = threading.Thread(target=loading_indicator)
+                    loading_thread = threading.Thread(target=loading_animation, args=(self.loading_style,))
                     loading_thread.start()
 
                     response = chat.send_message(instruction + user_input)
@@ -258,6 +335,7 @@ class GeminiChat:
                     self.conversation_log.append(f"Frea: {sanitized_response}")
 
                 user_input = ""
+                multiline_mode = False
 
         except KeyboardInterrupt:
             print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.LIGHTRED}Exiting.... Goodbye!{Color.ENDC}")

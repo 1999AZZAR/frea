@@ -5,5 +5,5 @@ data/
 code/*.txt
 code/*.wav
 code/.env
-code/other/
+code/*.ini
 ch/
