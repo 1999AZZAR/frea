@@ -25,16 +25,30 @@ Frea is an interactive terminal-based chat application powered by Google's gener
 
 1. **Clone the Repository**:
     ```bash
-    git clone <repository_url>
-    cd <repository_directory>
+    git clone https://github.com/1999AZZAR/frea.git
+    cd frea
+    ```
+2. **Create a virtual env**:
+    ```bash
+    pip -m venv .venv
+    ```
+3. **Activate the venv**:
+    ```bash
+    source .venv/bin/activate
     ```
 
-2. **Install Dependencies**:
+4. **Install Dependencies**:
     ```bash
     pip install -r requirements.txt
     ```
 
-3. **Configuration**:
+5. **Run the code**:
+    ```bash
+    cd code
+    python main.py
+    ```
+
+6. **Configuration**:
     - On the first run, the application will prompt for the API key, loading style, and instruction file path.
     - These settings will be saved in a `config.ini` file for future use.
 
@@ -45,7 +59,8 @@ Frea is an interactive terminal-based chat application powered by Google's gener
 To start the Frea application, run:
 
 ```bash
-python frea.py
+cd code
+python main.py
 ```
 
 ### Special Commands

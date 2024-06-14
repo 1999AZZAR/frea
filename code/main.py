@@ -1,4 +1,4 @@
-import os, subprocess, time, re, readline, termios, tty, sys, threading, configparser
+import os, subprocess, time, re, readline, termios, tty, sys, threading, configparser, datetime
 from dotenv import load_dotenv
 import google.generativeai as genai
 
@@ -115,7 +115,6 @@ class GeminiChatConfig:
         {Color.BRIGHTYELLOW}{GeminiChatConfig.RECONFIGURE_COMMAND}{Color.ENDC} - Reconfigure the settings
         {Color.BRIGHTYELLOW}{GeminiChatConfig.HELP_COMMAND}{Color.ENDC} - Display this help information
         """
-        multiline_mode = False
         print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{help_text}")
 
     @staticmethod
@@ -211,6 +210,7 @@ class GeminiChat:
         except Exception as e:
             """error handling"""
             print(f"{Color.BRIGHTYELLOW}\n╰─> {Color.ENDC}{Color.BRIGHTRED}subprocess execution error: {e}{Color.ENDC}")
+            multiline_mode = False
 
     def initialize_chat(self):
         """Initialize the chat session"""
@@ -251,6 +251,7 @@ class GeminiChat:
                         time.sleep(delay)
             cursor_show()
             print("\r" + " " * 20 + "\r", end="")
+            multiline_mode = False
 
         try:
             chat, instruction = self.initialize_chat()
@@ -283,6 +284,7 @@ class GeminiChat:
                     chat, instruction = self.initialize_chat()
                     self.conversation_log = []
                     user_input = ""
+                    multiline_mode = False
                     continue
                 elif user_input == GeminiChatConfig.CLEAR_COMMAND:
                     GeminiChatConfig.clear_screen()
@@ -298,14 +300,18 @@ class GeminiChat:
                     GeminiChatConfig.initialize_genai_api(self.api_key)
                     chat, instruction = self.initialize_chat()
                     self.conversation_log = []
+                    multiline_mode = False
                     user_input = ""
                     continue
                 elif user_input == GeminiChatConfig.PRINT_COMMAND:
                     """Save conversation log to a file"""
-                    with open("conversation_log.txt", "w") as file:
+                    current_datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                    log_file_name = f"log_{current_datetime}.txt"
+                    with open(log_file_name, "w") as file:
                         for line in self.conversation_log:
                             file.write(line + "\n")
-                    print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Conversation log saved to conversation_log.txt{Color.ENDC}\n")
+                    print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Conversation log saved to {log_file_name}{Color.ENDC}\n")
+                    multiline_mode = False
                     continue
                 elif not user_input:
                     break
@@ -314,6 +320,7 @@ class GeminiChat:
                     command = user_input[4:].strip()
                     print(f'{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.LIGHTRED}executing user command{Color.ENDC}')
                     self.run_subprocess(command)
+                    multiline_mode = False
                     print(f'\n')
                 else:
                     """Send user input to the language model and print the response"""
@@ -329,6 +336,7 @@ class GeminiChat:
                     sanitized_response = self.remove_emojis(response.text)
                     sanitized_response = sanitized_response.replace('*', '')
                     print(f'{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{sanitized_response}')
+                    multiline_mode = False
 
                     """Log the conversation"""
                     self.conversation_log.append(f"User: {user_input}")
@@ -343,6 +351,7 @@ class GeminiChat:
         except Exception as e:
             """error handling"""
             print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.BRIGHTRED}An unexpected error occurred: {e}{Color.ENDC}")
+            multiline_mode = False
             stop_loading = True
 
 if __name__ == "__main__":

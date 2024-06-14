@@ -1,13 +1,16 @@
 #!/bin/bash
 
+# Clear the screen
+clear
+
 # Change to root directory
 cd || exit
 
-# Change directory to the specified path
+# Change directory to the code path
 cd ./Downloads/project/frea/code || exit
 
-# Activate the virtual environment
-source ../venv/bin/activate || exit
+# Activate the virtual environment (if exist)
+source ../.venv/bin/activate || exit
 
 # Function to deactivate virtual environment and return to main directory
 cleanup() {
