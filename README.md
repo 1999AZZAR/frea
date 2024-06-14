@@ -117,6 +117,8 @@ Enter the path to the instruction file: /path/to/instruction_file.txt
 Configuration saved successfully!
 ```
 
+you can get your own gemini api key from [here](https://aistudio.google.com/app/apikey)
+
 ### Reconfiguration
 
 To update the configuration at any time, use the `reconfigure` command within the application.
