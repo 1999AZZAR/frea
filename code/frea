@@ -19,7 +19,7 @@ cleanup() {
 trap cleanup INT
 
 # Execute the Python script
-python assist.py
+python main.py
 
 # Call cleanup function after Python script exits
 cleanup
