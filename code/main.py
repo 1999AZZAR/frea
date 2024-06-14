@@ -99,22 +99,21 @@ class GeminiChatConfig:
         with open(GeminiChatConfig.CONFIG_FILE, 'w') as configfile:
             config.write(configfile)
         print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Configuration updated successfully!{Color.ENDC}\n")
-        multiline_mode = False
         return config
 
     @staticmethod
     def display_help():
         """Display help information"""
         help_text = f"""
-        {Color.BRIGHTCYAN}Special Commands:{Color.ENDC}
-        {Color.BRIGHTYELLOW}{GeminiChatConfig.EXIT_COMMAND}{Color.ENDC} - Exit the application
-        {Color.BRIGHTYELLOW}{GeminiChatConfig.CLEAR_COMMAND}{Color.ENDC} - Clear the terminal screen
-        {Color.BRIGHTYELLOW}{GeminiChatConfig.RESET_COMMAND}{Color.ENDC} - Reset the chat session
-        {Color.BRIGHTYELLOW}{GeminiChatConfig.PRINT_COMMAND}{Color.ENDC} - Save the conversation log to a file
-        {Color.BRIGHTYELLOW}{GeminiChatConfig.RECONFIGURE_COMMAND}{Color.ENDC} - Reconfigure the settings
-        {Color.BRIGHTYELLOW}{GeminiChatConfig.HELP_COMMAND}{Color.ENDC} - Display this help information
+    {Color.BRIGHTGREEN}{GeminiChatConfig.HELP_COMMAND}{Color.ENDC}  - Display this help information.
+    {Color.BRIGHTGREEN}{GeminiChatConfig.EXIT_COMMAND}{Color.ENDC}  - Exit the application.
+    {Color.BRIGHTGREEN}{GeminiChatConfig.CLEAR_COMMAND}{Color.ENDC} - Clear the terminal screen.
+    {Color.BRIGHTGREEN}{GeminiChatConfig.RESET_COMMAND}{Color.ENDC} - Reset the chat session.
+    {Color.BRIGHTGREEN}{GeminiChatConfig.PRINT_COMMAND}{Color.ENDC} - Save the conversation log to a file.
+    {Color.BRIGHTGREEN}{GeminiChatConfig.RECONFIGURE_COMMAND}{Color.ENDC}   - Reconfigure the settings.
+    {Color.BRIGHTGREEN}run (command){Color.ENDC} - run subprocess command eg run neofetch.
         """
-        print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{help_text}")
+        print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.BRIGHTCYAN}Special Commands:{Color.ENDC}{help_text}")
 
     @staticmethod
     def initialize_genai_api(api_key):
@@ -171,7 +170,7 @@ class GeminiChat:
 
         try:
             """Prompt for user input"""
-            question = input(f"{Color.BLUE}╭─ User \n╰─> {Color.ENDC}")
+            question = input(f"{Color.BLUE}╭─ User \n╰─> {Color.ENDC}", end="")
         except KeyboardInterrupt:
             print("\nKeyboard Interrupt")
             return ""
@@ -208,7 +207,6 @@ class GeminiChat:
         except Exception as e:
             """error handling"""
             print(f"{Color.BRIGHTYELLOW}\n╰─> {Color.ENDC}{Color.BRIGHTRED}subprocess execution error: {e}{Color.ENDC}")
-            multiline_mode = False
 
     def initialize_chat(self):
         """Initialize the chat session"""
@@ -249,7 +247,6 @@ class GeminiChat:
                         time.sleep(delay)
             cursor_show()
             print("\r" + " " * 20 + "\r", end="")
-            multiline_mode = False
 
         try:
             chat, instruction = self.initialize_chat()
@@ -269,7 +266,6 @@ class GeminiChat:
                     continue
                 else:
                     user_input += user_input_line
-                    multiline_mode = False
 
                 """Handle special commands"""
                 if user_input == GeminiChatConfig.EXIT_COMMAND:
@@ -286,9 +282,13 @@ class GeminiChat:
                     continue
                 elif user_input == GeminiChatConfig.CLEAR_COMMAND:
                     GeminiChatConfig.clear_screen()
+                    user_input = ""
+                    multiline_mode = False
                     continue
                 elif user_input == GeminiChatConfig.HELP_COMMAND:
                     GeminiChatConfig.display_help()
+                    user_input = ""
+                    multiline_mode = False
                     continue
                 elif user_input == GeminiChatConfig.RECONFIGURE_COMMAND:
                     config = GeminiChatConfig.reconfigure()
@@ -298,8 +298,8 @@ class GeminiChat:
                     GeminiChatConfig.initialize_genai_api(self.api_key)
                     chat, instruction = self.initialize_chat()
                     self.conversation_log = []
-                    multiline_mode = False
                     user_input = ""
+                    multiline_mode = False
                     continue
                 elif user_input == GeminiChatConfig.PRINT_COMMAND:
                     """Save conversation log to a file"""
@@ -309,17 +309,21 @@ class GeminiChat:
                         for line in self.conversation_log:
                             file.write(line + "\n")
                     print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Conversation log saved to {log_file_name}{Color.ENDC}\n")
+                    user_input = ""
                     multiline_mode = False
                     continue
                 elif not user_input:
-                    break
+                    print(f'\n{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.LIGHTRED}Please enter your command/prompt{Color.ENDC}\n')
+                    user_input = ""
+                    multiline_mode = False
+                    continue
                 elif user_input.startswith("run "):
                     """Run a subprocess command"""
                     command = user_input[4:].strip()
                     print(f'{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.LIGHTRED}executing user command{Color.ENDC}')
                     self.run_subprocess(command)
+                    user_input = ""
                     multiline_mode = False
-                    print(f'\n')
                 else:
                     """Send user input to the language model and print the response"""
                     stop_loading = False
@@ -334,7 +338,6 @@ class GeminiChat:
                     sanitized_response = self.remove_emojis(response.text)
                     sanitized_response = sanitized_response.replace('*', '')
                     print(f'{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{sanitized_response}')
-                    multiline_mode = False
 
                     """Log the conversation"""
                     self.conversation_log.append(f"User: {user_input}")
@@ -349,7 +352,6 @@ class GeminiChat:
         except Exception as e:
             """error handling"""
             print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.BRIGHTRED}An unexpected error occurred: {e}{Color.ENDC}")
-            multiline_mode = False
             stop_loading = True
 
 if __name__ == "__main__":
