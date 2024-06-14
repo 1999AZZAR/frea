@@ -75,7 +75,7 @@ class GeminiChatConfig:
         """Initialize the config.ini file"""
         config = configparser.ConfigParser()
         if not os.path.exists(GeminiChatConfig.CONFIG_FILE):
-            print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Configuration found. Creating configuration file.{Color.ENDC}\n")
+            print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}No Configuration found. Creating configuration file.{Color.ENDC}\n")
             config['DEFAULT'] = {
                 'API': input("Enter the API key: "),
                 'LoadingStyle': input("Enter the loading style (e.g., L1): "),

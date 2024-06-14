@@ -1,63 +1,145 @@
-# Frea: Freak Robotic Entity with Amusement
+# Frea - Freak Robotic Entity with Amusement
 
-Frea is a conversational AI application built using Google GenerativeAI, designed to provide responses with a blend of intelligence, eagerness, naughtiness, and lewdness personality. The acronym "Frea" stands for "Freak Robotic Entity with Amusement."
+## Overview
 
-## Installation
+Frea is an interactive terminal-based chat application powered by Google's generative AI, designed to provide seamless user interactions with advanced natural language processing capabilities. This application offers a variety of features, including multi-line input, special commands, and a customizable loading animation.
 
-1. Set up a virtual environment:
+## Features
 
+- **Interactive Chat Interface**: Engage in dynamic conversations with a generative AI model.
+- **Customization**: Configure API keys, loading styles, and instruction files via `config.ini`.
+- **Special Commands**: Use commands like `exit`, `clear`, `reset`, `print`, `reconfigure`, and `help`.
+- **Multi-Line Input**: Easily handle multi-line user inputs.
+- **Loading Animations**: Enjoy visually appealing loading animations while waiting for responses.
+- **Safety Settings**: Ensure content safety with predefined thresholds for harmful content categories.
+- **Conversation Log**: Save conversation logs to a file.
+
+## Setup
+
+### Prerequisites
+
+- Python 3.8 or later
+- Required Python packages listed in `requirements.txt`
+
+### Installation
+
+1. **Clone the Repository**:
     ```bash
-    python3 -m venv venv
+    git clone <repository_url>
+    cd <repository_directory>
     ```
 
-2. Activate the virtual environment:
-
-    ```bash
-    source venv/bin/activate
-    ```
-
-3. Install the required packages:
-
+2. **Install Dependencies**:
     ```bash
     pip install -r requirements.txt
     ```
 
-## Configuration
+3. **Configuration**:
+    - On the first run, the application will prompt for the API key, loading style, and instruction file path.
+    - These settings will be saved in a `config.ini` file for future use.
 
-1. Create a `.env` file in the `data` directory with your Gemini API key:
+## Usage
 
-```env
-GEMINI_API_KEY=your_api_key_here
+### Running the Application
+
+To start the Frea application, run:
+
+```bash
+python frea.py
 ```
 
-## How to Run
+### Special Commands
 
-1. activate your virtual env.
+- **exit**: Exit the application.
+- **clear**: Clear the terminal screen.
+- **reset**: Reset the chat session.
+- **print**: Save the conversation log to a file.
+- **reconfigure**: Reconfigure the settings.
+- **help**: Display help information.
 
-2. Navigate to the `code` directory and execute the python file:
+### Example Interaction
 
-    ```bash
-    cd code
-    python assist.py
-    ```
+Upon running the application, you will see a prompt to enter your message:
 
-- You can exit the chat by typing `exit`, clear the screen with `clear`, reset the session using `reset`.
+```plaintext
+╭─ User
+╰─> Hello, how are you?
+```
 
-## Additional Notes
+The application will respond after processing your input, showing a loading animation in the meantime.
 
-- By default Frea's behavior is programmed to be that of a smart but lewd servant/maid/slave.
-- You can use `clear` command as input to clear the display.
-- `exit` command to exit the chat bot.
-- `reset` command to reset the instance and clear the display.
-- or you can use `run` followed by the command you whan to run at it will run on your ocal terminal
-- you can incorporate frea to your bash terminal by doing [this step](alias.md).
+### Multi-Line Input
+
+To enter multi-line messages, end each line with a backslash (`\`):
+
+```plaintext
+╭─ User
+╰─> This is a multi-line \
+input example.
+```
+
+### Running Subprocess Commands
+
+You can run system commands by prefixing them with `run `:
+
+```plaintext
+╭─ User
+╰─> run ls -la
+```
+
+## Configuration
+
+### Initial Configuration
+
+On the first run, the application will guide you through creating a `config.ini` file:
+
+```plaintext
+╭─ Frea
+╰─> No Configuration found. Creating configuration file.
+Enter the API key: your_api_key_here
+Enter the loading style (e.g., L1): L1
+Enter the path to the instruction file: /path/to/instruction_file.txt
+Configuration saved successfully!
+```
+
+### Reconfiguration
+
+To update the configuration at any time, use the `reconfigure` command within the application.
+
+## Developer Notes
+
+### Code Structure
+
+- **Color**: Contains ANSI escape codes for terminal colors.
+- **GeminiChatConfig**: Handles configuration, API initialization, and command processing.
+- **GeminiChat**: Main class to run the chat application.
+
+### Functions
+
+- **cursor_hide()**: Hides the terminal cursor.
+- **cursor_show()**: Shows the terminal cursor.
+- **remove_emojis(text)**: Removes emojis from text.
+- **run_subprocess(command)**: Executes a system command.
+- **generate_chat()**: Main loop to handle user input and generate AI responses.
+
+### Safety Settings
+
+The application includes predefined safety settings to block harmful content categories:
+
+- Harassment
+- Hate Speech
+- Sexually Explicit
+- Dangerous Content
+
+These settings can be adjusted in the `gemini_safety_settings` method.
 
 ## demo
 
 [![asciicast](https://asciinema.org/a/WBjtnAb4HIPa2w3oMiIJsfeB1.svg)](https://asciinema.org/a/WBjtnAb4HIPa2w3oMiIJsfeB1)
-![frea](demo/1.png)
-![frea2](demo/2.png)
 
-## customize
+> note:
+> you can incorporate frea to your bash terminal by doing [this step](alias.md).
 
-Feel free to customize the `GeminiChatConfig` class in the python code it self to modify Frea's behavior or adjust the chat instructions. Enjoy chatting with Frea!
+---
+
+By following this README, you should be able to set up, configure, and run the Frea application seamlessly. Enjoy interacting with your AI chat assistant!
