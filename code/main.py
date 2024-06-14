@@ -1,5 +1,4 @@
 import os, subprocess, time, re, readline, termios, tty, sys, threading, configparser, datetime
-from dotenv import load_dotenv
 import google.generativeai as genai
 
 class Color:
@@ -120,7 +119,6 @@ class GeminiChatConfig:
     @staticmethod
     def initialize_genai_api(api_key):
         """Load API key from config"""
-        load_dotenv()
         genai.configure(api_key=api_key)
 
     @staticmethod
