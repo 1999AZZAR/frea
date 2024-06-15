@@ -1,4 +1,4 @@
-import os, subprocess, time, re, readline, termios, tty, sys, threading, configparser, datetime
+import os, subprocess, time, re, readline, termios, tty, sys, threading, configparser, datetime, json, os.path
 import google.generativeai as genai
 
 class Color:
@@ -68,6 +68,7 @@ class GeminiChatConfig:
     RECONFIGURE_COMMAND = 'reconfigure'
     HELP_COMMAND        = 'help'
     CONFIG_FILE         = 'config.ini'
+    LOG_FOLDER          = 'logs'
 
     @staticmethod
     def initialize_config():
@@ -162,6 +163,7 @@ class GeminiChat:
         GeminiChatConfig.initialize_genai_api(self.api_key)
         readline.parse_and_bind("tab: complete")
         self.conversation_log = []  # Initialize conversation log
+        self.log_folder = GeminiChatConfig.LOG_FOLDER
 
     def process_user_input(self):
         """Set delimiters for auto-completion and enable Vi editing mode"""
@@ -302,12 +304,11 @@ class GeminiChat:
                     multiline_mode = False
                     continue
                 elif user_input == GeminiChatConfig.PRINT_COMMAND:
-                    """Save conversation log to a file"""
+                    """Save conversation log to a JSON file"""
                     current_datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-                    log_file_name = f"log_{current_datetime}.txt"
+                    log_file_name = f"{GeminiChatConfig.LOG_FOLDER}/log_{current_datetime}.json"
                     with open(log_file_name, "w") as file:
-                        for line in self.conversation_log:
-                            file.write(line + "\n")
+                        json.dump(self.conversation_log, file, indent=4)
                     print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Conversation log saved to {log_file_name}{Color.ENDC}\n")
                     user_input = ""
                     multiline_mode = False
@@ -341,7 +342,7 @@ class GeminiChat:
 
                     """Log the conversation"""
                     self.conversation_log.append(f"User: {user_input}")
-                    self.conversation_log.append(f"Frea: {sanitized_response}")
+                    self.conversation_log.append(f"Model: {sanitized_response}")
 
                 user_input = ""
                 multiline_mode = False
