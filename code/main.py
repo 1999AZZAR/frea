@@ -106,15 +106,24 @@ class GeminiChatConfig:
     def display_help():
         """Display help information"""
         help_text = f"""
+    {Color.BRIGHTPURPLE}▒▓████████▓▒ ▒▓███████▓▒  ▒▓████████▓▒  ▒▓██████▓▒{Color.ENDC}
+    {Color.BRIGHTPURPLE}▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒ ▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒{Color.ENDC}
+    {Color.BRIGHTPURPLE}▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒ ▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒{Color.ENDC}
+    {Color.BRIGHTPURPLE}▒▓██████▓▒   ▒▓███████▓▒  ▒▓██████▓▒   ▒▓████████▓▒{Color.ENDC}
+    {Color.BRIGHTPURPLE}▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒ ▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒{Color.ENDC}
+    {Color.BRIGHTPURPLE}▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒ ▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒{Color.ENDC}
+    {Color.BRIGHTPURPLE}▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒ ▒▓████████▓▒ ▒▓█▓▒  ▒▓█▓▒{Color.ENDC}
+    {Color.RED}Freak        Robotic      Entity with  Amusement{Color.ENDC}\n
+    {Color.BRIGHTCYAN}Command List:{Color.ENDC}
     {Color.BRIGHTGREEN}{GeminiChatConfig.HELP_COMMAND}{Color.ENDC}  - Display this help information.
     {Color.BRIGHTGREEN}{GeminiChatConfig.EXIT_COMMAND}{Color.ENDC}  - Exit the application.
     {Color.BRIGHTGREEN}{GeminiChatConfig.CLEAR_COMMAND}{Color.ENDC} - Clear the terminal screen.
     {Color.BRIGHTGREEN}{GeminiChatConfig.RESET_COMMAND}{Color.ENDC} - Reset the chat session.
     {Color.BRIGHTGREEN}{GeminiChatConfig.PRINT_COMMAND}{Color.ENDC} - Save the conversation log to a file.
     {Color.BRIGHTGREEN}{GeminiChatConfig.RECONFIGURE_COMMAND}{Color.ENDC}   - Reconfigure the settings.
-    {Color.BRIGHTGREEN}run (command){Color.ENDC} - run subprocess command eg run neofetch.
+    {Color.BRIGHTGREEN}run (command){Color.ENDC} - run subprocess command eg run ls.
         """
-        print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.BRIGHTCYAN}Special Commands:{Color.ENDC}{help_text}")
+        print(f"\n{help_text}")
 
     @staticmethod
     def initialize_genai_api(api_key):
@@ -202,6 +211,10 @@ class GeminiChat:
                                    "]+", flags=re.UNICODE)
         return emoji_pattern.sub(r'', text)
 
+    def to_markdown(text):
+        text = text.replace('•', '  *')
+        return Markdown(textwrap.indent(text, '> ', predicate=lambda _: True))
+
     def run_subprocess(self, command):
         """Run a subprocess command"""
         try:
@@ -226,6 +239,7 @@ class GeminiChat:
 
     def generate_chat(self):
         """model generation response flow"""
+        @staticmethod
         def loading_animation(use='L1'):
             """loading animation"""
             cursor_hide()
