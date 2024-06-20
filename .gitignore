@@ -2,9 +2,8 @@ venv/
 models/
 data/
 .vscode/
-code/*.txt
-code/*.wav
-code/.env
-code/logs/*.*
-code/*.ini
-ch/
+src/*.txt
+src/*.wav
+src/.env
+src/logs/*.*
+src/*.ini

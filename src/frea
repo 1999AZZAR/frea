@@ -7,7 +7,7 @@ clear
 cd || exit
 
 # Change directory to the code path
-cd ./Downloads/project/frea/code || exit
+cd ./Downloads/project/frea/src || exit
 
 # Activate the virtual environment (if exist)
 source ../.venv/bin/activate || exit

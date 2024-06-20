@@ -208,7 +208,7 @@ class GeminiChat:
                                     u"\u231a"
                                     u"\ufe0f"
                                     u"\u3030"
-                                   "]+", flags=re.UNICODE)
+                                   "]+", flags=re.UNIscr)
         return emoji_pattern.sub(r'', text)
 
     def to_markdown(text):
