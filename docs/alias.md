@@ -1,6 +1,6 @@
 To make the code callable using the command `frea` from your bash terminal, you can create an alias for it in your bash profile configuration. Here's how you can do it:
 
-1. open the `frea` file from `code/` folder.
+1. open the `frea` file from `src/` folder.
 
 2. edit that file, edit the part to the main.py path it self.
 
@@ -12,7 +12,7 @@ To make the code callable using the command `frea` from your bash terminal, you 
     alias frea="/path/to/frea"
     ```
 
-    Replace `/path/to/frea` with the full path to the script you created earlier eg. `downloads/code/frea`.
+    Replace `/path/to/frea` with the full path to the script you created earlier eg. `downloads/src/frea`.
 
 5. Save the file and close the text editor.
 

@@ -155,7 +155,7 @@ These settings can be adjusted in the `gemini_safety_settings` method.
 [![asciicast](https://asciinema.org/a/663984.svg)](https://asciinema.org/a/663984)
 
 > note:
-> you can incorporate frea to your bash terminal by doing [this step](alias.md).
+> you can incorporate frea to your bash terminal by doing [this step](docs/alias.md).
 
 ---
 
