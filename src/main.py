@@ -1,4 +1,4 @@
-import os, subprocess, time, re, readline, termios, tty, sys, threading, configparser, datetime, json, os.path
+import os, subprocess, time, re, readline, termios, tty, sys, threading, configparser, datetime, json
 import google.generativeai as genai
 
 class Color:
@@ -70,6 +70,10 @@ class GeminiChatConfig:
     CONFIG_FILE         = 'config.ini'
     LOG_FOLDER          = 'logs'
 
+    DEFAULT_LOADING_STYLE = 'L2'
+    DEFAULT_INSTRUCTION_FILE = './instructions/general.txt'
+    DEFAULT_MODEL_NAME = 'gemini-1.5-pro'
+
     @staticmethod
     def initialize_config():
         """Initialize the config.ini file"""
@@ -78,8 +82,9 @@ class GeminiChatConfig:
             print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}No Configuration found. Creating configuration file.{Color.ENDC}\n")
             config['DEFAULT'] = {
                 'API': input("Enter the API key: "),
-                'LoadingStyle': input("Enter the loading style (e.g., L1): "),
-                'InstructionFile': input("Enter the path to the instruction file: ")
+                'LoadingStyle': input(f"Enter the loading style (e.g., L1, random, or press Enter for default '{GeminiChatConfig.DEFAULT_LOADING_STYLE}'): ") or GeminiChatConfig.DEFAULT_LOADING_STYLE,
+                'InstructionFile': input(f"Enter the path to the instruction file (or press Enter for default '{GeminiChatConfig.DEFAULT_INSTRUCTION_FILE}'): ") or GeminiChatConfig.DEFAULT_INSTRUCTION_FILE,
+                'ModelName': input(f"Enter the model name (or press Enter for default '{GeminiChatConfig.DEFAULT_MODEL_NAME}'): ") or GeminiChatConfig.DEFAULT_MODEL_NAME
             }
             with open(GeminiChatConfig.CONFIG_FILE, 'w') as configfile:
                 config.write(configfile)
@@ -93,10 +98,11 @@ class GeminiChatConfig:
         """Reconfigure the settings"""
         config = configparser.ConfigParser()
         config['DEFAULT'] = {
-            'API': input("Enter the new API key: "),
-            'LoadingStyle': input("Enter the new loading style (e.g., L1): "),
-            'InstructionFile': input("Enter the new path to the instruction file: ")
-        }
+                'API': input("Enter the API key: "),
+                'LoadingStyle': input(f"Enter the loading style (e.g., L1, random, or press Enter for default '{GeminiChatConfig.DEFAULT_LOADING_STYLE}'): ") or GeminiChatConfig.DEFAULT_LOADING_STYLE,
+                'InstructionFile': input(f"Enter the path to the instruction file (or press Enter for default '{GeminiChatConfig.DEFAULT_INSTRUCTION_FILE}'): ") or GeminiChatConfig.DEFAULT_INSTRUCTION_FILE,
+                'ModelName': input(f"Enter the model name (or press Enter for default '{GeminiChatConfig.DEFAULT_MODEL_NAME}'): ") or GeminiChatConfig.DEFAULT_MODEL_NAME
+            }
         with open(GeminiChatConfig.CONFIG_FILE, 'w') as configfile:
             config.write(configfile)
         print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Configuration updated successfully!{Color.ENDC}\n")
@@ -149,14 +155,18 @@ class GeminiChatConfig:
             {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
             {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
             {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
-            {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"}
+            {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_ONLY_HIGH"}
         ]
 
     @staticmethod
     def chat_instruction(instruction_file):
-        """Read the instruction file"""
-        with open(instruction_file, 'r') as file:
-            return file.read()
+        """Load instructions from the file"""
+        if os.path.exists(instruction_file):
+            with open(instruction_file, 'r') as file:
+                return file.read()
+        else:
+            print(f"{Color.BRIGHTRED}Instruction file not found. Using default instructions.{Color.ENDC}")
+            return "You are Frea (freak robotic entity with amusement), a helpful assistant."
 
     @staticmethod
     def clear_screen():
@@ -169,6 +179,7 @@ class GeminiChat:
         self.api_key = config['DEFAULT']['API']
         self.loading_style = config['DEFAULT']['LoadingStyle']
         self.instruction_file = config['DEFAULT']['InstructionFile']
+        self.model_name = config['DEFAULT']['ModelName']
         GeminiChatConfig.initialize_genai_api(self.api_key)
         readline.parse_and_bind("tab: complete")
         self.conversation_log = []  # Initialize conversation log
@@ -208,7 +219,7 @@ class GeminiChat:
                                     u"\u231a"
                                     u"\ufe0f"
                                     u"\u3030"
-                                   "]+", flags=re.UNIscr)
+                                   "]+", flags=re.UNICODE)
         return emoji_pattern.sub(r'', text)
 
     def to_markdown(text):
@@ -228,9 +239,10 @@ class GeminiChat:
         generation_config = GeminiChatConfig.gemini_generation_config()
         safety_settings = GeminiChatConfig.gemini_safety_settings()
         instruction = GeminiChatConfig.chat_instruction(self.instruction_file)
+        config = GeminiChatConfig.initialize_config()
         model = genai.GenerativeModel(
-            model_name="gemini-1.5-pro-latest",
             generation_config=generation_config,
+            model_name=self.model_name,
             safety_settings=safety_settings
         )
         """initiate chat model history"""
@@ -240,7 +252,7 @@ class GeminiChat:
     def generate_chat(self):
         """model generation response flow"""
         @staticmethod
-        def loading_animation(use='L1'):
+        def loading_animation(use='L2'):
             """loading animation"""
             cursor_hide()
             while not stop_loading:
@@ -254,7 +266,8 @@ class GeminiChat:
                     'L6': ([' ⠁ ', ' ⠂ ', ' ⠄ ', ' ⡀ ', ' ⢀ ', ' ⠠ ', ' ⠐ ', ' ⠈ '], 0.15),
                     'L7': ([' ⣀ ', ' ⣤ ', ' ⣶ ', ' ⣾ ', ' ⣿ ', ' ⣷ ', ' ⣯ ', ' ⣟ '], 0.2),
                     'L8': ([' 🕛 ', ' 🕐 ', ' 🕑 ', ' 🕒 ', ' 🕓 ', ' 🕔 ', ' 🕕 ', ' 🕖 ', ' 🕗 ', ' 🕘 ', ' 🕙 ', ' 🕚 '], 0.15),
-                    'L9': ([' 🔸 ', ' 🔹 ', ' 🔷 ', ' 🔶 '], 0.2)
+                    'L9': ([' 🔸 ', ' 🔹 ', ' 🔷 ', ' 🔶 '], 0.2),
+                    'L10': ([' .    ',' ..   ',' ...  ',' .... '], 0.15)
                 }
                 if use in animations:
                     frames, delay = animations[use]
@@ -311,6 +324,7 @@ class GeminiChat:
                     self.api_key = config['DEFAULT']['API']
                     self.loading_style = config['DEFAULT']['LoadingStyle']
                     self.instruction_file = config['DEFAULT']['InstructionFile']
+                    self.model_name = config['DEFAULT']['ModelName']
                     GeminiChatConfig.initialize_genai_api(self.api_key)
                     chat, instruction = self.initialize_chat()
                     self.conversation_log = []
