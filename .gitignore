@@ -1,8 +1,7 @@
-venv/
+.venv/
 models/
 data/
 .vscode/
-src/*.txt
 src/*.wav
 src/.env
 src/logs/*.*
