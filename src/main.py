@@ -140,7 +140,7 @@ class GeminiChatConfig:
     def gemini_generation_config():
         """Configuration for the Gemini language model"""
         return {
-            'max_output_tokens': 2048,
+            'max_output_tokens': 1024, # max 2048
             'temperature': 0.90,
             'candidate_count': 1,
             'top_k': 35,
