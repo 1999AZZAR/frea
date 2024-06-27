@@ -1,5 +1,29 @@
 # Frea - Freak Robotic Entity with Amusement
 
+## Table Of Content
+
+1. [Overview](#Overview)
+2. [Features](#Features)
+3. [Setup](#Setup)
+    - [Prerequisites](#Prerequisites)
+    - [Installation](#Installation)
+4. [Usage](#Usage)
+    - [Running the Application](#Running-the-Application)
+    - [Special Commands](#Special-Commands)
+    - [Example Interaction](#Example-Interaction)
+    - [Multi-Line Input](#Multi-Line-Input)
+    - [Running Subprocess Commands](#Running-Subprocess-Commands)
+5. [Configuration](#Configuration)
+    - [Initial Configuration](#Initial-Configuration)
+    - [Reconfiguration](#Reconfiguration)
+6. [Developer Notes](#Developer-Notes)
+    - [Code Structure](#Code-Structure)
+    - [Functions](#Functions)
+    - [Safety Settings](#Safety-Settings)
+7. [Flowchart](#Flowchart)
+8. [Demo](#Demo)
+
+
 ## Overview
 
 Frea is an interactive terminal-based chat application powered by Google's generative AI, designed to provide seamless user interactions with advanced natural language processing capabilities. This application offers a variety of features, including multi-line input, special commands, and a customizable loading animation.
@@ -149,8 +173,38 @@ The application includes predefined safety settings to block harmful content cat
 - Dangerous Content
 
 These settings can be adjusted in the `gemini_safety_settings` method.
+## Flowchart
 
-## demo
+```mermaid
+flowchart TD
+    A[Start] --> B{Initialize Configuration}
+    B -->|Initialization| C[Initialize GeminiChat]
+    C --> D{Main Chat Loop}
+    D --> E{Process User Input}
+    E -->|EXIT_COMMAND| F[Exit Application]
+    E -->|RESET_COMMAND| G[Reset Session]
+    E -->|CLEAR_COMMAND| H[Clear Screen]
+    E -->|RECONFIGURE_COMMAND| I[Reconfigure Settings]
+    E -->|PRINT_COMMAND| J[Save Conversation Log]
+    E -->|HELP_COMMAND| K[Display Help]
+    E -->|Default| L{Chatbot Interaction}
+    L --> M[Send Input to Model]
+    M --> N[Print Response]
+    E -->|Multiline Mode| O[Handle Multiline Input]
+    E -->|run| P[Run Subprocess Command]
+    F --> Q[End]
+    G --> Q
+    H --> Q
+    I --> Q
+    J --> Q
+    K --> Q
+    N --> Q
+    O --> Q
+    P --> Q
+    Q --> D
+```
+
+## Demo
 
 [![asciicast](https://asciinema.org/a/663984.svg)](https://asciinema.org/a/663984)
 
