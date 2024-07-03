@@ -3,7 +3,6 @@ import sys
 import configparser
 import google.generativeai as genai
 import subprocess
-import time
 from color import Color
 
 class ChatConfig:
@@ -20,8 +19,7 @@ class ChatConfig:
 
     DEFAULT_LOADING_STYLE = 'L1'
     DEFAULT_INSTRUCTION_FILE = './config/instruction.txt'
-    DEFAULT_GEMINI_MODEL = 'gemini-1.5-pro'
-    DEFAULT_GPT_MODEL = 'gpt-4o'
+    DEFAULT_GEMINI_MODEL = 'models/gemini-1.5-pro'
     DEFAULT_AI_SERVICE = 'gemini'
 
     @staticmethod
@@ -30,21 +28,18 @@ class ChatConfig:
         config = configparser.ConfigParser()
         if not os.path.exists(ChatConfig.CONFIG_FILE):
             print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}No Configuration found Creating configuration file.{Color.ENDC}\n")
-            gemini_api = input("Enter the Gemini API key (or press Enter to skip): ")
-            openai_api = input("Enter the OpenAI API key (or press Enter to skip): ")
+            gemini_api = input("Enter the Gemini API key: ")
 
-            if not gemini_api and not openai_api:
-                print(f"{Color.BRIGHTRED}Error: At least one API key is required.{Color.ENDC}")
+            if not gemini_api:
+                print(f"{Color.BRIGHTRED}Error: Gemini API key is required.{Color.ENDC}")
                 sys.exit(1)
 
             config['DEFAULT'] = {
                 'GeminiAPI': gemini_api,
-                'OpenAIAPI': openai_api,
-                'AIService': input(f"Enter the AI service to use (gemini/openai, press Enter for default'{ChatConfig.DEFAULT_AI_SERVICE}'): ") or ChatConfig.DEFAULT_AI_SERVICE,
+                'AIService': ChatConfig.DEFAULT_AI_SERVICE,
                 'LoadingStyle': input(f"Enter the loading style (e.g., L2, random, or press Enter for default'{ChatConfig.DEFAULT_LOADING_STYLE}'): ") or ChatConfig.DEFAULT_LOADING_STYLE,
-                'InstructionFile': input(f"Enter the path to the instruction file (or press Enter for defaul'{ChatConfig.DEFAULT_INSTRUCTION_FILE}'): ") or ChatConfig.DEFAULT_INSTRUCTION_FILE,
+                'InstructionFile': input(f"Enter the path to the instruction file (or press Enter for default'{ChatConfig.DEFAULT_INSTRUCTION_FILE}'): ") or ChatConfig.DEFAULT_INSTRUCTION_FILE,
                 'GeminiModel': input(f"Enter the Gemini model name (or press Enter for default'{ChatConfig.DEFAULT_GEMINI_MODEL}'): ") or ChatConfig.DEFAULT_GEMINI_MODEL,
-                'GPTModel': input(f"Enter the GPT model name (or press Enter for default'{ChatConfig.DEFAULT_GPT_MODEL}'): ") or ChatConfig.DEFAULT_GPT_MODEL
             }
             with open(ChatConfig.CONFIG_FILE, 'w') as configfile:
                 config.write(configfile)
@@ -57,21 +52,18 @@ class ChatConfig:
     def reconfigure():
         """Reconfigure the settings"""
         config = configparser.ConfigParser()
-        gemini_api = input("Enter the New Gemini API key (or press Enter to skip): ")
-        openai_api = input("Enter the New OpenAI API key (or press Enter to skip): ")
+        gemini_api = input("Enter the New Gemini API key: ")
 
-        if not gemini_api and not openai_api:
-            print(f"{Color.BRIGHTRED}Error: At least one API key is required.{Color.ENDC}")
+        if not gemini_api:
+            print(f"{Color.BRIGHTRED}Error: Gemini API key is required.{Color.ENDC}")
             sys.exit(1)
 
         config['DEFAULT'] = {
             'GeminiAPI': gemini_api,
-            'OpenAIAPI': openai_api,
-            'AIService': input(f"Enter the AI service to use (gemini/openai, press Enter for default'{ChatConfig.DEFAULT_AI_SERVICE}'): ") or ChatConfig.DEFAULT_AI_SERVICE,
+            'AIService': ChatConfig.DEFAULT_AI_SERVICE,
             'LoadingStyle': input(f"Enter the loading style (e.g., L1, random, or press Enter for default'{ChatConfig.DEFAULT_LOADING_STYLE}'): ") or ChatConfig.DEFAULT_LOADING_STYLE,
             'InstructionFile': input(f"Enter the path to the instruction file (or press Enter for default'{ChatConfig.DEFAULT_INSTRUCTION_FILE}'): ") or ChatConfig.DEFAULT_INSTRUCTION_FILE,
             'GeminiModel': input(f"Enter the Gemini model name (or press Enter for default'{ChatConfig.DEFAULT_GEMINI_MODEL}'): ") or ChatConfig.DEFAULT_GEMINI_MODEL,
-            'GPTModel': input(f"Enter the GPT model name (or press Enter for default'{ChatConfig.DEFAULT_GPT_MODEL}'): ") or ChatConfig.DEFAULT_GPT_MODEL
         }
         with open(ChatConfig.CONFIG_FILE, 'w') as configfile:
             config.write(configfile)
@@ -96,7 +88,7 @@ class ChatConfig:
     {Color.BRIGHTGREEN}{ChatConfig.CLEAR_COMMAND}{Color.ENDC} - Clear the terminal screen. Clears all text from the terminal screen.
     {Color.BRIGHTGREEN}{ChatConfig.RESET_COMMAND}{Color.ENDC} - Reset the chat session. Clears the chat history and restarts the chat session.
     {Color.BRIGHTGREEN}{ChatConfig.PRINT_COMMAND}{Color.ENDC} - Save the conversation log to a file. Saves to current chat session to a log file in JSON format.
-    {Color.BRIGHTGREEN}{ChatConfig.MODEL_COMMAND}{Color.ENDC} - Change the AI model. Allows you to switch between different AI models (e.g., Gemini, OpenAI).
+    {Color.BRIGHTGREEN}{ChatConfig.MODEL_COMMAND}{Color.ENDC} - Change the AI model. Allows you to switch between different Gemini models.
     {Color.BRIGHTGREEN}{ChatConfig.RECONFIGURE_COMMAND}{Color.ENDC}   - Reconfigure the settings. Prompts you to re-enter configuration settings such as API keys and model preferences.
     {Color.BRIGHTGREEN}run (command){Color.ENDC} - Run a subprocess command. Executes a shell command in the terminal (e.g., run ls).
     {Color.BRIGHTGREEN}(prompt) -wiki{Color.ENDC} - Get additional info from wikipedia (from the last 3 word of the prompt) to fetch into the model response as the knowladge base (e.g., airplane -wiki).
@@ -104,9 +96,12 @@ class ChatConfig:
         print(f"\n{help_text}")
 
     @staticmethod
-    def initialize_apis(gemini_api_key, openai_api_key):
+    def initialize_apis(gemini_api_key):
         """Initialize the API keys"""
-        genai.configure(api_key=gemini_api_key)
+        if gemini_api_key:
+            genai.configure(api_key=gemini_api_key)
+        else:
+            raise ValueError("Gemini API key is required")
 
     @staticmethod
     def gemini_generation_config():
@@ -144,4 +139,3 @@ class ChatConfig:
     def clear_screen():
         """Clear the terminal screen"""
         subprocess.run('clear', shell=True)
-

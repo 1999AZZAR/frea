@@ -3,10 +3,8 @@ from logging.handlers import RotatingFileHandler
 from color import Color
 from chat_initializer import ChatInitializer
 from chat_config import ChatConfig
-from utils import remove_emojis, run_subprocess, loading_animation, set_stop_loading, combine_responses, cursor_hide, cursor_show
+from utils import remove_emojis, run_subprocess, loading_animation, set_stop_loading, cursor_hide, cursor_show
 import google.generativeai as genai
-import openai
-from openai import OpenAI
 
 # Configure logging with RotatingFileHandler
 log_handler = RotatingFileHandler('./logs/error.log', maxBytes=0.5*1024*1024, backupCount=3)
@@ -19,25 +17,19 @@ class AIChat:
     def __init__(self):
         self.initializer = ChatInitializer()
         self.gemini_api_key = self.initializer.gemini_api_key or ""
-        self.openai_api_key = self.initializer.openai_api_key or ""
         self.ai_service = self._determine_ai_service()
         self.gemini_model = self.initializer.gemini_model
-        self.gpt_model = self.initializer.gpt_model
-        self.langchain_client = self.initializer.langchain_client
         self.chat_history = []  # Unified chat history
         self.loading_style = self.initializer.loading_style
         self.instruction = self.initializer.instruction
-        self.openai_client = self.initializer.openai_client
         self.conversation_log = []
 
     def generate_chat(self):
         """model generation response flow"""
-
         chat = self.initialize_chat()
         if chat is None:
             print(f"{Color.BRIGHTRED}Failed to initialize chat. Exiting...{Color.ENDC}")
             return
-
         user_input = ""
         multiline_mode = False
 
@@ -49,6 +41,7 @@ class AIChat:
                 else:
                     print(f"{Color.BLUE}╭─ 𝔲ser \n╰─❯ {Color.ENDC}", end="")
                 user_input_line = input()
+
                 if user_input_line.endswith("\\"):
                     user_input += user_input_line.rstrip("\\") + "\n"
                     multiline_mode = True
@@ -87,6 +80,17 @@ class AIChat:
                 print(f"{Color.BRIGHTRED}An error occurred. Please check the logs for more details.{Color.ENDC}")
                 break
 
+    def save_config(self):
+        """Save the current configuration to config.ini"""
+        config = configparser.ConfigParser()
+        config.read(ChatConfig.CONFIG_FILE)
+        config['DEFAULT']['AIService'] = self.ai_service
+        config['DEFAULT']['GeminiAPI'] = self.gemini_api_key
+        config['DEFAULT']['GeminiModel'] = self.gemini_model
+        with open(ChatConfig.CONFIG_FILE, 'w') as configfile:
+            config.write(configfile)
+        logging.info("Configuration saved.")
+
     def handle_special_commands(self, user_input):
         """Handle special commands"""
         if user_input.strip().lower() == ChatConfig.EXIT_COMMAND:
@@ -114,8 +118,7 @@ class AIChat:
             self.loading_style = config['DEFAULT']['LoadingStyle']
             self.instruction_file = config['DEFAULT']['InstructionFile']
             self.gemini_model = config['DEFAULT']['GeminiModel']
-            self.gpt_model = config['DEFAULT']['GPTModel']
-            ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
+            ChatConfig.initialize_apis(self.gemini_api_key)
             self.instruction = ChatConfig.chat_instruction(self.instruction_file)
             self.initialize_chat()
             self.conversation_log = []
@@ -137,64 +140,36 @@ class AIChat:
 
     def change_model(self):
         """Change the AI model"""
-        print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.WHITE}Current model: {Color.ENDC}{Color.PASTELPINK}{self.ai_service} - {self.gemini_model if self.ai_service == 'gemini' else self.gpt_model}{Color.ENDC}")
+        print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.WHITE}Current model: {Color.ENDC}{Color.PASTELPINK}{self.ai_service} - {self.gemini_model}{Color.ENDC}")
         change = input(f"{Color.BRIGHTYELLOW}Do you want to change the model? (yes/no): {Color.ENDC}").lower()
         if change == 'yes':
-            print(f"\n{Color.BRIGHTGREEN}Available services:{Color.ENDC}")
-            print(f"{Color.PASTELPINK}1. Google Gemini{Color.ENDC}")
-            print(f"{Color.PASTELPINK}2. OpenAI ChatGPT{Color.ENDC}")
-            service = input(f"{Color.BRIGHTYELLOW}Enter the number of the service you want to use: {Color.ENDC}")
-            if service == '1':
-                self.ai_service = 'gemini'
-                if not self.gemini_api_key:
-                    self.gemini_api_key = input("Please enter your GEMINI_API_KEY: ").strip()
-                    self.initializer.gemini_api_key = self.gemini_api_key
-                    ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
+            self.ai_service = 'gemini'
+            if not self.gemini_api_key:
+                self.gemini_api_key = input("Please enter your GEMINI_API_KEY: ").strip()
+                self.initializer.gemini_api_key = self.gemini_api_key
+                ChatConfig.initialize_apis(self.gemini_api_key)
+            try:
+                gemini_models = self.get_gemini_models()
+            except Exception as e:
+                logging.error(f"Error retrieving Gemini models: {e}")
+                print(f"{Color.BRIGHTRED}Error retrieving Gemini models. Please check your API key and try again.{Color.ENDC}")
+                self.gemini_api_key = input("Please enter your GEMINI_API_KEY: ").strip()
+                self.initializer.gemini_api_key = self.gemini_api_key
+                ChatConfig.initialize_apis(self.gemini_api_key)
+                gemini_models = self.get_gemini_models()
+            if gemini_models:
+                print(f"\n{Color.BRIGHTGREEN}Available Gemini models:{Color.ENDC}")
+                for i, model in enumerate(gemini_models, 1):
+                    print(f"{Color.PASTELPINK}{i}. {model}{Color.ENDC}")
+                model_choice = input(f"{Color.BRIGHTYELLOW}Enter the number of the model you want to use: {Color.ENDC}")
                 try:
-                    gemini_models = self.get_gemini_models()
-                except Exception as e:
-                    logging.error(f"Error retrieving Gemini models: {e}")
-                    print(f"{Color.BRIGHTRED}Error retrieving Gemini models. Please check your API key and try again.{Color.ENDC}")
-                    self.gemini_api_key = input("Please enter your GEMINI_API_KEY: ").strip()
-                    self.initializer.gemini_api_key = self.gemini_api_key
-                    ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
-                    gemini_models = self.get_gemini_models()
-                if gemini_models:
-                    print(f"\n{Color.BRIGHTGREEN}Available Gemini models:{Color.ENDC}")
-                    for i, model in enumerate(gemini_models, 1):
-                        print(f"{Color.PASTELPINK}{i}. {model}{Color.ENDC}")
-                    model_choice = input(f"{Color.BRIGHTYELLOW}Enter the number of the model you want to use: {Color.ENDC}")
-                    try:
-                        self.gemini_model = gemini_models[int(model_choice) - 1]
-                    except (ValueError, IndexError):
-                        print(f"{Color.BRIGHTRED}Invalid choice. Using default model.{Color.ENDC}")
-                        self.gemini_model = ChatConfig.DEFAULT_GEMINI_MODEL
-                else:
-                    print(f"{Color.BRIGHTRED}No Gemini models available. Using default model.{Color.ENDC}")
+                    self.gemini_model = gemini_models[int(model_choice) - 1]
+                except (ValueError, IndexError):
+                    print(f"{Color.BRIGHTRED}Invalid choice. Using default model.{Color.ENDC}")
                     self.gemini_model = ChatConfig.DEFAULT_GEMINI_MODEL
-            elif service == '2':
-                self.ai_service = 'openai'
-                if not self.openai_api_key:
-                    self.openai_api_key = input("Please enter your OPENAI_API_KEY: ").strip()
-                    self.initializer.openai_api_key = self.openai_api_key
-                    ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
-                openai_models = self.get_openai_models()
-                if openai_models:
-                    print(f"\n{Color.BRIGHTGREEN}Available OpenAI models:{Color.ENDC}")
-                    for i, model in enumerate(openai_models, 1):
-                        print(f"{Color.PASTELPINK}{i}. {model}{Color.ENDC}")
-                    model_choice = input(f"{Color.BRIGHTYELLOW}Enter the number of the model you want to use: {Color.ENDC}")
-                    try:
-                        self.gpt_model = openai_models[int(model_choice) - 1]
-                    except (ValueError, IndexError):
-                        print(f"{Color.BRIGHTRED}Invalid choice. Using default model.{Color.ENDC}")
-                        self.gpt_model = ChatConfig.DEFAULT_GPT_MODEL
-                else:
-                    print(f"{Color.BRIGHTRED}No OpenAI models available. Using default model.{Color.ENDC}")
-                    self.gpt_model = ChatConfig.DEFAULT_GPT_MODEL
             else:
-                print(f"{Color.BRIGHTRED}Invalid choice. Keeping the current model.{Color.ENDC}")
-                return False
+                print(f"{Color.BRIGHTRED}No Gemini models available. Using default model.{Color.ENDC}")
+                self.gemini_model = ChatConfig.DEFAULT_GEMINI_MODEL
 
             print(f"{Color.PASTELPINK}Switched to {self.ai_service.capitalize()} service. Reinitializing chat...{Color.ENDC}")
             self.save_config()
@@ -211,22 +186,23 @@ class AIChat:
 
         wiki_success = False
         if user_input.strip().endswith("-wiki"):
-            query = ' '.join(user_input.strip()[:-5].strip().split()[-3:])
+            query = ' '.join(user_input.strip()[:-5].strip().split()[-2:])
             logging.info(f"Querying Wikipedia with: {query}")
             wiki_summary = self.initializer.query_wikipedia(query)
             wiki_success = bool(wiki_summary)
             if wiki_success:
                 logging.info("Wikipedia query successful")
-                user_input += f"\n\nAdditional info from wiki: {wiki_summary}"
+                user_input = user_input[:-5].strip()
+                user_input += f"\n\nAdditional info from wiki (dont forget to add this to your response, and always give me the link): {wiki_summary}"
             else:
                 logging.info("Wikipedia query returned no results")
-                user_input = user_input.strip()[:-5].strip()
+                user_input = user_input[:-5].strip()
 
         response_text = self.send_message_to_ai(chat, user_input)
         sanitized_response = remove_emojis(response_text)
 
         ai_success = bool(response_text)
-        ai_success = bool(response_text)
+        # ai_success = bool(response_text)
         logging.info(f"Wiki Success: {wiki_success}, AI Success: {ai_success}")
         self.chat_history.append({"role": "user", "parts": [user_input]})
         self.chat_history.append({"role": "model", "parts": [sanitized_response]})
@@ -250,40 +226,12 @@ class AIChat:
                 return response
             else:
                 return response.text
-        elif self.ai_service == 'openai':
-            messages = [{"role": "system", "content": self.instruction}]
-            messages.extend([{"role": "user" if msg["role"] == "user" else "assistant", "content": msg["parts"][0]} for msg in self.chat_history])
-            messages.append({"role": "user", "content": user_input})
-            response = self.openai_client.chat.completions.create(
-                model=self.gpt_model,
-                max_tokens=1024,
-                temperature=0.75,
-                top_p=0.65,
-                n=1,
-                stop=[],
-                messages=messages
-            )
-            return response.choices[0].message.content
-        elif self.ai_service == 'langchain':
-            response = chat.send_message(self.instruction + user_input)
-            return response.text
         return None
+
     def format_response_as_markdown(self, response_text):
         """Format the response text using Markdown structure"""
-        # Example formatting, you can adjust as needed
-        response_text = response_text.replace('\n', '\n\n')  # Ensure paragraphs are separated
-        response_text = re.sub(r'(?i)\b(frea)\b', r'**\1**', response_text)  # Bold the word 'frea'
+        response_text = re.sub(r'(?i)\b(frea)\b', r'**\1**', response_text)
         return response_text
-        """Save the current configuration to config.ini"""
-        config = configparser.ConfigParser()
-        config.read(ChatConfig.CONFIG_FILE)
-        config['DEFAULT']['AIService'] = self.ai_service
-        config['DEFAULT']['GeminiAPI'] = self.gemini_api_key
-        config['DEFAULT']['GeminiModel'] = self.gemini_model
-        config['DEFAULT']['OpenAIAPI'] = self.openai_api_key
-        config['DEFAULT']['GPTModel'] = self.gpt_model
-        with open(ChatConfig.CONFIG_FILE, 'w') as configfile:
-            config.write(configfile)
 
     def initialize_chat(self):
         """Initialize the chat session"""
@@ -300,28 +248,20 @@ class AIChat:
         """Retrieve available Gemini models"""
         return self.initializer.get_gemini_models()
 
-    def get_openai_models(self):
-        """Retrieve available OpenAI models"""
-        return self.initializer.get_openai_models()
-
     def _determine_ai_service(self):
         """Determine the AI service to use based on available API keys"""
         if self.initializer.gemini_api_key:
             return 'gemini'
-        elif self.initializer.openai_api_key:
-            return 'openai'
+
         else:
             print(f"{Color.BRIGHTRED}No valid API keys found. Please provide at least one API key.{Color.ENDC}")
-            self.gemini_api_key = input("Please enter your GEMINI_API_KEY (or press Enter to skip): ").strip()
-            self.openai_api_key = input("Please enter your OPENAI_API_KEY (or press Enter to skip): ").strip()
+            self.gemini_api_key = input("Please enter your GEMINI_API_KEY : ").strip()
+            # self.openai_api_key = input("Please enter your OPENAI_API_KEY (or press Enter to skip): ").strip()
             if self.gemini_api_key:
                 self.initializer.gemini_api_key = self.gemini_api_key
-                ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
+                ChatConfig.initialize_apis(self.gemini_api_key)
                 return 'gemini'
-            elif self.openai_api_key:
-                self.initializer.openai_api_key = self.openai_api_key
-                ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
-                return 'openai'
+
             else:
                 raise ValueError("No valid API keys provided. Exiting...")
 

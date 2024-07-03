@@ -75,10 +75,3 @@ def loading_animation(use='L2'):
                 time.sleep(delay)
     cursor_show()
     print("\r" + " " * 20 + "\r", end="")
-
-def combine_responses(ai_response, wiki_summary):
-    """Combine AI response and Wikipedia summary"""
-    if ai_response:
-        return f"{ai_response}\n\nAdditional information from Wikipedia:\n{wiki_summary}"
-    else:
-        return wiki_summary
