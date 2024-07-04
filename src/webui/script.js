@@ -30,7 +30,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const filename = src.split('/').pop();
             const [name, ext] = filename.split('.');
             if (isDark) {
-                img.src = `icon/${name}_inverted.${ext}`;
+                if (!name.endsWith('_inverted')) {
+                    img.src = `icon/${name}_inverted.${ext}`;
+                }
             } else {
                 img.src = `icon/${name.replace('_inverted', '')}.${ext}`;
             }
