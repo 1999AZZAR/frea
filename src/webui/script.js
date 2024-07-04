@@ -22,6 +22,21 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.style.overflow = '';
     }
 
+    // Function to update image sources based on theme
+    function updateImageSources(isDark) {
+        const images = document.querySelectorAll('img');
+        images.forEach(img => {
+            const src = img.src;
+            const filename = src.split('/').pop();
+            const [name, ext] = filename.split('.');
+            if (isDark) {
+                img.src = `icon/${name}_inverted.${ext}`;
+            } else {
+                img.src = `icon/${name.replace('_inverted', '')}.${ext}`;
+            }
+        });
+    }
+
     // Event listener for opening the settings
     settingsButton.addEventListener('click', openSettings);
 
@@ -30,11 +45,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Event listener for changing the theme
     themeSelect.addEventListener('change', (e) => {
-        if (e.target.value === 'dark') {
+        const isDark = e.target.value === 'dark';
+        if (isDark) {
             document.documentElement.classList.add('dark');
         } else {
             document.documentElement.classList.remove('dark');
         }
+        updateImageSources(isDark);
     });
 
     // Close the popup when clicking outside of it
@@ -48,6 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
         document.documentElement.classList.add('dark');
         themeSelect.value = 'dark';
+        updateImageSources(true);
     }
 
     // Function to add a message to the chat
@@ -60,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const avatar = document.createElement('img');
         avatar.classList.add('avatar');
-        avatar.src = 'https://placehold.co/50x50';
+        avatar.src = isUser ? 'icon/user.png' : 'icon/ico.png';
         avatar.alt = isUser ? 'user' : 'bot';
         avatar.setAttribute('aria-hidden', 'true');
 
@@ -74,6 +92,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         mainContent.appendChild(messageDiv);
         mainContent.scrollTop = mainContent.scrollHeight;
+
+        // Update the newly added image source if in dark mode
+        if (document.documentElement.classList.contains('dark')) {
+            updateImageSources(true);
+        }
     }
 
     // Function to clear chat history

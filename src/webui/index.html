@@ -3,35 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChatBot</title>
+    <title>FREA</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/x-icon" href="icon/ico.png">
 </head>
 <body>
     <div id="app">
         <header>
-            <h1>ChatBot</h1>
+            <h1>FREA webui</h1>
             <button id="settingsButton" class="icon-button">
-                <img aria-hidden="true" alt="settings" src="icon/gear.png" width="32" height="32" />
+                <img aria-hidden="true" alt="settings" src="icon/gear.png" />
             </button>
         </header>
         <main>
             <div class="message user-message">
                 <p>Hi there! How can I assist you today?</p>
-                <img aria-hidden="true" alt="user" src="https://placehold.co/50x50" class="avatar" />
+                <img aria-hidden="true" alt="user" src="icon/user.png" class="avatar" />
             </div>
             <div class="message bot-message">
-                <img aria-hidden="true" alt="bot" src="https://placehold.co/50x50" class="avatar" />
+                <img aria-hidden="true" alt="bot" src="icon/ico.png" class="avatar" />
                 <p>Sure! How can I help you today?</p>
             </div>
         </main>
         <footer>
             <input type="text" id="messageInput" placeholder="Type a message..." />
             <label for="fileInput" class="icon-button">
-                <img aria-hidden="true" alt="attach file" src="icon/link.png" width="32" height="32" />
+                <img aria-hidden="true" alt="attach file" src="icon/link.png" />
                 <input type="file" id="fileInput" style="display: none;" />
             </label>
             <button id="sendButton" class="icon-button">
-                <img aria-hidden="true" alt="send" src="icon/send.png" width="32" height="32" />
+                <img aria-hidden="true" alt="send" src="icon/send.png" />
             </button>
         </footer>
     </div>
