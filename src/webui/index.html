@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatBot</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>ChatBot</h1>
+            <button id="settingsButton" class="icon-button">
+                <img aria-hidden="true" alt="settings" src="icon/gear.png" width="32" height="32" />
+            </button>
+        </header>
+        <main>
+            <div class="message user-message">
+                <p>Hi there! How can I assist you today?</p>
+                <img aria-hidden="true" alt="user" src="https://placehold.co/50x50" class="avatar" />
+            </div>
+            <div class="message bot-message">
+                <img aria-hidden="true" alt="bot" src="https://placehold.co/50x50" class="avatar" />
+                <p>Sure! How can I help you today?</p>
+            </div>
+        </main>
+        <footer>
+            <input type="text" id="messageInput" placeholder="Type a message..." />
+            <label for="fileInput" class="icon-button">
+                <img aria-hidden="true" alt="attach file" src="icon/link.png" width="32" height="32" />
+                <input type="file" id="fileInput" style="display: none;" />
+            </label>
+            <button id="sendButton" class="icon-button">
+                <img aria-hidden="true" alt="send" src="icon/send.png" width="32" height="32" />
+            </button>
+        </footer>
+    </div>
+    <div id="settingsPopup" class="hidden">
+        <div class="popup-content">
+            <h2>Settings</h2>
+            <div class="setting-group">
+                <label for="themeSelect">Theme</label>
+                <select id="themeSelect">
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                </select>
+            </div>
+            <button id="closeSettings">Close</button>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
