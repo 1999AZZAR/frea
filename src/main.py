@@ -1,5 +1,7 @@
 import os, subprocess, time, re, readline, termios, tty, sys, threading, configparser, datetime, json
 import google.generativeai as genai
+from flask import Flask, render_template, request, jsonify
+from flask_socketio import SocketIO, emit
 
 class Color:
     """ANSI escape codes for terminal colors"""
@@ -184,6 +186,10 @@ class GeminiChat:
         readline.parse_and_bind("tab: complete")
         self.conversation_log = []  # Initialize conversation log
         self.log_folder = GeminiChatConfig.LOG_FOLDER
+        self.web_mode = False
+        self.app = Flask(__name__, template_folder='webui', static_folder='webui')
+        self.socketio = SocketIO(self.app)
+        self.port = 5000  # Default port
 
     def process_user_input(self):
         """Set delimiters for auto-completion and enable Vi editing mode"""
@@ -249,6 +255,56 @@ class GeminiChat:
         chat = model.start_chat(history=[])
         return chat, instruction
 
+    def toggle_web_mode(self):
+        if self.web_mode:
+            print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Web UI is currently active on port {self.port}.{Color.ENDC}")
+            choice = input(f"{Color.BLUE}Do you want to disable it? (y/n): {Color.ENDC}").lower()
+            if choice == 'y':
+                self.web_mode = False
+                print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Web UI has been disabled.{Color.ENDC}")
+            else:
+                print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Web UI remains active.{Color.ENDC}")
+        else:
+            print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Web UI is currently inactive.{Color.ENDC}")
+            choice = input(f"{Color.BLUE}Do you want to enable it? (y/n): {Color.ENDC}").lower()
+            if choice == 'y':
+                self.web_mode = True
+                self.port = int(input(f"{Color.BLUE}Enter the port number (default 5000): {Color.ENDC}") or 5000)
+                print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Web UI has been enabled on port {self.port}.{Color.ENDC}")
+                self.start_web_server()
+            else:
+                print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Web UI remains inactive.{Color.ENDC}")
+
+    def setup_routes(self):
+        @self.app.route('/')
+        def index():
+            return render_template('index.html')
+
+        @self.socketio.on('user_message')
+        def handle_message(message):
+            chat, instruction = self.initialize_chat()
+            response = chat.send_message(instruction + message)
+            sanitized_response = self.remove_emojis(response.text)
+            sanitized_response = sanitized_response.replace('*', '')
+
+            # Send response to web client
+            emit('bot_response', {'message': sanitized_response})
+
+            # Print response in terminal
+            print(f'{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{sanitized_response}')
+
+            # Log the conversation
+            self.conversation_log.append(f"User: {message}")
+            self.conversation_log.append(f"Model: {sanitized_response}")
+
+    def start_web_server(self):
+        def run_flask():
+            self.socketio.run(self.app, port=self.port)
+
+        thread = threading.Thread(target=run_flask)
+        thread.daemon = True
+        thread.start()
+
     def generate_chat(self):
         """model generation response flow"""
         @staticmethod
@@ -283,12 +339,13 @@ class GeminiChat:
             multiline_mode = False
 
             while True:
-                """multiline automation"""
                 if multiline_mode:
                     print(f"{Color.BLUE}╰─> {Color.ENDC}", end="")
                 else:
                     print(f"{Color.BLUE}╭─ User \n╰─> {Color.ENDC}", end="")
+
                 user_input_line = input()
+
                 if user_input_line.endswith("\\"):
                     user_input += user_input_line.rstrip("\\") + "\n"
                     multiline_mode = True
@@ -296,10 +353,14 @@ class GeminiChat:
                 else:
                     user_input += user_input_line
 
-                """Handle special commands"""
                 if user_input == GeminiChatConfig.EXIT_COMMAND:
                     print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.LIGHTRED}Exiting.... Goodbye!{Color.ENDC}")
                     break
+                elif user_input == "web mode":
+                    self.toggle_web_mode()
+                elif self.web_mode:
+                    # Send user input to web clients
+                    self.socketio.emit('terminal_input', {'message': user_input})
                 elif user_input == GeminiChatConfig.RESET_COMMAND:
                     print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Resetting session...{Color.ENDC}")
                     time.sleep(0.5)
@@ -353,7 +414,7 @@ class GeminiChat:
                     self.run_subprocess(command)
                     user_input = ""
                     multiline_mode = False
-                else:
+                if user_input and user_input != "web mode":
                     """Send user input to the language model and print the response"""
                     stop_loading = False
                     loading_thread = threading.Thread(target=loading_animation, args=(self.loading_style,))
@@ -367,6 +428,10 @@ class GeminiChat:
                     sanitized_response = self.remove_emojis(response.text)
                     sanitized_response = sanitized_response.replace('*', '')
                     print(f'{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{sanitized_response}')
+
+                    # Send response to web clients if web mode is active
+                    if self.web_mode:
+                        self.socketio.emit('bot_response', {'message': sanitized_response})
 
                     """Log the conversation"""
                     self.conversation_log.append(f"User: {user_input}")
@@ -385,4 +450,5 @@ class GeminiChat:
 
 if __name__ == "__main__":
     chat_app = GeminiChat()
+    chat_app.setup_routes()
     chat_app.generate_chat()

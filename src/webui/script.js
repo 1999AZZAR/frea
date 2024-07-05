@@ -31,10 +31,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const [name, ext] = filename.split('.');
             if (isDark) {
                 if (!name.endsWith('_inverted')) {
-                    img.src = `icon/${name}_inverted.${ext}`;
+                    img.src = `webui/icon/${name}_inverted.${ext}`;
                 }
             } else {
-                img.src = `icon/${name.replace('_inverted', '')}.${ext}`;
+                img.src = `webui/icon/${name.replace('_inverted', '')}.${ext}`;
             }
         });
     }
@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const avatar = document.createElement('img');
         avatar.classList.add('avatar');
-        avatar.src = isUser ? 'icon/user.png' : 'icon/ico.png';
+        avatar.src = isUser ? 'webui/icon/user.png' : 'webui/icon/ico.png';
         avatar.alt = isUser ? 'user' : 'bot';
         avatar.setAttribute('aria-hidden', 'true');
 
@@ -115,8 +115,8 @@ document.addEventListener('DOMContentLoaded', () => {
         messageInput.placeholder = "Type a message...";
     }
 
-    // Function to handle sending a message and file
-    function sendMessage() {
+    // Updated function to handle sending a message and file
+    async function sendMessage() {
         const message = messageInput.value.trim();
         if (message || selectedFile) {
             let content = message;
@@ -129,10 +129,25 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 addMessage(content, true);
 
-                // Mirror the user's input as a reply
-                setTimeout(() => {
-                    addMessage(`You said: "${content}"`, false);
-                }, 500);
+                try {
+                    const response = await fetch('/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ message: content }),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+
+                    const data = await response.json();
+                    addMessage(data.response, false);
+                } catch (error) {
+                    console.error('Error:', error);
+                    addMessage('Sorry, there was an error processing your request.', false);
+                }
             }
 
             // Clear inputs after sending
