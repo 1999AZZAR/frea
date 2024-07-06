@@ -37,11 +37,14 @@ Frea is an interactive terminal-based chat application powered by Google's gener
 - **Loading Animations**: Enjoy visually appealing loading animations while waiting for responses.
 - **Safety Settings**: Ensure content safety with predefined thresholds for harmful content categories.
 - **Conversation Log**: Save conversation logs to a file.
+- **Model Switching**: Easily switch between different AI models.
 
 ## Setup
 
 ### Prerequisites
 
+- Openai API key
+- Gemini API key
 - Python 3.8 or later
 - Required Python packages listed in `requirements.txt`
 
@@ -95,6 +98,7 @@ python main.py
 - **print**: Save the conversation log to a file.
 - **reconfigure**: Reconfigure the settings.
 - **help**: Display help information.
+- **model**: Switch between models and services.
 
 ### Example Interaction
 
@@ -177,31 +181,44 @@ These settings can be adjusted in the `gemini_safety_settings` method.
 
 ```mermaid
 flowchart TD
-    A[Start] --> B{Initialize Configuration}
-    B -->|Initialization| C[Initialize GeminiChat]
-    C --> D{Main Chat Loop}
-    D --> E{Process User Input}
-    E -->|EXIT_COMMAND| F[Exit Application]
-    E -->|RESET_COMMAND| G[Reset Session]
-    E -->|CLEAR_COMMAND| H[Clear Screen]
-    E -->|RECONFIGURE_COMMAND| I[Reconfigure Settings]
-    E -->|PRINT_COMMAND| J[Save Conversation Log]
-    E -->|HELP_COMMAND| K[Display Help]
-    E -->|Default| L{Chatbot Interaction}
-    L --> M[Send Input to Model]
-    M --> N[Print Response]
-    E -->|Multiline Mode| O[Handle Multiline Input]
-    E -->|run| P[Run Subprocess Command]
-    F --> Q[End]
-    G --> Q
-    H --> Q
-    I --> Q
-    J --> Q
-    K --> Q
-    N --> Q
-    O --> Q
-    P --> Q
-    Q --> D
+    A[Start] --> B[Initialize AIChat Class]
+    B --> C{User Input?}
+    C -- "Help Command" --> D[Display Help Information]
+    C -- "Exit Command" --> E[Exit Application]
+    C -- "Clear Command" --> F[Clear Terminal Screen]
+    C -- "Reset Command" --> G[Reset Chat Session]
+    C -- "Print Command" --> H[Save Conversation Log to File]
+    C -- "Model Command" --> I[Change AI Model]
+    C -- "Reconfigure Command" --> J[Reconfigure Settings]
+    C -- "Run Command" --> K[Run Subprocess Command]
+    C -- "Other Input" --> L[Process Input with AI Model]
+
+    L --> M{API Key Initialized?}
+    M -- "Yes" --> N[Generate Response with Gemini]
+    M -- "No" --> O[Generate Response with OpenAI GPT]
+
+    N --> P[Sanitize Response]
+    O --> P
+    P --> Q[Print Response]
+    Q --> R[Log Conversation]
+    Q --> C
+
+    E --> S[Goodbye Message]
+    S --> T[End]
+
+    subgraph Error Handling
+        P --> U{Error Occurred?}
+        U -- "Yes" --> V[Display Error Message]
+        U -- "No" --> W[Continue]
+    end
+
+    W --> Q
+
+    subgraph Generate Response
+        L --> X[Add User Input to Chat History]
+        X --> Y[Determine AI Model to Use]
+        Y --> M
+    end
 ```
 
 ## Demo
