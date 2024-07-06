@@ -1,6 +1,7 @@
 import os, subprocess, time, re, readline, termios, tty, sys, threading, configparser, datetime, json
 import google.generativeai as genai
-from openai import OpenAI
+from flask import Flask, render_template, request, jsonify
+from flask_socketio import SocketIO, emit
 
 class Color:
     """ANSI escape codes for terminal colors"""
@@ -60,44 +61,38 @@ def cursor_show():
     sys.stdout.write("\033[?25h")
     sys.stdout.flush()
 
-class ChatConfig:
-    """Special commands and configuration for chat"""
+class GeminiChatConfig:
+    """Special commands for chat"""
     EXIT_COMMAND        = 'exit'
     CLEAR_COMMAND       = 'clear'
     RESET_COMMAND       = 'reset'
     PRINT_COMMAND       = 'print'
-    MODEL_COMMAND       = 'model'
     RECONFIGURE_COMMAND = 'reconfigure'
     HELP_COMMAND        = 'help'
     CONFIG_FILE         = 'config.ini'
     LOG_FOLDER          = 'logs'
 
     DEFAULT_LOADING_STYLE = 'L2'
-    DEFAULT_INSTRUCTION_FILE = './general.txt'
-    DEFAULT_GEMINI_MODEL = 'gemini-1.5-pro'
-    DEFAULT_GPT_MODEL = 'gpt-4o'
-    DEFAULT_AI_SERVICE = 'gemini'
+    DEFAULT_INSTRUCTION_FILE = './instructions/general.txt'
+    DEFAULT_MODEL_NAME = 'gemini-1.5-pro'
 
     @staticmethod
     def initialize_config():
         """Initialize the config.ini file"""
         config = configparser.ConfigParser()
-        if not os.path.exists(ChatConfig.CONFIG_FILE):
+        if not os.path.exists(GeminiChatConfig.CONFIG_FILE):
             print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}No Configuration found. Creating configuration file.{Color.ENDC}\n")
             config['DEFAULT'] = {
-                'GeminiAPI': input("Enter the Gemini API key: "),
-                'OpenAIAPI': input("Enter the OpenAI API key: "),
-                'AIService': input(f"Enter the AI service to use (gemini/openai, press Enter for default '{ChatConfig.DEFAULT_AI_SERVICE}'): ") or ChatConfig.DEFAULT_AI_SERVICE,
-                'LoadingStyle': input(f"Enter the loading style (e.g., L1, random, or press Enter for default '{ChatConfig.DEFAULT_LOADING_STYLE}'): ") or ChatConfig.DEFAULT_LOADING_STYLE,
-                'InstructionFile': input(f"Enter the path to the instruction file (or press Enter for default '{ChatConfig.DEFAULT_INSTRUCTION_FILE}'): ") or ChatConfig.DEFAULT_INSTRUCTION_FILE,
-                'GeminiModel': input(f"Enter the Gemini model name (or press Enter for default '{ChatConfig.DEFAULT_GEMINI_MODEL}'): ") or ChatConfig.DEFAULT_GEMINI_MODEL,
-                'GPTModel': input(f"Enter the GPT model name (or press Enter for default '{ChatConfig.DEFAULT_GPT_MODEL}'): ") or ChatConfig.DEFAULT_GPT_MODEL
+                'API': input("Enter the API key: "),
+                'LoadingStyle': input(f"Enter the loading style (e.g., L1, random, or press Enter for default '{GeminiChatConfig.DEFAULT_LOADING_STYLE}'): ") or GeminiChatConfig.DEFAULT_LOADING_STYLE,
+                'InstructionFile': input(f"Enter the path to the instruction file (or press Enter for default '{GeminiChatConfig.DEFAULT_INSTRUCTION_FILE}'): ") or GeminiChatConfig.DEFAULT_INSTRUCTION_FILE,
+                'ModelName': input(f"Enter the model name (or press Enter for default '{GeminiChatConfig.DEFAULT_MODEL_NAME}'): ") or GeminiChatConfig.DEFAULT_MODEL_NAME
             }
-            with open(ChatConfig.CONFIG_FILE, 'w') as configfile:
+            with open(GeminiChatConfig.CONFIG_FILE, 'w') as configfile:
                 config.write(configfile)
-            print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Configuration saved successfully!{Color.ENDC}\n")
+                print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Configuration saved successfully!{Color.ENDC}\n")
         else:
-            config.read(ChatConfig.CONFIG_FILE)
+            config.read(GeminiChatConfig.CONFIG_FILE)
         return config
 
     @staticmethod
@@ -105,15 +100,12 @@ class ChatConfig:
         """Reconfigure the settings"""
         config = configparser.ConfigParser()
         config['DEFAULT'] = {
-            'GeminiAPI': input("Enter the Gemini API key: "),
-            'OpenAIAPI': input("Enter the OpenAI API key: "),
-            'AIService': input(f"Enter the AI service to use (gemini/openai, press Enter for default '{ChatConfig.DEFAULT_AI_SERVICE}'): ") or ChatConfig.DEFAULT_AI_SERVICE,
-            'LoadingStyle': input(f"Enter the loading style (e.g., L1, random, or press Enter for default '{ChatConfig.DEFAULT_LOADING_STYLE}'): ") or ChatConfig.DEFAULT_LOADING_STYLE,
-            'InstructionFile': input(f"Enter the path to the instruction file (or press Enter for default '{ChatConfig.DEFAULT_INSTRUCTION_FILE}'): ") or ChatConfig.DEFAULT_INSTRUCTION_FILE,
-            'GeminiModel': input(f"Enter the Gemini model name (or press Enter for default '{ChatConfig.DEFAULT_GEMINI_MODEL}'): ") or ChatConfig.DEFAULT_GEMINI_MODEL,
-            'GPTModel': input(f"Enter the GPT model name (or press Enter for default '{ChatConfig.DEFAULT_GPT_MODEL}'): ") or ChatConfig.DEFAULT_GPT_MODEL
-        }
-        with open(ChatConfig.CONFIG_FILE, 'w') as configfile:
+                'API': input("Enter the API key: "),
+                'LoadingStyle': input(f"Enter the loading style (e.g., L1, random, or press Enter for default '{GeminiChatConfig.DEFAULT_LOADING_STYLE}'): ") or GeminiChatConfig.DEFAULT_LOADING_STYLE,
+                'InstructionFile': input(f"Enter the path to the instruction file (or press Enter for default '{GeminiChatConfig.DEFAULT_INSTRUCTION_FILE}'): ") or GeminiChatConfig.DEFAULT_INSTRUCTION_FILE,
+                'ModelName': input(f"Enter the model name (or press Enter for default '{GeminiChatConfig.DEFAULT_MODEL_NAME}'): ") or GeminiChatConfig.DEFAULT_MODEL_NAME
+            }
+        with open(GeminiChatConfig.CONFIG_FILE, 'w') as configfile:
             config.write(configfile)
         print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Configuration updated successfully!{Color.ENDC}\n")
         return config
@@ -131,28 +123,27 @@ class ChatConfig:
     {Color.BRIGHTPURPLE}▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒ ▒▓████████▓▒ ▒▓█▓▒  ▒▓█▓▒{Color.ENDC}
     {Color.RED}Freak        Robotic      Entity with  Amusement{Color.ENDC}\n
     {Color.BRIGHTCYAN}Command List:{Color.ENDC}
-    {Color.BRIGHTGREEN}{ChatConfig.HELP_COMMAND}{Color.ENDC}  - Display this help information.
-    {Color.BRIGHTGREEN}{ChatConfig.EXIT_COMMAND}{Color.ENDC}  - Exit the application.
-    {Color.BRIGHTGREEN}{ChatConfig.CLEAR_COMMAND}{Color.ENDC} - Clear the terminal screen.
-    {Color.BRIGHTGREEN}{ChatConfig.RESET_COMMAND}{Color.ENDC} - Reset the chat session.
-    {Color.BRIGHTGREEN}{ChatConfig.PRINT_COMMAND}{Color.ENDC} - Save the conversation log to a file.
-    {Color.BRIGHTGREEN}{ChatConfig.MODEL_COMMAND}{Color.ENDC} - Change the ai model.
-    {Color.BRIGHTGREEN}{ChatConfig.RECONFIGURE_COMMAND}{Color.ENDC}   - Reconfigure the settings.
+    {Color.BRIGHTGREEN}{GeminiChatConfig.HELP_COMMAND}{Color.ENDC}  - Display this help information.
+    {Color.BRIGHTGREEN}{GeminiChatConfig.EXIT_COMMAND}{Color.ENDC}  - Exit the application.
+    {Color.BRIGHTGREEN}{GeminiChatConfig.CLEAR_COMMAND}{Color.ENDC} - Clear the terminal screen.
+    {Color.BRIGHTGREEN}{GeminiChatConfig.RESET_COMMAND}{Color.ENDC} - Reset the chat session.
+    {Color.BRIGHTGREEN}{GeminiChatConfig.PRINT_COMMAND}{Color.ENDC} - Save the conversation log to a file.
+    {Color.BRIGHTGREEN}{GeminiChatConfig.RECONFIGURE_COMMAND}{Color.ENDC}   - Reconfigure the settings.
     {Color.BRIGHTGREEN}run (command){Color.ENDC} - run subprocess command eg run ls.
+    {Color.BRIGHTGREEN}web mode{Color.ENDC} - enable/desable the web ui mode.
         """
         print(f"\n{help_text}")
 
     @staticmethod
-    def initialize_apis(gemini_api_key, openai_api_key):
-        """Initialize the API keys"""
-        genai.configure(api_key=gemini_api_key)
-        # openai.api_key = openai_api_key
+    def initialize_genai_api(api_key):
+        """Load API key from config"""
+        genai.configure(api_key=api_key)
 
     @staticmethod
     def gemini_generation_config():
         """Configuration for the Gemini language model"""
         return {
-            'max_output_tokens': 1024,
+            'max_output_tokens': 1024, # max 2048
             'temperature': 0.90,
             'candidate_count': 1,
             'top_k': 35,
@@ -162,7 +153,7 @@ class ChatConfig:
 
     @staticmethod
     def gemini_safety_settings():
-        """Safety settings for the Gemini model"""
+        """Safety settings for the model"""
         return [
             {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
             {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
@@ -185,23 +176,21 @@ class ChatConfig:
         """Clear the terminal screen"""
         subprocess.run('clear', shell=True)
 
-class AIChat:
+class GeminiChat:
     def __init__(self):
-        config = ChatConfig.initialize_config()
-        self.gemini_api_key = config['DEFAULT']['GeminiAPI']
-        self.openai_api_key = config['DEFAULT']['OpenAIAPI']
-        self.ai_service = config['DEFAULT']['AIService']
+        config = GeminiChatConfig.initialize_config()
+        self.api_key = config['DEFAULT']['API']
         self.loading_style = config['DEFAULT']['LoadingStyle']
         self.instruction_file = config['DEFAULT']['InstructionFile']
-        self.gemini_model = config['DEFAULT']['GeminiModel']
-        self.gpt_model = config['DEFAULT']['GPTModel']
-        ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
-        self.openai_client = OpenAI(api_key=self.openai_api_key)
+        self.model_name = config['DEFAULT']['ModelName']
+        GeminiChatConfig.initialize_genai_api(self.api_key)
         readline.parse_and_bind("tab: complete")
-        self.conversation_log = []
-        self.log_folder = ChatConfig.LOG_FOLDER
-        self.chat_history = []  # Unified chat history
-        self.instruction = ChatConfig.chat_instruction(self.instruction_file)
+        self.conversation_log = []  # Initialize conversation log
+        self.log_folder = GeminiChatConfig.LOG_FOLDER
+        self.web_mode = False
+        self.app = Flask(__name__, template_folder='webui', static_folder='webui')
+        self.socketio = SocketIO(self.app)
+        self.port = 5000  # Default port
 
     def process_user_input(self):
         """Set delimiters for auto-completion and enable Vi editing mode"""
@@ -240,6 +229,10 @@ class AIChat:
                                    "]+", flags=re.UNICODE)
         return emoji_pattern.sub(r'', text)
 
+    def to_markdown(text):
+        text = text.replace('•', '  *')
+        return Markdown(textwrap.indent(text, '> ', predicate=lambda _: True))
+
     def run_subprocess(self, command):
         """Run a subprocess command"""
         try:
@@ -250,83 +243,68 @@ class AIChat:
 
     def initialize_chat(self):
         """Initialize the chat session"""
-        if self.ai_service == 'gemini':
-            generation_config = ChatConfig.gemini_generation_config()
-            safety_settings = ChatConfig.gemini_safety_settings()
-            model = genai.GenerativeModel(
-                generation_config=generation_config,
-                model_name=self.gemini_model,
-                safety_settings=safety_settings
-            )
-            chat = model.start_chat(history=self.chat_history)
-        else:  # OpenAI GPT
-            chat = None  # We don't need to initialize a chat object for OpenAI
-        return chat
+        generation_config = GeminiChatConfig.gemini_generation_config()
+        safety_settings = GeminiChatConfig.gemini_safety_settings()
+        instruction = GeminiChatConfig.chat_instruction(self.instruction_file)
+        config = GeminiChatConfig.initialize_config()
+        model = genai.GenerativeModel(
+            generation_config=generation_config,
+            model_name=self.model_name,
+            safety_settings=safety_settings
+        )
+        """initiate chat model history"""
+        chat = model.start_chat(history=[])
+        return chat, instruction
 
-
-    def get_gemini_models(self):
-        """Retrieve available Gemini models"""
-        try:
-            models = genai.list_models()
-            return [model.name for model in models if 'generateContent' in model.supported_generation_methods]
-        except Exception as e:
-            print(f"{Color.BRIGHTRED}Error retrieving Gemini models: {e}{Color.ENDC}")
-            return []
-
-    def get_openai_models(self):
-        """Retrieve available OpenAI models"""
-        try:
-            models = self.openai_client.models.list()
-            return [model.id for model in models.data if model.id.startswith("gpt")]
-        except Exception as e:
-            print(f"{Color.BRIGHTRED}Error retrieving OpenAI models: {e}{Color.ENDC}")
-            return []
-
-    def change_model(self):
-        """Change the AI model"""
-        print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.WHITE}Current model: {Color.ENDC}{Color.PASTELPINK}{self.ai_service} - {self.gemini_model if self.ai_service == 'gemini' else self.gpt_model}{Color.ENDC}")
-        change = input(f"{Color.BRIGHTYELLOW}Do you want to change the model? (yes/no): {Color.ENDC}").lower()
-        if change == 'yes':
-            print(f"\n{Color.BRIGHTYELLOW}Available services:{Color.ENDC}")
-            print(f"{Color.PASTELPINK}1. Gemini{Color.ENDC}")
-            print(f"{Color.PASTELPINK}2. OpenAI GPT{Color.ENDC}")
-            service = input(f"{Color.BRIGHTYELLOW}Enter the number of the service you want to use: {Color.ENDC}")
-            if service == '1':
-                self.ai_service = 'gemini'
-                gemini_models = self.get_gemini_models()
-                if gemini_models:
-                    print(f"\n{Color.BRIGHTYELLOW}Available Gemini models:{Color.ENDC}")
-                    for i, model in enumerate(gemini_models, 1):
-                        print(f"{Color.PASTELPINK}{i}. {model}{Color.ENDC}")
-                    model_choice = input(f"{Color.BRIGHTYELLOW}Enter the number of the model you want to use: {Color.ENDC}")
-                    try:
-                        self.gemini_model = gemini_models[int(model_choice) - 1]
-                    except (ValueError, IndexError):
-                        print(f"{Color.BRIGHTRED}Invalid choice. Using default model.{Color.ENDC}")
-                        self.gemini_model = ChatConfig.DEFAULT_GEMINI_MODEL
-                else:
-                    print(f"{Color.BRIGHTRED}No Gemini models available. Using default model.{Color.ENDC}")
-                    self.gemini_model = ChatConfig.DEFAULT_GEMINI_MODEL
-            elif service == '2':
-                self.ai_service = 'openai'
-                openai_models = self.get_openai_models()
-                if openai_models:
-                    print(f"\n{Color.BRIGHTYELLOW}Available OpenAI models:{Color.ENDC}")
-                    for i, model in enumerate(openai_models, 1):
-                        print(f"{Color.PASTELPINK}{i}. {model}{Color.ENDC}")
-                    model_choice = input(f"{Color.BRIGHTYELLOW}Enter the number of the model you want to use: {Color.ENDC}")
-                    try:
-                        self.gpt_model = openai_models[int(model_choice) - 1]
-                    except (ValueError, IndexError):
-                        print(f"{Color.BRIGHTRED}Invalid choice. Using default model.{Color.ENDC}")
-                        self.gpt_model = ChatConfig.DEFAULT_GPT_MODEL
-                else:
-                    print(f"{Color.BRIGHTRED}No OpenAI models available. Using default model.{Color.ENDC}")
-                    self.gpt_model = ChatConfig.DEFAULT_GPT_MODEL
+    def toggle_web_mode(self):
+        if self.web_mode:
+            print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Web UI is currently active on port {self.port}.{Color.ENDC}")
+            choice = input(f"{Color.BLUE}Do you want to disable it? (y/n): {Color.ENDC}").lower()
+            if choice == 'y':
+                self.web_mode = False
+                print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Web UI has been disabled.{Color.ENDC}")
             else:
-                print(f"{Color.BRIGHTRED}Invalid choice. Keeping the current model.{Color.ENDC}")
-            return True
-        return False
+                print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Web UI remains active.{Color.ENDC}")
+        else:
+            print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Web UI is currently inactive.{Color.ENDC}")
+            choice = input(f"{Color.BLUE}Do you want to enable it? (y/n): {Color.ENDC}").lower()
+            if choice == 'y':
+                self.web_mode = True
+                self.port = int(input(f"{Color.BLUE}Enter the port number (default 5000): {Color.ENDC}") or 5000)
+                print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Web UI has been enabled on port {self.port}.{Color.ENDC}")
+                self.start_web_server()
+            else:
+                print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Web UI remains inactive.{Color.ENDC}")
+
+    def setup_routes(self):
+        @self.app.route('/')
+        def index():
+            return render_template('index.html')
+
+        @self.socketio.on('user_message')
+        def handle_message(message):
+            chat, instruction = self.initialize_chat()
+            response = chat.send_message(instruction + message)
+            sanitized_response = self.remove_emojis(response.text)
+            sanitized_response = sanitized_response.replace('*', '')
+
+            # Send response to web client
+            emit('bot_response', {'message': sanitized_response})
+
+            # Print response in terminal
+            print(f'{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{sanitized_response}')
+
+            # Log the conversation
+            self.conversation_log.append(f"User: {message}")
+            self.conversation_log.append(f"Model: {sanitized_response}")
+
+    def start_web_server(self):
+        def run_flask():
+            self.socketio.run(self.app, port=self.port)
+
+        thread = threading.Thread(target=run_flask)
+        thread.daemon = True
+        thread.start()
 
     def generate_chat(self):
         """model generation response flow"""
@@ -357,17 +335,18 @@ class AIChat:
             print("\r" + " " * 20 + "\r", end="")
 
         try:
-            chat = self.initialize_chat()
+            chat, instruction = self.initialize_chat()
             user_input = ""
             multiline_mode = False
 
             while True:
-                """multiline automation"""
                 if multiline_mode:
                     print(f"{Color.BLUE}╰─> {Color.ENDC}", end="")
                 else:
                     print(f"{Color.BLUE}╭─ User \n╰─> {Color.ENDC}", end="")
+
                 user_input_line = input()
+
                 if user_input_line.endswith("\\"):
                     user_input += user_input_line.rstrip("\\") + "\n"
                     multiline_mode = True
@@ -375,59 +354,52 @@ class AIChat:
                 else:
                     user_input += user_input_line
 
-                """Handle special commands"""
-                if user_input == ChatConfig.EXIT_COMMAND:
-                    print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.LIGHTRED}Exiting.... Goodbye!{Color.ENDC}\n")
+                if user_input == GeminiChatConfig.EXIT_COMMAND:
+                    print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.LIGHTRED}Exiting.... Goodbye!{Color.ENDC}")
                     break
-                elif user_input == ChatConfig.RESET_COMMAND:
-                    print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Resetting session...{Color.ENDC}\n")
+                elif user_input == "web mode":
+                    self.toggle_web_mode()
+                elif self.web_mode:
+                    # Send user input to web clients
+                    self.socketio.emit('terminal_input', {'message': user_input})
+                elif user_input == GeminiChatConfig.RESET_COMMAND:
+                    print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Resetting session...{Color.ENDC}")
                     time.sleep(0.5)
-                    ChatConfig.clear_screen()
-                    self.chat_history = []
-                    chat = self.initialize_chat()
+                    GeminiChatConfig.clear_screen()
+                    chat, instruction = self.initialize_chat()
                     self.conversation_log = []
                     user_input = ""
                     multiline_mode = False
                     continue
-                elif user_input == ChatConfig.CLEAR_COMMAND:
-                    ChatConfig.clear_screen()
+                elif user_input == GeminiChatConfig.CLEAR_COMMAND:
+                    GeminiChatConfig.clear_screen()
                     user_input = ""
                     multiline_mode = False
                     continue
-                elif user_input == ChatConfig.HELP_COMMAND:
-                    ChatConfig.display_help()
+                elif user_input == GeminiChatConfig.HELP_COMMAND:
+                    GeminiChatConfig.display_help()
                     user_input = ""
                     multiline_mode = False
                     continue
-                elif user_input == ChatConfig.RECONFIGURE_COMMAND:
-                    config = ChatConfig.reconfigure()
-                    self.gemini_api_key = config['DEFAULT']['GeminiAPI']
-                    self.openai_api_key = config['DEFAULT']['OpenAIAPI']
-                    self.ai_service = config['DEFAULT']['AIService']
+                elif user_input == GeminiChatConfig.RECONFIGURE_COMMAND:
+                    config = GeminiChatConfig.reconfigure()
+                    self.api_key = config['DEFAULT']['API']
                     self.loading_style = config['DEFAULT']['LoadingStyle']
                     self.instruction_file = config['DEFAULT']['InstructionFile']
-                    self.gemini_model = config['DEFAULT']['GeminiModel']
-                    self.gpt_model = config['DEFAULT']['GPTModel']
-                    ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
-                    self.instruction = ChatConfig.chat_instruction(self.instruction_file)
-                    chat = self.initialize_chat()
+                    self.model_name = config['DEFAULT']['ModelName']
+                    GeminiChatConfig.initialize_genai_api(self.api_key)
+                    chat, instruction = self.initialize_chat()
                     self.conversation_log = []
                     user_input = ""
                     multiline_mode = False
                     continue
-                elif user_input == ChatConfig.PRINT_COMMAND:
+                elif user_input == GeminiChatConfig.PRINT_COMMAND:
                     """Save conversation log to a JSON file"""
                     current_datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-                    log_file_name = f"{ChatConfig.LOG_FOLDER}/log_{current_datetime}.json"
+                    log_file_name = f"{GeminiChatConfig.LOG_FOLDER}/log_{current_datetime}.json"
                     with open(log_file_name, "w") as file:
                         json.dump(self.conversation_log, file, indent=4)
                     print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Conversation log saved to {log_file_name}{Color.ENDC}\n")
-                    user_input = ""
-                    multiline_mode = False
-                    continue
-                elif user_input == ChatConfig.MODEL_COMMAND:
-                    if self.change_model():
-                        chat = self.initialize_chat()
                     user_input = ""
                     multiline_mode = False
                     continue
@@ -439,38 +411,28 @@ class AIChat:
                 elif user_input.startswith("run "):
                     """Run a subprocess command"""
                     command = user_input[4:].strip()
-                    print(f'{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.LIGHTRED}Executing User Command{Color.ENDC}\n')
+                    print(f'{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.LIGHTRED}Executing User Command{Color.ENDC}')
                     self.run_subprocess(command)
                     user_input = ""
                     multiline_mode = False
-                else:
+                if user_input and user_input != "web mode":
                     """Send user input to the language model and print the response"""
                     stop_loading = False
                     loading_thread = threading.Thread(target=loading_animation, args=(self.loading_style,))
                     loading_thread.start()
 
-                    if self.ai_service == 'gemini':
-                        response = chat.send_message(self.instruction + user_input)
-                        sanitized_response = self.remove_emojis(response.text)
-                        self.chat_history.append({"role": "user", "parts": [user_input]})
-                        self.chat_history.append({"role": "model", "parts": [sanitized_response]})
-                    else:  # OpenAI GPT
-                        messages = [{"role": "system", "content": self.instruction}]
-                        messages.extend([{"role": "user" if msg["role"] == "user" else "assistant", "content": msg["parts"][0]} for msg in self.chat_history])
-                        messages.append({"role": "user", "content": user_input})
-                        response = self.openai_client.chat.completions.create(
-                            model=self.gpt_model,
-                            messages=messages
-                        )
-                        sanitized_response = self.remove_emojis(response.choices[0].message.content)
-                        self.chat_history.append({"role": "user", "parts": [user_input]})
-                        self.chat_history.append({"role": "model", "parts": [sanitized_response]})
+                    response = chat.send_message(instruction + user_input)
 
                     stop_loading = True
                     loading_thread.join()
 
+                    sanitized_response = self.remove_emojis(response.text)
                     sanitized_response = sanitized_response.replace('*', '')
-                    print(f'{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{sanitized_response}\n')
+                    print(f'{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{sanitized_response}')
+
+                    # Send response to web clients if web mode is active
+                    if self.web_mode:
+                        self.socketio.emit('bot_response', {'message': sanitized_response})
 
                     """Log the conversation"""
                     self.conversation_log.append(f"User: {user_input}")
@@ -480,13 +442,14 @@ class AIChat:
                 multiline_mode = False
 
         except KeyboardInterrupt:
-            print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.LIGHTRED}Exiting.... Goodbye!{Color.ENDC}\n")
+            print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.LIGHTRED}Exiting.... Goodbye!{Color.ENDC}")
 
         except Exception as e:
             """error handling"""
-            print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.BRIGHTRED}An unexpected Error occurred: {e}{Color.ENDC}\n")
+            print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.BRIGHTRED}An unexpected Error occurred: {e}{Color.ENDC}")
             stop_loading = True
 
 if __name__ == "__main__":
-    chat_app = AIChat()
+    chat_app = GeminiChat()
+    chat_app.setup_routes()
     chat_app.generate_chat()
