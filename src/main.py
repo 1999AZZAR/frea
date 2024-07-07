@@ -83,7 +83,7 @@ class ChatConfig:
         """Initialize the config.ini file"""
         config = configparser.ConfigParser()
         if not os.path.exists(ChatConfig.CONFIG_FILE):
-            print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}No Configuration found. Creating configuration file.{Color.ENDC}\n")
+            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}No Configuration found. Creating configuration file.{Color.ENDC}\n")
             config['DEFAULT'] = {
                 'GeminiAPI': input("Enter the Gemini API key: "),
                 'OpenAIAPI': input("Enter the OpenAI API key: "),
@@ -95,7 +95,7 @@ class ChatConfig:
             }
             with open(ChatConfig.CONFIG_FILE, 'w') as configfile:
                 config.write(configfile)
-            print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Configuration saved successfully!{Color.ENDC}\n")
+            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}Configuration saved successfully!{Color.ENDC}\n")
         else:
             config.read(ChatConfig.CONFIG_FILE)
         return config
@@ -115,7 +115,7 @@ class ChatConfig:
         }
         with open(ChatConfig.CONFIG_FILE, 'w') as configfile:
             config.write(configfile)
-        print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Configuration updated successfully!{Color.ENDC}\n")
+        print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}Configuration updated successfully!{Color.ENDC}\n")
         return config
 
     @staticmethod
@@ -129,7 +129,7 @@ class ChatConfig:
     {Color.BRIGHTPURPLE}▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒ ▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒{Color.ENDC}
     {Color.BRIGHTPURPLE}▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒ ▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒{Color.ENDC}
     {Color.BRIGHTPURPLE}▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒ ▒▓████████▓▒ ▒▓█▓▒  ▒▓█▓▒{Color.ENDC}
-    {Color.RED}Freak        Robotic      Entity with  Amusement{Color.ENDC}\n
+    {Color.RED}𝑓reak        Robotic      Entity with  Amusement{Color.ENDC}\n
     {Color.BRIGHTCYAN}Command List:{Color.ENDC}
     {Color.BRIGHTGREEN}{ChatConfig.HELP_COMMAND}{Color.ENDC}  - Display this help information.
     {Color.BRIGHTGREEN}{ChatConfig.EXIT_COMMAND}{Color.ENDC}  - Exit the application.
@@ -178,7 +178,7 @@ class ChatConfig:
                 return file.read()
         else:
             print(f"{Color.BRIGHTRED}Instruction file not found. Using default instructions.{Color.ENDC}")
-            return "You are Frea (freak robotic entity with amusement), a helpful assistant."
+            return "You are 𝑓rea (𝑓reak robotic entity with amusement), a helpful assistant."
 
     @staticmethod
     def clear_screen():
@@ -210,7 +210,7 @@ class AIChat:
 
         try:
             """Prompt for user input"""
-            question = input(f"{Color.BLUE}╭─ User \n╰─> {Color.ENDC}", end="")
+            question = input(f"{Color.BLUE}╭─ 𝔲ser \n╰─❯ {Color.ENDC}", end="")
         except KeyboardInterrupt:
             print("\nKeyboard Interrupt")
             return ""
@@ -246,7 +246,7 @@ class AIChat:
             subprocess.run(command, shell=True)
         except Exception as e:
             """error handling"""
-            print(f"{Color.BRIGHTYELLOW}\n╰─> {Color.ENDC}{Color.BRIGHTRED}subprocess execution error: {e}{Color.ENDC}")
+            print(f"{Color.BRIGHTYELLOW}\n╰─❯ {Color.ENDC}{Color.BRIGHTRED}subprocess execution error: {e}{Color.ENDC}")
 
     def initialize_chat(self):
         """Initialize the chat session"""
@@ -284,10 +284,10 @@ class AIChat:
 
     def change_model(self):
         """Change the AI model"""
-        print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.WHITE}Current model: {Color.ENDC}{Color.PASTELPINK}{self.ai_service} - {self.gemini_model if self.ai_service == 'gemini' else self.gpt_model}{Color.ENDC}")
+        print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.WHITE}Current model: {Color.ENDC}{Color.PASTELPINK}{self.ai_service} - {self.gemini_model if self.ai_service == 'gemini' else self.gpt_model}{Color.ENDC}")
         change = input(f"{Color.BRIGHTYELLOW}Do you want to change the model? (yes/no): {Color.ENDC}").lower()
         if change == 'yes':
-            print(f"\n{Color.BRIGHTYELLOW}Available services:{Color.ENDC}")
+            print(f"\n{Color.BRIGHTGREEN}Available services:{Color.ENDC}")
             print(f"{Color.PASTELPINK}1. Gemini{Color.ENDC}")
             print(f"{Color.PASTELPINK}2. OpenAI GPT{Color.ENDC}")
             service = input(f"{Color.BRIGHTYELLOW}Enter the number of the service you want to use: {Color.ENDC}")
@@ -295,7 +295,7 @@ class AIChat:
                 self.ai_service = 'gemini'
                 gemini_models = self.get_gemini_models()
                 if gemini_models:
-                    print(f"\n{Color.BRIGHTYELLOW}Available Gemini models:{Color.ENDC}")
+                    print(f"\n{Color.BRIGHTGREEN}Available Gemini models:{Color.ENDC}")
                     for i, model in enumerate(gemini_models, 1):
                         print(f"{Color.PASTELPINK}{i}. {model}{Color.ENDC}")
                     model_choice = input(f"{Color.BRIGHTYELLOW}Enter the number of the model you want to use: {Color.ENDC}")
@@ -311,7 +311,7 @@ class AIChat:
                 self.ai_service = 'openai'
                 openai_models = self.get_openai_models()
                 if openai_models:
-                    print(f"\n{Color.BRIGHTYELLOW}Available OpenAI models:{Color.ENDC}")
+                    print(f"\n{Color.BRIGHTGREEN}Available OpenAI models:{Color.ENDC}")
                     for i, model in enumerate(openai_models, 1):
                         print(f"{Color.PASTELPINK}{i}. {model}{Color.ENDC}")
                     model_choice = input(f"{Color.BRIGHTYELLOW}Enter the number of the model you want to use: {Color.ENDC}")
@@ -364,9 +364,9 @@ class AIChat:
             while True:
                 """multiline automation"""
                 if multiline_mode:
-                    print(f"{Color.BLUE}╰─> {Color.ENDC}", end="")
+                    print(f"{Color.BLUE}╰─❯ {Color.ENDC}", end="")
                 else:
-                    print(f"{Color.BLUE}╭─ User \n╰─> {Color.ENDC}", end="")
+                    print(f"{Color.BLUE}╭─ 𝔲ser \n╰─❯ {Color.ENDC}", end="")
                 user_input_line = input()
                 if user_input_line.endswith("\\"):
                     user_input += user_input_line.rstrip("\\") + "\n"
@@ -377,10 +377,10 @@ class AIChat:
 
                 """Handle special commands"""
                 if user_input == ChatConfig.EXIT_COMMAND:
-                    print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.LIGHTRED}Exiting.... Goodbye!{Color.ENDC}\n")
+                    print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.LIGHTRED}Exiting.... Goodbye!{Color.ENDC}\n")
                     break
                 elif user_input == ChatConfig.RESET_COMMAND:
-                    print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Resetting session...{Color.ENDC}\n")
+                    print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}Resetting session...{Color.ENDC}\n")
                     time.sleep(0.5)
                     ChatConfig.clear_screen()
                     self.chat_history = []
@@ -421,25 +421,26 @@ class AIChat:
                     log_file_name = f"{ChatConfig.LOG_FOLDER}/log_{current_datetime}.json"
                     with open(log_file_name, "w") as file:
                         json.dump(self.conversation_log, file, indent=4)
-                    print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.PASTELPINK}Conversation log saved to {log_file_name}{Color.ENDC}\n")
+                    print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}Conversation log saved to {log_file_name}{Color.ENDC}\n")
                     user_input = ""
                     multiline_mode = False
                     continue
                 elif user_input == ChatConfig.MODEL_COMMAND:
                     if self.change_model():
                         chat = self.initialize_chat()
+                    print(f'\n')
                     user_input = ""
                     multiline_mode = False
                     continue
                 elif not user_input:
-                    print(f'\n{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.LIGHTRED}Please enter your command/prompt{Color.ENDC}\n')
+                    print(f'\n{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.LIGHTRED}Please enter your command/prompt{Color.ENDC}\n')
                     user_input = ""
                     multiline_mode = False
                     continue
                 elif user_input.startswith("run "):
                     """Run a subprocess command"""
                     command = user_input[4:].strip()
-                    print(f'{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.LIGHTRED}Executing User Command{Color.ENDC}\n')
+                    print(f'{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.LIGHTRED}Executing 𝔲ser Command{Color.ENDC}\n')
                     self.run_subprocess(command)
                     user_input = ""
                     multiline_mode = False
@@ -470,7 +471,7 @@ class AIChat:
                     loading_thread.join()
 
                     sanitized_response = sanitized_response.replace('*', '')
-                    print(f'{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{sanitized_response}\n')
+                    print(f'{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{sanitized_response}\n')
 
                     """Log the conversation"""
                     self.conversation_log.append(f"User: {user_input}")
@@ -480,11 +481,11 @@ class AIChat:
                 multiline_mode = False
 
         except KeyboardInterrupt:
-            print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.LIGHTRED}Exiting.... Goodbye!{Color.ENDC}\n")
+            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.LIGHTRED}Exiting.... Goodbye!{Color.ENDC}\n")
 
         except Exception as e:
             """error handling"""
-            print(f"{Color.BRIGHTYELLOW}\n╭─ Frea \n╰─> {Color.ENDC}{Color.BRIGHTRED}An unexpected Error occurred: {e}{Color.ENDC}\n")
+            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.BRIGHTRED}An unexpected Error occurred: {e}{Color.ENDC}\n")
             stop_loading = True
 
 if __name__ == "__main__":
