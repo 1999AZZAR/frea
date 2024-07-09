@@ -73,7 +73,7 @@ class ChatConfig:
     LOG_FOLDER          = 'logs'
 
     DEFAULT_LOADING_STYLE = 'L2'
-    DEFAULT_INSTRUCTION_FILE = './general.txt'
+    DEFAULT_INSTRUCTION_FILE = './instructions/general.txt'
     DEFAULT_GEMINI_MODEL = 'gemini-1.5-pro'
     DEFAULT_GPT_MODEL = 'gpt-4o'
     DEFAULT_AI_SERVICE = 'gemini'
@@ -84,9 +84,16 @@ class ChatConfig:
         config = configparser.ConfigParser()
         if not os.path.exists(ChatConfig.CONFIG_FILE):
             print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}No Configuration found. Creating configuration file.{Color.ENDC}\n")
+            gemini_api = input("Enter the Gemini API key (or press Enter to skip): ")
+            openai_api = input("Enter the OpenAI API key (or press Enter to skip): ")
+
+            if not gemini_api and not openai_api:
+                print(f"{Color.BRIGHTRED}Error: At least one API key is required.{Color.ENDC}")
+                sys.exit(1)
+
             config['DEFAULT'] = {
-                'GeminiAPI': input("Enter the Gemini API key: "),
-                'OpenAIAPI': input("Enter the OpenAI API key: "),
+                'GeminiAPI': gemini_api,
+                'OpenAIAPI': openai_api,
                 'AIService': input(f"Enter the AI service to use (gemini/openai, press Enter for default '{ChatConfig.DEFAULT_AI_SERVICE}'): ") or ChatConfig.DEFAULT_AI_SERVICE,
                 'LoadingStyle': input(f"Enter the loading style (e.g., L1, random, or press Enter for default '{ChatConfig.DEFAULT_LOADING_STYLE}'): ") or ChatConfig.DEFAULT_LOADING_STYLE,
                 'InstructionFile': input(f"Enter the path to the instruction file (or press Enter for default '{ChatConfig.DEFAULT_INSTRUCTION_FILE}'): ") or ChatConfig.DEFAULT_INSTRUCTION_FILE,
@@ -104,9 +111,16 @@ class ChatConfig:
     def reconfigure():
         """Reconfigure the settings"""
         config = configparser.ConfigParser()
+        gemini_api = input("Enter the New Gemini API key (or press Enter to skip): ")
+        openai_api = input("Enter the New OpenAI API key (or press Enter to skip): ")
+
+        if not gemini_api and not openai_api:
+            print(f"{Color.BRIGHTRED}Error: At least one API key is required.{Color.ENDC}")
+            sys.exit(1)
+
         config['DEFAULT'] = {
-            'GeminiAPI': input("Enter the Gemini API key: "),
-            'OpenAIAPI': input("Enter the OpenAI API key: "),
+            'GeminiAPI': gemini_api,
+            'OpenAIAPI': openai_api,
             'AIService': input(f"Enter the AI service to use (gemini/openai, press Enter for default '{ChatConfig.DEFAULT_AI_SERVICE}'): ") or ChatConfig.DEFAULT_AI_SERVICE,
             'LoadingStyle': input(f"Enter the loading style (e.g., L1, random, or press Enter for default '{ChatConfig.DEFAULT_LOADING_STYLE}'): ") or ChatConfig.DEFAULT_LOADING_STYLE,
             'InstructionFile': input(f"Enter the path to the instruction file (or press Enter for default '{ChatConfig.DEFAULT_INSTRUCTION_FILE}'): ") or ChatConfig.DEFAULT_INSTRUCTION_FILE,
@@ -129,7 +143,7 @@ class ChatConfig:
     {Color.BRIGHTPURPLE}▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒ ▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒{Color.ENDC}
     {Color.BRIGHTPURPLE}▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒ ▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒{Color.ENDC}
     {Color.BRIGHTPURPLE}▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒ ▒▓████████▓▒ ▒▓█▓▒  ▒▓█▓▒{Color.ENDC}
-    {Color.RED}𝑓reak        Robotic      Entity with  Amusement{Color.ENDC}\n
+    {Color.RED}freak        Robotic      Entity with  Amusement{Color.ENDC}\n
     {Color.BRIGHTCYAN}Command List:{Color.ENDC}
     {Color.BRIGHTGREEN}{ChatConfig.HELP_COMMAND}{Color.ENDC}  - Display this help information.
     {Color.BRIGHTGREEN}{ChatConfig.EXIT_COMMAND}{Color.ENDC}  - Exit the application.
@@ -153,7 +167,7 @@ class ChatConfig:
         """Configuration for the Gemini language model"""
         return {
             'max_output_tokens': 1024,
-            'temperature': 0.90,
+            'temperature': 0.75,
             'candidate_count': 1,
             'top_k': 35,
             'top_p': 0.65,
@@ -178,7 +192,7 @@ class ChatConfig:
                 return file.read()
         else:
             print(f"{Color.BRIGHTRED}Instruction file not found. Using default instructions.{Color.ENDC}")
-            return "You are 𝑓rea (𝑓reak robotic entity with amusement), a helpful assistant."
+            return "You are frea (freak robotic entity with amusement), a helpful assistant."
 
     @staticmethod
     def clear_screen():
@@ -288,8 +302,8 @@ class AIChat:
         change = input(f"{Color.BRIGHTYELLOW}Do you want to change the model? (yes/no): {Color.ENDC}").lower()
         if change == 'yes':
             print(f"\n{Color.BRIGHTGREEN}Available services:{Color.ENDC}")
-            print(f"{Color.PASTELPINK}1. Gemini{Color.ENDC}")
-            print(f"{Color.PASTELPINK}2. OpenAI GPT{Color.ENDC}")
+            print(f"{Color.PASTELPINK}1. Google Gemini{Color.ENDC}")
+            print(f"{Color.PASTELPINK}2. OpenAI ChatGPT{Color.ENDC}")
             service = input(f"{Color.BRIGHTYELLOW}Enter the number of the service you want to use: {Color.ENDC}")
             if service == '1':
                 self.ai_service = 'gemini'
@@ -325,6 +339,19 @@ class AIChat:
                     self.gpt_model = ChatConfig.DEFAULT_GPT_MODEL
             else:
                 print(f"{Color.BRIGHTRED}Invalid choice. Keeping the current model.{Color.ENDC}")
+                return False
+
+            # Update config file
+            config = configparser.ConfigParser()
+            config.read(ChatConfig.CONFIG_FILE)
+            config['DEFAULT']['AIService'] = self.ai_service
+            config['DEFAULT']['GeminiAPI'] = self.gemini_api_key
+            config['DEFAULT']['GeminiModel'] = self.gemini_model
+            config['DEFAULT']['OpenAIAPI'] = self.openai_api_key
+            config['DEFAULT']['GPTModel'] = self.gpt_model
+            with open(ChatConfig.CONFIG_FILE, 'w') as configfile:
+                config.write(configfile)
+            print(f"{Color.PASTELPINK}Switched to {self.ai_service.capitalize()} service.{Color.ENDC}")
             return True
         return False
 
@@ -461,6 +488,11 @@ class AIChat:
                         messages.append({"role": "user", "content": user_input})
                         response = self.openai_client.chat.completions.create(
                             model=self.gpt_model,
+                            max_tokens=1024,
+                            temperature=0.75,
+                            top_p=0.65,
+                            n=1,
+                            stop=[],
                             messages=messages
                         )
                         sanitized_response = self.remove_emojis(response.choices[0].message.content)
@@ -471,6 +503,7 @@ class AIChat:
                     loading_thread.join()
 
                     sanitized_response = sanitized_response.replace('*', '')
+                    sanitized_response = re.sub(r'(?i)frea', '𝑓rea', sanitized_response)
                     print(f'{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{sanitized_response}\n')
 
                     """Log the conversation"""
