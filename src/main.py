@@ -260,7 +260,21 @@ class AIChat:
 
     def initialize_chat(self):
         """Initialize the chat session"""
+        self.chat_history = self.chat_history or []  # Ensure chat_history is not None
         if self.ai_service == 'gemini':
+            generation_config = ChatConfig.gemini_generation_config()
+            safety_settings = ChatConfig.gemini_safety_settings()
+            model = genai.GenerativeModel(
+                generation_config=generation_config,
+                model_name=self.gemini_model,
+                safety_settings=safety_settings
+            )
+            chat = model.start_chat(history=self.chat_history)
+        else:  # OpenAI GPT
+            messages = [{"role": "system", "content": self.instruction}]
+            messages.extend([{"role": "user" if msg["role"] == "user" else "assistant", "content": msg["parts"][0]} for msg in self.chat_history])
+            chat = None  # We don't need to initialize a chat object for OpenAI
+        return chat
             generation_config = ChatConfig.gemini_generation_config()
             safety_settings = ChatConfig.gemini_safety_settings()
             model = genai.GenerativeModel(
@@ -347,7 +361,9 @@ class AIChat:
             config['DEFAULT']['GPTModel'] = self.gpt_model
             with open(ChatConfig.CONFIG_FILE, 'w') as configfile:
                 config.write(configfile)
-            print(f"{Color.PASTELPINK}Switched to {self.ai_service.capitalize()} service.{Color.ENDC}")
+            print(f"{Color.PASTELPINK}Switched to {self.ai_service.capitalize()} service. Reinitializing chat...{Color.ENDC}")
+            self.chat_history = self.chat_history or []  # Ensure chat_history is not None
+            self.initialize_chat()
             return True
         return False
 
