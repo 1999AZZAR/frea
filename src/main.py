@@ -72,7 +72,7 @@ class ChatConfig:
     CONFIG_FILE         = 'config.ini'
     LOG_FOLDER          = 'logs'
 
-    DEFAULT_LOADING_STYLE = 'L2'
+    DEFAULT_LOADING_STYLE = 'L1'
     DEFAULT_INSTRUCTION_FILE = './instructions/general.txt'
     DEFAULT_GEMINI_MODEL = 'gemini-1.5-pro'
     DEFAULT_GPT_MODEL = 'gpt-4o'
@@ -95,7 +95,7 @@ class ChatConfig:
                 'GeminiAPI': gemini_api,
                 'OpenAIAPI': openai_api,
                 'AIService': input(f"Enter the AI service to use (gemini/openai, press Enter for default '{ChatConfig.DEFAULT_AI_SERVICE}'): ") or ChatConfig.DEFAULT_AI_SERVICE,
-                'LoadingStyle': input(f"Enter the loading style (e.g., L1, random, or press Enter for default '{ChatConfig.DEFAULT_LOADING_STYLE}'): ") or ChatConfig.DEFAULT_LOADING_STYLE,
+                'LoadingStyle': input(f"Enter the loading style (e.g., L2, random, or press Enter for default '{ChatConfig.DEFAULT_LOADING_STYLE}'): ") or ChatConfig.DEFAULT_LOADING_STYLE,
                 'InstructionFile': input(f"Enter the path to the instruction file (or press Enter for default '{ChatConfig.DEFAULT_INSTRUCTION_FILE}'): ") or ChatConfig.DEFAULT_INSTRUCTION_FILE,
                 'GeminiModel': input(f"Enter the Gemini model name (or press Enter for default '{ChatConfig.DEFAULT_GEMINI_MODEL}'): ") or ChatConfig.DEFAULT_GEMINI_MODEL,
                 'GPTModel': input(f"Enter the GPT model name (or press Enter for default '{ChatConfig.DEFAULT_GPT_MODEL}'): ") or ChatConfig.DEFAULT_GPT_MODEL
