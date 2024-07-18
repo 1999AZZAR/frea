@@ -1,6 +1,7 @@
 import os, subprocess, time, re, readline, termios, tty, sys, threading, configparser, datetime, json, logging
 from terminal_utils import cursor_hide, cursor_show
 import google.generativeai as genai
+import openai
 from openai import OpenAI
 
 class Color:
