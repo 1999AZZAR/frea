@@ -534,9 +534,19 @@ class AIChat:
         except subprocess.CalledProcessError as spe:
             logging.error("Subprocess Error: %s", spe)
             print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.BRIGHTRED}Subprocess error: {spe}{Color.ENDC}\n")
-        except Exception as e:
-            logging.error("Unexpected Error: %s", e)
-            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.BRIGHTRED}An unexpected error occurred: {e}{Color.ENDC}\n")
+        except genai.exceptions.InvalidAPIKeyError as e:
+            logging.error("Invalid Gemini API Key: %s", e)
+            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.BRIGHTRED}Invalid Gemini API Key. Please enter a new key.{Color.ENDC}\n")
+            self.gemini_api_key = input("Enter the new Gemini API key: ")
+            ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
+            chat = self.initialize_chat()
+        except openai.error.AuthenticationError as e:
+            logging.error("Invalid OpenAI API Key: %s", e)
+            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.BRIGHTRED}Invalid OpenAI API Key. Please enter a new key.{Color.ENDC}\n")
+            self.openai_api_key = input("Enter the new OpenAI API key: ")
+            ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
+            self.openai_client = OpenAI(api_key=self.openai_api_key)
+            chat = self.initialize_chat()
         finally:
             stop_loading = True
 
