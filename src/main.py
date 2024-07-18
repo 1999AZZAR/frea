@@ -1,4 +1,5 @@
 import os, subprocess, time, re, readline, termios, tty, sys, threading, configparser, datetime, json
+from terminal_utils import cursor_hide, cursor_show
 import google.generativeai as genai
 from openai import OpenAI
 
@@ -50,15 +51,6 @@ class Color:
     # End of color
     ENDC        = '\033[0m'     # End of color
 
-def cursor_hide():
-    """Hide the cursor in the terminal"""
-    sys.stdout.write("\033[?25l")
-    sys.stdout.flush()
-
-def cursor_show():
-    """Show the cursor in the terminal"""
-    sys.stdout.write("\033[?25h")
-    sys.stdout.flush()
 
 class ChatConfig:
     """Special commands and configuration for chat"""
