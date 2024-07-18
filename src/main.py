@@ -516,7 +516,7 @@ class AIChat:
         except ValueError as ve:
             logging.error("ValueError: %s", ve)
             print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.BRIGHTRED}A value error occurred: {ve}{Color.ENDC}\n")
-        except configparser.Error:
+        except configparser.Error as ce:
             logging.error("ConfigParser Error: %s", ce)
             print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.BRIGHTRED}Configuration error occurred. Entering configuration mode...{Color.ENDC}\n")
             config = ChatConfig.reconfigure()
