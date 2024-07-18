@@ -1,4 +1,4 @@
-import os, subprocess, time, re, readline, termios, tty, sys, threading, configparser, datetime, json
+import os, subprocess, time, re, readline, termios, tty, sys, threading, configparser, datetime, json, logging
 from terminal_utils import cursor_hide, cursor_show
 import google.generativeai as genai
 from openai import OpenAI
@@ -190,6 +190,9 @@ class ChatConfig:
     def clear_screen():
         """Clear the terminal screen"""
         subprocess.run('clear', shell=True)
+
+# Configure logging
+logging.basicConfig(filename='error.log', level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class AIChat:
     def __init__(self):
@@ -508,9 +511,21 @@ class AIChat:
         except KeyboardInterrupt:
             print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.LIGHTRED}Exiting.... Goodbye!{Color.ENDC}\n")
 
+        except KeyboardInterrupt:
+            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.LIGHTRED}Exiting.... Goodbye!{Color.ENDC}\n")
+        except ValueError as ve:
+            logging.error("ValueError: %s", ve)
+            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.BRIGHTRED}A value error occurred: {ve}{Color.ENDC}\n")
+        except configparser.Error as ce:
+            logging.error("ConfigParser Error: %s", ce)
+            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.BRIGHTRED}Configuration error: {ce}{Color.ENDC}\n")
+        except subprocess.CalledProcessError as spe:
+            logging.error("Subprocess Error: %s", spe)
+            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.BRIGHTRED}Subprocess error: {spe}{Color.ENDC}\n")
         except Exception as e:
-            """error handling"""
-            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.BRIGHTRED}An unexpected Error occurred: {e}{Color.ENDC}\n")
+            logging.error("Unexpected Error: %s", e)
+            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.BRIGHTRED}An unexpected error occurred: {e}{Color.ENDC}\n")
+        finally:
             stop_loading = True
 
 if __name__ == "__main__":
