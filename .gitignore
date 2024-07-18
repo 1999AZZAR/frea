@@ -6,3 +6,4 @@ src/*.wav
 src/.env
 src/logs/*.*
 src/*.ini
+.aider*
