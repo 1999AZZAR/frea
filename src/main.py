@@ -1,4 +1,5 @@
 import os, readline, termios, tty, sys, threading, configparser, datetime, json, logging, time, re
+from logging.handlers import RotatingFileHandler
 from color import Color
 from chat_config import ChatConfig
 from terminal_utils import cursor_hide, cursor_show
@@ -10,8 +11,12 @@ from openai import OpenAI
 
 
 
-# Configure logging
-logging.basicConfig(filename='error.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+# Configure logging with RotatingFileHandler
+log_handler = RotatingFileHandler('error.log', maxBytes=5*1024*1024, backupCount=3)  # 5 MB per file, 3 backups
+log_handler.setLevel(logging.DEBUG)
+log_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+logging.getLogger().addHandler(log_handler)
+logging.getLogger().setLevel(logging.DEBUG)
 
 class AIChat:
     def __init__(self):
