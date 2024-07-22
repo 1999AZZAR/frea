@@ -285,11 +285,6 @@ class AIChat:
                     sanitized_response = sanitized_response.replace('*', '')
                     sanitized_response = re.sub(r'(?i)frea', '𝑓rea', sanitized_response)
                     print(f'{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{sanitized_response}\n')
-                    loading_thread.join()
-
-                    sanitized_response = sanitized_response.replace('*', '')
-                    sanitized_response = re.sub(r'(?i)frea', '𝑓rea', sanitized_response)
-                    print(f'{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{sanitized_response}\n')
 
                     """Log the conversation"""
                     self.conversation_log.append(f"User: {user_input}")
