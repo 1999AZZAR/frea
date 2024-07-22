@@ -64,6 +64,10 @@ class AIChat:
         logging.debug(f"OpenAI Model: {self.gpt_model}")
         logging.debug(f"Instruction: {self.instruction}")
         try:
+            logging.debug(f"AI Service: {self.ai_service}")
+            logging.debug(f"Gemini Model: {self.gemini_model}")
+            logging.debug(f"OpenAI Model: {self.gpt_model}")
+            logging.debug(f"Instruction: {self.instruction}")
             if self.ai_service == 'gemini':
                 logging.debug("Using Gemini service")
                 generation_config = ChatConfig.gemini_generation_config()
