@@ -347,6 +347,49 @@ class AIChat:
 
 
 
+        except KeyboardInterrupt:
+            print("\nKeyboard Interrupt")
+            return ""
+        except ValueError as ve:
+            logging.error("ValueError: %s", ve)
+            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.BRIGHTRED}A value error occurred: {ve}{Color.ENDC}\n")
+        except configparser.Error as ce:
+            logging.error("ConfigParser Error: %s", ce)
+            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.BRIGHTRED}Configuration error occurred. Entering configuration mode...{Color.ENDC}\n")
+            config = ChatConfig.reconfigure()
+            self.gemini_api_key = config['DEFAULT']['GeminiAPI']
+            self.openai_api_key = config['DEFAULT']['OpenAIAPI']
+            self.ai_service = config['DEFAULT']['AIService']
+            self.loading_style = config['DEFAULT']['LoadingStyle']
+            self.instruction_file = config['DEFAULT']['InstructionFile']
+            self.gemini_model = config['DEFAULT']['GeminiModel']
+            self.gpt_model = config['DEFAULT']['GPTModel']
+            ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
+            self.instruction = ChatConfig.chat_instruction(self.instruction_file)
+            chat = self.initialize_chat()
+            self.conversation_log = []
+        except subprocess.CalledProcessError as spe:
+            logging.error("Subprocess Error: %s", spe)
+            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.BRIGHTRED}Subprocess error: {spe}{Color.ENDC}\n")
+        except genai.exceptions.InvalidAPIKeyError as e:
+            logging.error("Invalid Gemini API Key: %s", e)
+            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.BRIGHTRED}Invalid Gemini API Key. Please enter a new key.{Color.ENDC}\n")
+            self.gemini_api_key = input("Enter the new Gemini API key: ")
+            ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
+            chat = self.initialize_chat()
+        except openai.error.AuthenticationError as e:
+            logging.error("Invalid OpenAI API Key: %s", e)
+            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.BRIGHTRED}Invalid OpenAI API Key. Please enter a new key.{Color.ENDC}\n")
+            self.openai_api_key = input("Enter the new OpenAI API key: ")
+            ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
+            self.openai_client = OpenAI(api_key=self.openai_api_key)
+            chat = self.initialize_chat()
+        finally:
+            stop_loading = True
+            loading_thread.join()
+            cursor_show()
+            print("\r" + " " * 20 + "\r", end="")
+
 if __name__ == "__main__":
     chat_app = AIChat()
     chat_app.generate_chat()
