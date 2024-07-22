@@ -2,7 +2,7 @@ import os, readline, termios, tty, sys, threading, configparser, datetime, json,
 from color import Color
 from chat_config import ChatConfig
 from terminal_utils import cursor_hide, cursor_show
-from utils import remove_emojis, run_subprocess, loading_animation, remove_emojis
+from utils import remove_emojis, run_subprocess, loading_animation
 import google.generativeai as genai
 import openai
 from openai import OpenAI
