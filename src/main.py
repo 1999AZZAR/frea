@@ -251,6 +251,7 @@ class AIChat:
                     multiline_mode = False
                 else:
                     """Send user input to the language model and print the response"""
+                    global stop_loading
                     stop_loading = False
                     loading_thread = threading.Thread(target=loading_animation, args=(self.loading_style,))
                     loading_thread.start()
