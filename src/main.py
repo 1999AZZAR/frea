@@ -235,10 +235,10 @@ class AIChat:
                     user_input += user_input_line
 
                 """Handle special commands"""
-                if user_input == ChatConfig.EXIT_COMMAND:
+                if user_input.strip().lower() == ChatConfig.EXIT_COMMAND:
                     print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.LIGHTRED}Exiting.... Goodbye!{Color.ENDC}\n")
                     break
-                elif user_input == ChatConfig.RESET_COMMAND:
+                elif user_input.strip().lower() == ChatConfig.RESET_COMMAND:
                     print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}Resetting session...{Color.ENDC}\n")
                     time.sleep(0.5)
                     ChatConfig.clear_screen()
@@ -248,17 +248,17 @@ class AIChat:
                     user_input = ""
                     multiline_mode = False
                     continue
-                elif user_input == ChatConfig.CLEAR_COMMAND:
+                elif user_input.strip().lower() == ChatConfig.CLEAR_COMMAND:
                     ChatConfig.clear_screen()
                     user_input = ""
                     multiline_mode = False
                     continue
-                elif user_input == ChatConfig.HELP_COMMAND:
+                elif user_input.strip().lower() == ChatConfig.HELP_COMMAND:
                     ChatConfig.display_help()
                     user_input = ""
                     multiline_mode = False
                     continue
-                elif user_input == ChatConfig.RECONFIGURE_COMMAND:
+                elif user_input.strip().lower() == ChatConfig.RECONFIGURE_COMMAND:
                     config = ChatConfig.reconfigure()
                     self.gemini_api_key = config['DEFAULT']['GeminiAPI']
                     self.openai_api_key = config['DEFAULT']['OpenAIAPI']
@@ -274,7 +274,7 @@ class AIChat:
                     user_input = ""
                     multiline_mode = False
                     continue
-                elif user_input == ChatConfig.PRINT_COMMAND:
+                elif user_input.strip().lower() == ChatConfig.PRINT_COMMAND:
                     """Save conversation log to a JSON file"""
                     current_datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                     log_file_name = f"{ChatConfig.LOG_FOLDER}/log_{current_datetime}.json"
@@ -284,7 +284,7 @@ class AIChat:
                     user_input = ""
                     multiline_mode = False
                     continue
-                elif user_input == ChatConfig.MODEL_COMMAND:
+                elif user_input.strip().lower() == ChatConfig.MODEL_COMMAND:
                     if self.change_model():
                         chat = self.initialize_chat()
                     print(f'\n')
@@ -296,7 +296,7 @@ class AIChat:
                     user_input = ""
                     multiline_mode = False
                     continue
-                elif user_input.startswith("run "):
+                elif user_input.strip().lower().startswith("run "):
                     """Run a subprocess command"""
                     command = user_input[4:].strip()
                     print(f'{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.LIGHTRED}Executing 𝔲ser Command{Color.ENDC}\n')
