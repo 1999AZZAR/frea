@@ -1,6 +1,7 @@
 import os
 import sys
 import configparser
+import google.generativeai as genai
 import subprocess
 import time
 from color import Color
