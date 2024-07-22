@@ -1,5 +1,7 @@
-import os, subprocess, time, re, readline, termios, tty, sys, threading, configparser, datetime, json
+import os, subprocess, time, re, readline, termios, tty, sys, threading, configparser, datetime, json, logging
+from terminal_utils import cursor_hide, cursor_show
 import google.generativeai as genai
+import openai
 from openai import OpenAI
 
 class Color:
@@ -50,15 +52,6 @@ class Color:
     # End of color
     ENDC        = '\033[0m'     # End of color
 
-def cursor_hide():
-    """Hide the cursor in the terminal"""
-    sys.stdout.write("\033[?25l")
-    sys.stdout.flush()
-
-def cursor_show():
-    """Show the cursor in the terminal"""
-    sys.stdout.write("\033[?25h")
-    sys.stdout.flush()
 
 class ChatConfig:
     """Special commands and configuration for chat"""
@@ -145,14 +138,14 @@ class ChatConfig:
     {Color.BRIGHTPURPLE}▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒ ▒▓████████▓▒ ▒▓█▓▒  ▒▓█▓▒{Color.ENDC}
     {Color.RED}freak        Robotic      Entity with  Amusement{Color.ENDC}\n
     {Color.BRIGHTCYAN}Command List:{Color.ENDC}
-    {Color.BRIGHTGREEN}{ChatConfig.HELP_COMMAND}{Color.ENDC}  - Display this help information.
-    {Color.BRIGHTGREEN}{ChatConfig.EXIT_COMMAND}{Color.ENDC}  - Exit the application.
-    {Color.BRIGHTGREEN}{ChatConfig.CLEAR_COMMAND}{Color.ENDC} - Clear the terminal screen.
-    {Color.BRIGHTGREEN}{ChatConfig.RESET_COMMAND}{Color.ENDC} - Reset the chat session.
-    {Color.BRIGHTGREEN}{ChatConfig.PRINT_COMMAND}{Color.ENDC} - Save the conversation log to a file.
-    {Color.BRIGHTGREEN}{ChatConfig.MODEL_COMMAND}{Color.ENDC} - Change the ai model.
-    {Color.BRIGHTGREEN}{ChatConfig.RECONFIGURE_COMMAND}{Color.ENDC}   - Reconfigure the settings.
-    {Color.BRIGHTGREEN}run (command){Color.ENDC} - run subprocess command eg run ls.
+    {Color.BRIGHTGREEN}{ChatConfig.HELP_COMMAND}{Color.ENDC}  - Display this help information. Provides a list of all available commands and their descriptions.
+    {Color.BRIGHTGREEN}{ChatConfig.EXIT_COMMAND}{Color.ENDC}  - Exit the application. Terminates the chat session and closes the application.
+    {Color.BRIGHTGREEN}{ChatConfig.CLEAR_COMMAND}{Color.ENDC} - Clear the terminal screen. Clears all text from the terminal screen.
+    {Color.BRIGHTGREEN}{ChatConfig.RESET_COMMAND}{Color.ENDC} - Reset the chat session. Clears the chat history and restarts the chat session.
+    {Color.BRIGHTGREEN}{ChatConfig.PRINT_COMMAND}{Color.ENDC} - Save the conversation log to a file. Saves the current chat session to a log file in JSON format.
+    {Color.BRIGHTGREEN}{ChatConfig.MODEL_COMMAND}{Color.ENDC} - Change the AI model. Allows you to switch between different AI models (e.g., Gemini, OpenAI).
+    {Color.BRIGHTGREEN}{ChatConfig.RECONFIGURE_COMMAND}{Color.ENDC}   - Reconfigure the settings. Prompts you to re-enter configuration settings such as API keys and model preferences.
+    {Color.BRIGHTGREEN}run (command){Color.ENDC} - Run a subprocess command. Executes a shell command in the terminal (e.g., run ls).
         """
         print(f"\n{help_text}")
 
@@ -198,6 +191,9 @@ class ChatConfig:
     def clear_screen():
         """Clear the terminal screen"""
         subprocess.run('clear', shell=True)
+
+# Configure logging
+logging.basicConfig(filename='error.log', level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class AIChat:
     def __init__(self):
@@ -264,6 +260,7 @@ class AIChat:
 
     def initialize_chat(self):
         """Initialize the chat session"""
+        self.chat_history = self.chat_history or []  # Ensure chat_history is not None
         if self.ai_service == 'gemini':
             generation_config = ChatConfig.gemini_generation_config()
             safety_settings = ChatConfig.gemini_safety_settings()
@@ -274,6 +271,22 @@ class AIChat:
             )
             chat = model.start_chat(history=self.chat_history)
         else:  # OpenAI GPT
+            messages = [{"role": "system", "content": self.instruction}]
+            messages.extend([{"role": "user" if msg["role"] == "user" else "assistant", "content": msg["parts"][0]} for msg in self.chat_history])
+            chat = None  # We don't need to initialize a chat object for OpenAI
+        self.chat_history = self.chat_history or []  # Ensure chat_history is not None
+        if self.ai_service == 'gemini':
+            generation_config = ChatConfig.gemini_generation_config()
+            safety_settings = ChatConfig.gemini_safety_settings()
+            model = genai.GenerativeModel(
+                generation_config=generation_config,
+                model_name=self.gemini_model,
+                safety_settings=safety_settings
+            )
+            chat = model.start_chat(history=self.chat_history)
+        else:  # OpenAI GPT
+            messages = [{"role": "system", "content": self.instruction}]
+            messages.extend([{"role": "user" if msg["role"] == "user" else "assistant", "content": msg["parts"][0]} for msg in self.chat_history])
             chat = None  # We don't need to initialize a chat object for OpenAI
         return chat
 
@@ -351,7 +364,9 @@ class AIChat:
             config['DEFAULT']['GPTModel'] = self.gpt_model
             with open(ChatConfig.CONFIG_FILE, 'w') as configfile:
                 config.write(configfile)
-            print(f"{Color.PASTELPINK}Switched to {self.ai_service.capitalize()} service.{Color.ENDC}")
+            print(f"{Color.PASTELPINK}Switched to {self.ai_service.capitalize()} service. Reinitializing chat...{Color.ENDC}")
+            self.chat_history = self.chat_history or []  # Ensure chat_history is not None
+            self.initialize_chat()
             return True
         return False
 
@@ -516,9 +531,43 @@ class AIChat:
         except KeyboardInterrupt:
             print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.LIGHTRED}Exiting.... Goodbye!{Color.ENDC}\n")
 
-        except Exception as e:
-            """error handling"""
-            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.BRIGHTRED}An unexpected Error occurred: {e}{Color.ENDC}\n")
+        except KeyboardInterrupt:
+            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.LIGHTRED}Exiting.... Goodbye!{Color.ENDC}\n")
+        except ValueError as ve:
+            logging.error("ValueError: %s", ve)
+            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.BRIGHTRED}A value error occurred: {ve}{Color.ENDC}\n")
+        except configparser.Error as ce:
+            logging.error("ConfigParser Error: %s", ce)
+            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.BRIGHTRED}Configuration error occurred. Entering configuration mode...{Color.ENDC}\n")
+            config = ChatConfig.reconfigure()
+            self.gemini_api_key = config['DEFAULT']['GeminiAPI']
+            self.openai_api_key = config['DEFAULT']['OpenAIAPI']
+            self.ai_service = config['DEFAULT']['AIService']
+            self.loading_style = config['DEFAULT']['LoadingStyle']
+            self.instruction_file = config['DEFAULT']['InstructionFile']
+            self.gemini_model = config['DEFAULT']['GeminiModel']
+            self.gpt_model = config['DEFAULT']['GPTModel']
+            ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
+            self.instruction = ChatConfig.chat_instruction(self.instruction_file)
+            chat = self.initialize_chat()
+            self.conversation_log = []
+        except subprocess.CalledProcessError as spe:
+            logging.error("Subprocess Error: %s", spe)
+            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.BRIGHTRED}Subprocess error: {spe}{Color.ENDC}\n")
+        except genai.exceptions.InvalidAPIKeyError as e:
+            logging.error("Invalid Gemini API Key: %s", e)
+            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.BRIGHTRED}Invalid Gemini API Key. Please enter a new key.{Color.ENDC}\n")
+            self.gemini_api_key = input("Enter the new Gemini API key: ")
+            ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
+            chat = self.initialize_chat()
+        except openai.error.AuthenticationError as e:
+            logging.error("Invalid OpenAI API Key: %s", e)
+            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.BRIGHTRED}Invalid OpenAI API Key. Please enter a new key.{Color.ENDC}\n")
+            self.openai_api_key = input("Enter the new OpenAI API key: ")
+            ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
+            self.openai_client = OpenAI(api_key=self.openai_api_key)
+            chat = self.initialize_chat()
+        finally:
             stop_loading = True
 
 if __name__ == "__main__":

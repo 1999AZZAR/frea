@@ -7,3 +7,5 @@ src/.env
 src/logs/*.*
 src/*.ini
 .aider*
+__pycache__/
+src/__pycache__/

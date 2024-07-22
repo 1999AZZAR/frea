@@ -255,7 +255,6 @@ class AIChat:
                     loading_thread = threading.Thread(target=loading_animation, args=(self.loading_style,))
                     loading_thread.start()
 
-                    print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}Generating response...{Color.ENDC}\n")
                     if self.ai_service == 'gemini':
                         response = chat.send_message(self.instruction + user_input)
                         sanitized_response = remove_emojis(response.text)
@@ -279,12 +278,11 @@ class AIChat:
                         self.chat_history.append({"role": "model", "parts": [sanitized_response]})
 
                     set_stop_loading(True)
-                    print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}Setting stop_loading to True...{Color.ENDC}\n")
                     loading_thread.join()
-                    print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}Loading animation stopped.{Color.ENDC}\n")
                     sanitized_response = sanitized_response.replace('*', '')
                     sanitized_response = re.sub(r'(?i)frea', '𝑓rea', sanitized_response)
                     print(f'{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{sanitized_response}\n')
+                    user_input = ""
 
                     """Log the conversation"""
                     self.conversation_log.append(f"User: {user_input}")
