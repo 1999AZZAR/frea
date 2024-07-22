@@ -98,10 +98,12 @@ class AIChat:
                 except Exception as e:
                     logging.error(f"Error initializing OpenAI chat: {e}")
                     raise
+            logging.debug(f"Returning chat object: {chat}")
             return chat
         except Exception as e:
             logging.error(f"Error in initialize_chat method: {e}", exc_info=True)
             print(f"{Color.BRIGHTRED}Error in initialize_chat method: {e}{Color.ENDC}")
+            logging.debug("Returning None from initialize_chat method")
             return None
 
 
