@@ -36,6 +36,8 @@ def run_subprocess(command):
         """error handling"""
         print(f"{Color.BRIGHTYELLOW}\n╰─❯ {Color.ENDC}{Color.BRIGHTRED}subprocess execution error: {e}{Color.ENDC}")
 
+stop_loading = False
+
 def loading_animation(use='L2'):
     """loading animation"""
     cursor_hide()

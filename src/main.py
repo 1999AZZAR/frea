@@ -1,4 +1,4 @@
-import os, readline, termios, tty, sys, threading, configparser, datetime, json, logging
+import os, readline, termios, tty, sys, threading, configparser, datetime, json, logging, time, re
 from color import Color
 from chat_config import ChatConfig
 from terminal_utils import cursor_hide, cursor_show
