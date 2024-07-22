@@ -56,23 +56,11 @@ class AIChat:
 
     def initialize_chat(self):
         """Initialize the chat session"""
-        self.chat_history = self.chat_history or []  # Ensure chat_history is not None
-        if self.ai_service == 'gemini':
-            generation_config = ChatConfig.gemini_generation_config()
-            safety_settings = ChatConfig.gemini_safety_settings()
-            model = genai.GenerativeModel(
-                generation_config=generation_config,
-                model_name=self.gemini_model,
-                safety_settings=safety_settings
-            )
-            chat = model.start_chat(history=self.chat_history)
-        else:  # OpenAI GPT
-            messages = [{"role": "system", "content": self.instruction}]
-            messages.extend([{"role": "user" if msg["role"] == "user" else "assistant", "content": msg["parts"][0]} for msg in self.chat_history])
-            chat = None  # We don't need to initialize a chat object for OpenAI
+        logging.debug("Initializing chat session")
         self.chat_history = self.chat_history or []  # Ensure chat_history is not None
         try:
             if self.ai_service == 'gemini':
+                logging.debug("Using Gemini service")
                 generation_config = ChatConfig.gemini_generation_config()
                 safety_settings = ChatConfig.gemini_safety_settings()
                 model = genai.GenerativeModel(
@@ -82,9 +70,11 @@ class AIChat:
                 )
                 chat = model.start_chat(history=self.chat_history)
             else:  # OpenAI GPT
+                logging.debug("Using OpenAI GPT service")
                 messages = [{"role": "system", "content": self.instruction}]
                 messages.extend([{"role": "user" if msg["role"] == "user" else "assistant", "content": msg["parts"][0]} for msg in self.chat_history])
                 chat = None  # We don't need to initialize a chat object for OpenAI
+            logging.debug("Chat session initialized successfully")
             return chat
         except Exception as e:
             logging.error(f"Error initializing chat: {e}")
