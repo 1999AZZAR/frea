@@ -58,11 +58,18 @@ class AIChat:
         """Initialize the chat session"""
         logging.debug("Initializing chat session")
         self.chat_history = self.chat_history or []  # Ensure chat_history is not None
+        logging.debug(f"Chat history: {self.chat_history}")
+        logging.debug(f"AI Service: {self.ai_service}")
+        logging.debug(f"Gemini Model: {self.gemini_model}")
+        logging.debug(f"OpenAI Model: {self.gpt_model}")
+        logging.debug(f"Instruction: {self.instruction}")
         try:
             if self.ai_service == 'gemini':
                 logging.debug("Using Gemini service")
                 generation_config = ChatConfig.gemini_generation_config()
                 safety_settings = ChatConfig.gemini_safety_settings()
+                logging.debug(f"Generation Config: {generation_config}")
+                logging.debug(f"Safety Settings: {safety_settings}")
                 model = genai.GenerativeModel(
                     generation_config=generation_config,
                     model_name=self.gemini_model,
@@ -73,6 +80,7 @@ class AIChat:
                 logging.debug("Using OpenAI GPT service")
                 messages = [{"role": "system", "content": self.instruction}]
                 messages.extend([{"role": "user" if msg["role"] == "user" else "assistant", "content": msg["parts"][0]} for msg in self.chat_history])
+                logging.debug(f"Messages: {messages}")
                 chat = None  # We don't need to initialize a chat object for OpenAI
             logging.debug("Chat session initialized successfully")
             return chat
