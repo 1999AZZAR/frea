@@ -1,5 +1,6 @@
 import os, subprocess, time, re, readline, termios, tty, sys, threading, configparser, datetime, json, logging
 from color import Color
+from chat_config import ChatConfig
 from terminal_utils import cursor_hide, cursor_show
 import google.generativeai as genai
 import openai
