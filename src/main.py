@@ -280,7 +280,11 @@ class AIChat:
                         self.chat_history.append({"role": "model", "parts": [sanitized_response]})
 
                     stop_loading = True
+                    loading_thread.join()
                     print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}Response generated. Stopping loading animation...{Color.ENDC}\n")
+                    sanitized_response = sanitized_response.replace('*', '')
+                    sanitized_response = re.sub(r'(?i)frea', '𝑓rea', sanitized_response)
+                    print(f'{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{sanitized_response}\n')
                     loading_thread.join()
 
                     sanitized_response = sanitized_response.replace('*', '')
