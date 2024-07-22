@@ -93,7 +93,7 @@ class AIChat:
                     messages = [{"role": "system", "content": self.instruction}]
                     messages.extend([{"role": "user" if msg["role"] == "user" else "assistant", "content": msg["parts"][0]} for msg in self.chat_history])
                     logging.debug(f"Messages: {messages}")
-                    chat = None  # We don't need to initialize a chat object for OpenAI
+                    chat = messages  # Set chat to messages for OpenAI
                     logging.debug("OpenAI chat initialized successfully")
                 except Exception as e:
                     logging.error(f"Error initializing OpenAI chat: {e}")
