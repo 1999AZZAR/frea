@@ -2,7 +2,7 @@ import os, readline, termios, tty, sys, threading, configparser, datetime, json,
 from color import Color
 from chat_config import ChatConfig
 from terminal_utils import cursor_hide, cursor_show
-from utils import remove_emojis, run_subprocess, loading_animation
+from utils import remove_emojis, run_subprocess, loading_animation, remove_emojis
 import google.generativeai as genai
 import openai
 from openai import OpenAI
@@ -257,7 +257,7 @@ class AIChat:
 
                     if self.ai_service == 'gemini':
                         response = chat.send_message(self.instruction + user_input)
-                        sanitized_response = self.remove_emojis(response.text)
+                        sanitized_response = remove_emojis(response.text)
                         self.chat_history.append({"role": "user", "parts": [user_input]})
                         self.chat_history.append({"role": "model", "parts": [sanitized_response]})
                     else:  # OpenAI GPT
@@ -273,7 +273,7 @@ class AIChat:
                             stop=[],
                             messages=messages
                         )
-                        sanitized_response = self.remove_emojis(response.choices[0].message.content)
+                        sanitized_response = remove_emojis(response.choices[0].message.content)
                         self.chat_history.append({"role": "user", "parts": [user_input]})
                         self.chat_history.append({"role": "model", "parts": [sanitized_response]})
 
