@@ -38,6 +38,10 @@ def run_subprocess(command):
 
 stop_loading = False
 
+def set_stop_loading(value):
+    global stop_loading
+    stop_loading = value
+
 def loading_animation(use='L2'):
     """loading animation"""
     cursor_hide()

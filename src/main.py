@@ -2,7 +2,7 @@ import os, readline, termios, tty, sys, threading, configparser, datetime, json,
 from color import Color
 from chat_config import ChatConfig
 from terminal_utils import cursor_hide, cursor_show
-from utils import remove_emojis, run_subprocess, loading_animation
+from utils import remove_emojis, run_subprocess, loading_animation, set_stop_loading
 import google.generativeai as genai
 import openai
 from openai import OpenAI
@@ -251,8 +251,7 @@ class AIChat:
                     multiline_mode = False
                 else:
                     """Send user input to the language model and print the response"""
-                    global stop_loading
-                    stop_loading = False
+                    set_stop_loading(False)
                     loading_thread = threading.Thread(target=loading_animation, args=(self.loading_style,))
                     loading_thread.start()
 
@@ -279,9 +278,10 @@ class AIChat:
                         self.chat_history.append({"role": "user", "parts": [user_input]})
                         self.chat_history.append({"role": "model", "parts": [sanitized_response]})
 
-                    stop_loading = True
+                    set_stop_loading(True)
+                    print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}Setting stop_loading to True...{Color.ENDC}\n")
                     loading_thread.join()
-                    print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}Response generated. Stopping loading animation...{Color.ENDC}\n")
+                    print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}Loading animation stopped.{Color.ENDC}\n")
                     sanitized_response = sanitized_response.replace('*', '')
                     sanitized_response = re.sub(r'(?i)frea', '𝑓rea', sanitized_response)
                     print(f'{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{sanitized_response}\n')
