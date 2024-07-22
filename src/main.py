@@ -11,7 +11,7 @@ from openai import OpenAI
 
 
 # Configure logging
-logging.basicConfig(filename='error.log', level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(filename='error.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class AIChat:
     def __init__(self):
@@ -100,7 +100,7 @@ class AIChat:
                     raise
             return chat
         except Exception as e:
-            logging.error(f"Error in initialize_chat method: {e}")
+            logging.error(f"Error in initialize_chat method: {e}", exc_info=True)
             print(f"{Color.BRIGHTRED}Error in initialize_chat method: {e}{Color.ENDC}")
             return None
 
