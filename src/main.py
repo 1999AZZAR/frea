@@ -36,13 +36,21 @@ class AIChat:
         readline.set_completer_delims(' \t\n=')
         readline.parse_and_bind("set editing-mode vi")
 
+        """Set delimiters for auto-completion and enable Vi editing mode"""
+        readline.set_completer_delims(' \t\n=')
+        readline.parse_and_bind("set editing-mode vi")
+
         try:
             """Prompt for user input"""
-            question = input(f"{Color.BLUE}╭─ 𝔲ser \n╰─❯ {Color.ENDC}", end="")
+            question = input(f"{Color.BLUE}╭─ 𝔲ser \n╰─❯ {Color.ENDC}")
+            return question.strip().lower()
         except KeyboardInterrupt:
             print("\nKeyboard Interrupt")
             return ""
-        return question.strip().lower()
+        except Exception as e:
+            logging.error(f"Error processing user input: {e}")
+            print(f"{Color.BRIGHTRED}Error processing user input: {e}{Color.ENDC}")
+            return ""
 
 
 
@@ -63,20 +71,25 @@ class AIChat:
             messages.extend([{"role": "user" if msg["role"] == "user" else "assistant", "content": msg["parts"][0]} for msg in self.chat_history])
             chat = None  # We don't need to initialize a chat object for OpenAI
         self.chat_history = self.chat_history or []  # Ensure chat_history is not None
-        if self.ai_service == 'gemini':
-            generation_config = ChatConfig.gemini_generation_config()
-            safety_settings = ChatConfig.gemini_safety_settings()
-            model = genai.GenerativeModel(
-                generation_config=generation_config,
-                model_name=self.gemini_model,
-                safety_settings=safety_settings
-            )
-            chat = model.start_chat(history=self.chat_history)
-        else:  # OpenAI GPT
-            messages = [{"role": "system", "content": self.instruction}]
-            messages.extend([{"role": "user" if msg["role"] == "user" else "assistant", "content": msg["parts"][0]} for msg in self.chat_history])
-            chat = None  # We don't need to initialize a chat object for OpenAI
-        return chat
+        try:
+            if self.ai_service == 'gemini':
+                generation_config = ChatConfig.gemini_generation_config()
+                safety_settings = ChatConfig.gemini_safety_settings()
+                model = genai.GenerativeModel(
+                    generation_config=generation_config,
+                    model_name=self.gemini_model,
+                    safety_settings=safety_settings
+                )
+                chat = model.start_chat(history=self.chat_history)
+            else:  # OpenAI GPT
+                messages = [{"role": "system", "content": self.instruction}]
+                messages.extend([{"role": "user" if msg["role"] == "user" else "assistant", "content": msg["parts"][0]} for msg in self.chat_history])
+                chat = None  # We don't need to initialize a chat object for OpenAI
+            return chat
+        except Exception as e:
+            logging.error(f"Error initializing chat: {e}")
+            print(f"{Color.BRIGHTRED}Error initializing chat: {e}{Color.ENDC}")
+            return None
 
 
     def get_gemini_models(self):
@@ -161,12 +174,16 @@ class AIChat:
     def generate_chat(self):
         """model generation response flow"""
 
-        try:
-            chat = self.initialize_chat()
-            user_input = ""
-            multiline_mode = False
+        chat = self.initialize_chat()
+        if chat is None:
+            print(f"{Color.BRIGHTRED}Failed to initialize chat. Exiting...{Color.ENDC}")
+            return
 
-            while True:
+        user_input = ""
+        multiline_mode = False
+
+        while True:
+            try:
                 """multiline automation"""
                 if multiline_mode:
                     print(f"{Color.BLUE}╰─❯ {Color.ENDC}", end="")
@@ -288,9 +305,13 @@ class AIChat:
                     self.conversation_log.append(f"User: {user_input}")
                     self.conversation_log.append(f"Model: {sanitized_response}")
 
-        except KeyboardInterrupt:
-            print("\nKeyboard Interrupt")
-            return ""
+            except KeyboardInterrupt:
+                print("\nKeyboard Interrupt")
+                break
+            except Exception as e:
+                logging.error(f"Error during chat generation: {e}")
+                print(f"{Color.BRIGHTRED}Error during chat generation: {e}{Color.ENDC}")
+                break
 
 if __name__ == "__main__":
     chat_app = AIChat()
