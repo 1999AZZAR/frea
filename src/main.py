@@ -246,7 +246,7 @@ class AIChat:
                     """Run a subprocess command"""
                     command = user_input[4:].strip()
                     print(f'{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.LIGHTRED}Executing 𝔲ser Command{Color.ENDC}\n')
-                    self.run_subprocess(command)
+                    run_subprocess(command)
                     user_input = ""
                     multiline_mode = False
                 else:
