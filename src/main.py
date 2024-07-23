@@ -21,7 +21,7 @@ class AIChat:
         self.initializer = ChatInitializer()
         self.gemini_api_key = self.initializer.gemini_api_key or ""
         self.openai_api_key = self.initializer.openai_api_key or ""
-        self.ai_service = self.initializer.ai_service or "openai"
+        self.ai_service = self._determine_ai_service()
         self.gemini_model = self.initializer.gemini_model
         self.gpt_model = self.initializer.gpt_model
         self.langchain_client = self.initializer.langchain_client if self.initializer.langchain_client else None
@@ -77,7 +77,26 @@ class AIChat:
         """Retrieve available OpenAI models"""
         return self.initializer.get_openai_models()
 
-    def change_model(self):
+    def _determine_ai_service(self):
+        """Determine the AI service to use based on available API keys"""
+        if self.initializer.gemini_api_key:
+            return 'gemini'
+        elif self.initializer.openai_api_key:
+            return 'openai'
+        else:
+            print(f"{Color.BRIGHTRED}No valid API keys found. Please provide at least one API key.{Color.ENDC}")
+            self.gemini_api_key = input("Please enter your GEMINI_API_KEY (or press Enter to skip): ").strip()
+            self.openai_api_key = input("Please enter your OPENAI_API_KEY (or press Enter to skip): ").strip()
+            if self.gemini_api_key:
+                self.initializer.gemini_api_key = self.gemini_api_key
+                ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
+                return 'gemini'
+            elif self.openai_api_key:
+                self.initializer.openai_api_key = self.openai_api_key
+                ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
+                return 'openai'
+            else:
+                raise ValueError("No valid API keys provided. Exiting...")
         """Change the AI model"""
         print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.WHITE}Current model: {Color.ENDC}{Color.PASTELPINK}{self.ai_service} - {self.gemini_model if self.ai_service == 'gemini' else self.gpt_model}{Color.ENDC}")
         change = input(f"{Color.BRIGHTYELLOW}Do you want to change the model? (yes/no): {Color.ENDC}").lower()
