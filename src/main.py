@@ -19,8 +19,8 @@ logging.getLogger().setLevel(logging.DEBUG)
 class AIChat:
     def __init__(self):
         self.initializer = ChatInitializer()
-        self.gemini_api_key = self.initializer.gemini_api_key
-        self.openai_api_key = self.initializer.openai_api_key
+        self.gemini_api_key = os.getenv('GEMINI_API_KEY', self.initializer.gemini_api_key)
+        self.openai_api_key = os.getenv('OPENAI_API_KEY', self.initializer.openai_api_key)
         self.ai_service = self.initializer.ai_service
         self.gemini_model = self.initializer.gemini_model
         self.gpt_model = self.initializer.gpt_model
@@ -43,12 +43,15 @@ class AIChat:
         try:
             """Prompt for user input"""
             question = input(f"{Color.BLUE}╭─ 𝔲ser \n╰─❯ {Color.ENDC}")
-            return question.strip().lower()
+            question = question.strip().lower()
+            if not re.match("^[a-zA-Z0-9_ ]*$", question):
+                raise ValueError("Invalid characters in input")
+            return question
         except KeyboardInterrupt:
             print("\nKeyboard Interrupt")
             return ""
         except Exception as e:
-            logging.error(f"Error processing user input: {e}")
+            logging.error(f"Error processing user input: {e}", exc_info=True)
             print(f"{Color.BRIGHTRED}Error processing user input: {e}{Color.ENDC}")
             return ""
 
@@ -277,7 +280,8 @@ class AIChat:
                 break
             except Exception as e:
                 logging.error(f"Error during chat generation: {e}")
-                print(f"{Color.BRIGHTRED}Error during chat generation: {e}{Color.ENDC}")
+                logging.error(f"Error during chat generation: {e}", exc_info=True)
+                print(f"{Color.BRIGHTRED}An error occurred. Please check the logs for more details.{Color.ENDC}")
                 break
 
 if __name__ == "__main__":
