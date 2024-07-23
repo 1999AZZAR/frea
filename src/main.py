@@ -571,3 +571,7 @@ class AIChat:
                 logging.error(f"Error during chat generation: {e}", exc_info=True)
                 print(f"{Color.BRIGHTRED}An error occurred. Please check the logs for more details.{Color.ENDC}")
                 break
+
+if __name__ == "__main__":
+     chat_app = AIChat()
+     chat_app.generate_chat()
