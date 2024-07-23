@@ -572,6 +572,3 @@ class AIChat:
                 print(f"{Color.BRIGHTRED}An error occurred. Please check the logs for more details.{Color.ENDC}")
                 break
     chat_app = AIChat()
-if __name__ == "__main__":
-    chat_app = AIChat()
-    chat_app.generate_chat()
