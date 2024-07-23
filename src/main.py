@@ -10,7 +10,7 @@ import openai
 from openai import OpenAI
 
 # Configure logging with RotatingFileHandler
-log_handler = RotatingFileHandler('error.log', maxBytes=1*1024*1024, backupCount=3)  # 1 MB per file, 3 backups
+log_handler = RotatingFileHandler('error.log', maxBytes=0.5*1024*1024, backupCount=3)
 log_handler.setLevel(logging.DEBUG)
 log_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 logging.getLogger().addHandler(log_handler)
