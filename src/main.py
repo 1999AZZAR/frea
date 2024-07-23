@@ -93,15 +93,14 @@ class AIChat:
                         self.gemini_api_key = input("Please enter your GEMINI_API_KEY: ").strip()
                         self.initializer.gemini_api_key = self.gemini_api_key
                         ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
-                    try:
                         gemini_models = self.get_gemini_models()
-                except Exception as e:
-                    logging.error(f"Error retrieving Gemini models: {e}")
-                    print(f"{Color.BRIGHTRED}Error retrieving Gemini models. Please check your API key and try again.{Color.ENDC}")
-                    self.gemini_api_key = input("Please enter your GEMINI_API_KEY: ").strip()
-                    self.initializer.gemini_api_key = self.gemini_api_key
-                    ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
-                    gemini_models = self.get_gemini_models()
+                    except Exception as e:
+                        logging.error(f"Error retrieving Gemini models: {e}")
+                        print(f"{Color.BRIGHTRED}Error retrieving Gemini models. Please check your API key and try again.{Color.ENDC}")
+                        self.gemini_api_key = input("Please enter your GEMINI_API_KEY: ").strip()
+                        self.initializer.gemini_api_key = self.gemini_api_key
+                        ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
+                        gemini_models = self.get_gemini_models()
                 if gemini_models:
                     print(f"\n{Color.BRIGHTGREEN}Available Gemini models:{Color.ENDC}")
                     for i, model in enumerate(gemini_models, 1):
