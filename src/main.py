@@ -19,8 +19,8 @@ logging.getLogger().setLevel(logging.DEBUG)
 class AIChat:
     def __init__(self):
         self.initializer = ChatInitializer()
-        self.gemini_api_key = os.getenv('GEMINI_API_KEY', self.initializer.gemini_api_key)
-        self.openai_api_key = os.getenv('OPENAI_API_KEY', self.initializer.openai_api_key)
+        self.gemini_api_key = self.initializer.gemini_api_key
+        self.openai_api_key = self.initializer.openai_api_key
         self.ai_service = self.initializer.ai_service
         self.gemini_model = self.initializer.gemini_model
         self.gpt_model = self.initializer.gpt_model
@@ -88,7 +88,15 @@ class AIChat:
             service = input(f"{Color.BRIGHTYELLOW}Enter the number of the service you want to use: {Color.ENDC}")
             if service == '1':
                 self.ai_service = 'gemini'
-                gemini_models = self.get_gemini_models()
+                try:
+                    gemini_models = self.get_gemini_models()
+                except Exception as e:
+                    logging.error(f"Error retrieving Gemini models: {e}")
+                    print(f"{Color.BRIGHTRED}Error retrieving Gemini models. Please check your API key and try again.{Color.ENDC}")
+                    self.gemini_api_key = input("Please enter your GEMINI_API_KEY: ").strip()
+                    self.initializer.gemini_api_key = self.gemini_api_key
+                    ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
+                    gemini_models = self.get_gemini_models()
                 if gemini_models:
                     print(f"\n{Color.BRIGHTGREEN}Available Gemini models:{Color.ENDC}")
                     for i, model in enumerate(gemini_models, 1):
