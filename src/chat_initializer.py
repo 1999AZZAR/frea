@@ -3,7 +3,7 @@ import google.generativeai as genai
 import openai
 from openai import OpenAI
 from chat_config import ChatConfig
-from langchain.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 
 class ChatInitializer:
     def __init__(self):
