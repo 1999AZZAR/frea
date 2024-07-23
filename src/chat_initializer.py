@@ -11,6 +11,27 @@ from langchain_openai import ChatOpenAI
 
 
 
+    def initialize_chat(self, chat_history):
+        """Initialize the chat session"""
+        logging.debug(f"AI Service: {self.ai_service}")
+        if self.ai_service == 'gemini':
+            generation_config = ChatConfig.gemini_generation_config()
+            safety_settings = ChatConfig.gemini_safety_settings()
+            model = genai.GenerativeModel(
+                generation_config=generation_config,
+                model_name=self.gemini_model,
+                safety_settings=safety_settings
+            )
+            chat = model.start_chat(history=chat_history)
+        elif self.ai_service == 'langchain':
+            chat = LangChainChat(self.langchain_client, self.gpt_model, self.instruction, chat_history)
+        elif self.ai_service == 'openai':
+            chat = OpenAIChat(self.openai_client, self.gpt_model, self.instruction, chat_history)
+        else:
+            logging.error(f"Unsupported AI service: {self.ai_service}")
+            chat = None
+        return chat
+
     def get_gemini_models(self):
         """Retrieve available Gemini models"""
         models = genai.list_models()
@@ -36,27 +57,22 @@ class ChatInitializer:
         self.openai_client = OpenAI(api_key=self.openai_api_key)
         self.instruction_file = config['DEFAULT']['InstructionFile']
         self.instruction = ChatConfig.chat_instruction(self.instruction_file)
+    def __init__(self):
+        config = ChatConfig.initialize_config()
+        if not config:
+            raise ValueError("Configuration initialization failed")
+        self.gemini_api_key = os.getenv('GEMINI_API_KEY', config['DEFAULT']['GeminiAPI'])
+        self.openai_api_key = os.getenv('OPENAI_API_KEY', config['DEFAULT']['OpenAIAPI'])
+        self.gemini_model = config['DEFAULT']['GeminiModel']
+        self.loading_style = config['DEFAULT']['LoadingStyle']
+        self.gpt_model = config['DEFAULT']['GPTModel']
+        self.ai_service = config['DEFAULT']['AIService']
+        ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
+        self.langchain_client = ChatOpenAI(api_key=self.openai_api_key)
+        self.openai_client = OpenAI(api_key=self.openai_api_key)
+        self.instruction_file = config['DEFAULT']['InstructionFile']
+        self.instruction = ChatConfig.chat_instruction(self.instruction_file)
 
-    def initialize_chat(self, chat_history):
-        """Initialize the chat session"""
-        logging.debug(f"AI Service: {self.ai_service}")
-        if self.ai_service == 'gemini':
-            generation_config = ChatConfig.gemini_generation_config()
-            safety_settings = ChatConfig.gemini_safety_settings()
-            model = genai.GenerativeModel(
-                generation_config=generation_config,
-                model_name=self.gemini_model,
-                safety_settings=safety_settings
-            )
-            chat = model.start_chat(history=chat_history)
-        elif self.ai_service == 'langchain':
-            chat = LangChainChat(self.langchain_client, self.gpt_model, self.instruction, chat_history)
-        elif self.ai_service == 'openai':
-            chat = OpenAIChat(self.openai_client, self.gpt_model, self.instruction, chat_history)
-        else:
-            logging.error(f"Unsupported AI service: {self.ai_service}")
-            chat = None
-        return chat
     def __init__(self):
         config = ChatConfig.initialize_config()
         if not config:
