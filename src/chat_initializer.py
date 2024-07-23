@@ -16,6 +16,7 @@ class ChatInitializer:
         self.gpt_model = config['DEFAULT']['GPTModel']
         ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
         self.openai_client = OpenAI(api_key=self.openai_api_key)
+        self.ai_service = config['DEFAULT']['AIService']
         self.instruction = ChatConfig.chat_instruction(self.instruction_file)
 
     def initialize_chat(self, chat_history):

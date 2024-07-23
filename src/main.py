@@ -19,6 +19,7 @@ logging.getLogger().setLevel(logging.DEBUG)
 class AIChat:
     def __init__(self):
         self.initializer = ChatInitializer()
+        self.ai_service = self.initializer.ai_service
         self.chat_history = []  # Unified chat history
         self.conversation_log = []
 
