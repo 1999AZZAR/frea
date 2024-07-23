@@ -5,6 +5,7 @@ import google.generativeai as genai
 import openai
 from openai import OpenAI
 from chat_config import ChatConfig
+import wikipediaapi
 from langchain_openai import ChatOpenAI
 
 class ChatInitializer:
@@ -55,7 +56,32 @@ class ChatInitializer:
         """Retrieve available OpenAI models"""
         models = self.openai_client.models.list()
         return [model.id for model in models.data if model.id.startswith("gpt")]
-class OpenAIChat:
+class ChatInitializer:
+    def __init__(self):
+        config = ChatConfig.initialize_config()
+        if not config:
+            raise ValueError("Configuration initialization failed")
+        self.gemini_api_key = os.getenv('GEMINI_API_KEY', config['DEFAULT']['GeminiAPI'])
+        self.openai_api_key = os.getenv('OPENAI_API_KEY', config['DEFAULT']['OpenAIAPI'])
+        self.ai_service = config['DEFAULT']['AIService']
+        self.loading_style = config['DEFAULT']['LoadingStyle']
+        self.instruction_file = config['DEFAULT']['InstructionFile']
+        self.gemini_model = config['DEFAULT']['GeminiModel']
+        self.gpt_model = config['DEFAULT']['GPTModel']
+        ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
+        self.langchain_client = ChatOpenAI(api_key=self.openai_api_key)
+        self.openai_client = OpenAI(api_key=self.openai_api_key)
+        self.ai_service = config['DEFAULT']['AIService']
+        self.instruction = ChatConfig.chat_instruction(self.instruction_file)
+        self.wiki_wiki = wikipediaapi.Wikipedia('en')
+
+    def query_wikipedia(self, query):
+        """Query Wikipedia for additional information"""
+        page = self.wiki_wiki.page(query)
+        if page.exists():
+            return page.summary
+        else:
+            return None
     def __init__(self, client, model, instruction, chat_history):
         self.client = client
         self.model = model
