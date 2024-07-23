@@ -39,10 +39,8 @@ class ChatInitializer:
             chat = model.start_chat(history=chat_history)
         elif self.ai_service == 'langchain':
             chat = LangChainChat(self.langchain_client, self.gpt_model, self.instruction, chat_history)
-            chat = OpenAIChat(self.openai_client, self.gpt_model, self.instruction, chat_history)
         elif self.ai_service == 'openai':
             chat = OpenAIChat(self.openai_client, self.gpt_model, self.instruction, chat_history)
-            chat = None
         else:
             logging.error(f"Unsupported AI service: {self.ai_service}")
             chat = None
