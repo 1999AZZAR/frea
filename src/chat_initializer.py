@@ -71,17 +71,6 @@ class ChatInitializer:
         ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
         self.langchain_client = ChatOpenAI(api_key=self.openai_api_key)
         self.openai_client = OpenAI(api_key=self.openai_api_key)
-        self.ai_service = config['DEFAULT']['AIService']
-        self.instruction = ChatConfig.chat_instruction(self.instruction_file)
-        self.wiki_wiki = wikipediaapi.Wikipedia('en')
-
-    def query_wikipedia(self, query):
-        """Query Wikipedia for additional information"""
-        page = self.wiki_wiki.page(query)
-        if page.exists():
-            return page.summary
-        else:
-            return None
     def __init__(self, client, model, instruction, chat_history):
         self.client = client
         self.model = model
