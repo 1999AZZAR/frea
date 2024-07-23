@@ -27,6 +27,7 @@ class AIChat:
         self.chat_history = []  # Unified chat history
         self.loading_style = self.initializer.loading_style
         self.instruction = self.initializer.instruction
+        self.openai_client = self.initializer.openai_client
         self.conversation_log = []
 
     def process_user_input(self):
