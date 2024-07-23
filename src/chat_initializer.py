@@ -30,10 +30,8 @@ class ChatInitializer:
                 safety_settings=safety_settings
             )
             chat = model.start_chat(history=chat_history)
-        else:  # OpenAI GPT
-            messages = [{"role": "system", "content": self.instruction}]
-            messages.extend([{"role": "user" if msg["role"] == "user" else "assistant", "content": msg["parts"][0]} for msg in chat_history])
-            chat = messages  # Set chat to messages for OpenAI
+        else:
+            chat = OpenAIChat(self.openai_client, self.gpt_model, self.instruction, chat_history)
         return chat
 
     def get_gemini_models(self):
@@ -45,3 +43,24 @@ class ChatInitializer:
         """Retrieve available OpenAI models"""
         models = self.openai_client.models.list()
         return [model.id for model in models.data if model.id.startswith("gpt")]
+class OpenAIChat:
+    def __init__(self, client, model, instruction, chat_history):
+        self.client = client
+        self.model = model
+        self.instruction = instruction
+        self.chat_history = chat_history
+
+    def send_message(self, user_input):
+        messages = [{"role": "system", "content": self.instruction}]
+        messages.extend([{"role": "user" if msg["role"] == "user" else "assistant", "content": msg["parts"][0]} for msg in self.chat_history])
+        messages.append({"role": "user", "content": user_input})
+        response = self.client.chat.completions.create(
+            model=self.model,
+            max_tokens=1024,
+            temperature=0.75,
+            top_p=0.65,
+            n=1,
+            stop=[],
+            messages=messages
+        )
+        return response.choices[0].message.content
