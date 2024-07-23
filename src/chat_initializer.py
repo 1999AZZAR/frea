@@ -38,6 +38,8 @@ class ChatInitializer:
         elif self.ai_service == 'langchain':
             chat = LangChainChat(self.langchain_client, self.gpt_model, self.instruction, chat_history)
             chat = OpenAIChat(self.openai_client, self.gpt_model, self.instruction, chat_history)
+        else:
+            chat = None
         return chat
 
     def get_gemini_models(self):
