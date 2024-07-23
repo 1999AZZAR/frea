@@ -22,6 +22,7 @@ class ChatInitializer:
         self.langchain_client = ChatOpenAI(api_key=self.openai_api_key)
         self.openai_client = OpenAI(api_key=self.openai_api_key)
         self.gemini_model = config['DEFAULT']['GeminiModel']
+        self.gemini_model = config['DEFAULT']['GeminiModel']
         self.instruction_file = config['DEFAULT']['InstructionFile']
         self.instruction = ChatConfig.chat_instruction(self.instruction_file)
 
