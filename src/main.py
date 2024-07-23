@@ -57,69 +57,18 @@ class AIChat:
                 else:
                     user_input += user_input_line
 
-                """Handle special commands"""
-                if user_input.strip().lower() == ChatConfig.EXIT_COMMAND:
-                    print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.LIGHTRED}Exiting.... Goodbye!{Color.ENDC}\n")
-                    break
-                elif user_input.strip().lower() == ChatConfig.RESET_COMMAND:
-                    print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}Resetting session...{Color.ENDC}\n")
-                    time.sleep(0.5)
-                    ChatConfig.clear_screen()
-                    self.chat_history = []
-                    chat = self.initialize_chat()
-                    self.conversation_log = []
+                if self.handle_special_commands(user_input):
                     user_input = ""
                     multiline_mode = False
                     continue
-                elif user_input.strip().lower() == ChatConfig.CLEAR_COMMAND:
-                    ChatConfig.clear_screen()
-                    user_input = ""
-                    multiline_mode = False
-                    continue
-                elif user_input.strip().lower() == ChatConfig.HELP_COMMAND:
-                    ChatConfig.display_help()
-                    user_input = ""
-                    multiline_mode = False
-                    continue
-                elif user_input.strip().lower() == ChatConfig.RECONFIGURE_COMMAND:
-                    config = ChatConfig.reconfigure()
-                    self.gemini_api_key = config['DEFAULT']['GeminiAPI']
-                    self.openai_api_key = config['DEFAULT']['OpenAIAPI']
-                    self.ai_service = config['DEFAULT']['AIService']
-                    self.loading_style = config['DEFAULT']['LoadingStyle']
-                    self.instruction_file = config['DEFAULT']['InstructionFile']
-                    self.gemini_model = config['DEFAULT']['GeminiModel']
-                    self.gpt_model = config['DEFAULT']['GPTModel']
-                    ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
-                    self.instruction = ChatConfig.chat_instruction(self.instruction_file)
-                    chat = self.initialize_chat()
-                    self.conversation_log = []
-                    user_input = ""
-                    multiline_mode = False
-                    continue
-                elif user_input.strip().lower() == ChatConfig.PRINT_COMMAND:
-                    """Save conversation log to a JSON file"""
-                    current_datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-                    log_file_name = f"{ChatConfig.LOG_FOLDER}/log_{current_datetime}.json"
-                    with open(log_file_name, "w") as file:
-                        json.dump(self.conversation_log, file, indent=4)
-                    print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}Conversation log saved to {log_file_name}{Color.ENDC}\n")
-                    user_input = ""
-                    multiline_mode = False
-                    continue
-                elif user_input.strip().lower() == ChatConfig.MODEL_COMMAND:
-                    if self.change_model():
-                        chat = self.initialize_chat()
-                    print(f'\n')
-                    user_input = ""
-                    multiline_mode = False
-                    continue
-                elif not user_input:
+
+                if not user_input:
                     print(f'\n{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.LIGHTRED}Please enter your command/prompt{Color.ENDC}\n')
                     user_input = ""
                     multiline_mode = False
                     continue
-                elif user_input.strip().lower().startswith("run "):
+
+                if user_input.strip().lower().startswith("run "):
                     """Run a subprocess command"""
                     command = user_input[4:].strip()
                     print(f'{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.LIGHTRED}Executing 𝔲ser Command{Color.ENDC}\n')
@@ -127,62 +76,9 @@ class AIChat:
                     user_input = ""
                     multiline_mode = False
                 else:
-                    """Send user input to the language model and print the response"""
-                    set_stop_loading(False)
-                    loading_thread = threading.Thread(target=loading_animation, args=(self.loading_style,))
-                    loading_thread.start()
-
-                    response_text = None
-                    if self.ai_service == 'gemini':
-                        response = chat.send_message(self.instruction + user_input)
-                        if isinstance(response, str):
-                            response_text = response
-                        else:
-                            response_text = response.text
-                    elif self.ai_service == 'openai':
-                        messages = [{"role": "system", "content": self.instruction}]
-                        messages.extend([{"role": "user" if msg["role"] == "user" else "assistant", "content": msg["parts"][0]} for msg in self.chat_history])
-                        messages.append({"role": "user", "content": user_input})
-                        response = self.openai_client.chat.completions.create(
-                            model=self.gpt_model,
-                            max_tokens=1024,
-                            temperature=0.75,
-                            top_p=0.65,
-                            n=1,
-                            stop=[],
-                            messages=messages
-                        )
-                        response_text = response.choices[0].message.content
-                    elif self.ai_service == 'langchain':
-                        response = chat.send_message(self.instruction + user_input)
-                        response_text = response.text
-
-                    if response_text:
-                        sanitized_response = remove_emojis(response_text)
-                        self.chat_history.append({"role": "user", "parts": [user_input]})
-                        self.chat_history.append({"role": "model", "parts": [sanitized_response]})
-                    else:
-                        wiki_summary = self.initializer.query_wikipedia(user_input)
-                        if wiki_summary:
-                            combined_response = combine_responses(response_text, wiki_summary)
-                            sanitized_response = remove_emojis(combined_response)
-                            self.chat_history.append({"role": "user", "parts": [user_input]})
-                            self.chat_history.append({"role": "model", "parts": [sanitized_response]})
-                        else:
-                            sanitized_response = f"Sorry, I couldn't find enough information on {user_input}."
-                            self.chat_history.append({"role": "user", "parts": [user_input]})
-                            self.chat_history.append({"role": "model", "parts": [sanitized_response]})
-
-                    set_stop_loading(True)
-                    loading_thread.join()
-                    sanitized_response = sanitized_response.replace('*', '')
-                    sanitized_response = re.sub(r'(?i)frea', '𝑓rea', sanitized_response)
-                    print(f'{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{sanitized_response}\n')
+                    self.process_user_input(chat, user_input)
                     user_input = ""
-
-                    """Log the conversation"""
-                    self.conversation_log.append(f"User: {user_input}")
-                    self.conversation_log.append(f"Model: {sanitized_response}")
+                    multiline_mode = False
 
             except KeyboardInterrupt:
                 print("\nKeyboard Interrupt")
@@ -192,6 +88,115 @@ class AIChat:
                 logging.error(f"Error during chat generation: {e}", exc_info=True)
                 print(f"{Color.BRIGHTRED}An error occurred. Please check the logs for more details.{Color.ENDC}")
                 break
+
+    def handle_special_commands(self, user_input):
+        """Handle special commands"""
+        if user_input.strip().lower() == ChatConfig.EXIT_COMMAND:
+            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.LIGHTRED}Exiting.... Goodbye!{Color.ENDC}\n")
+            return True
+        elif user_input.strip().lower() == ChatConfig.RESET_COMMAND:
+            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}Resetting session...{Color.ENDC}\n")
+            time.sleep(0.5)
+            ChatConfig.clear_screen()
+            self.chat_history = []
+            self.initialize_chat()
+            self.conversation_log = []
+            return True
+        elif user_input.strip().lower() == ChatConfig.CLEAR_COMMAND:
+            ChatConfig.clear_screen()
+            return True
+        elif user_input.strip().lower() == ChatConfig.HELP_COMMAND:
+            ChatConfig.display_help()
+            return True
+        elif user_input.strip().lower() == ChatConfig.RECONFIGURE_COMMAND:
+            config = ChatConfig.reconfigure()
+            self.gemini_api_key = config['DEFAULT']['GeminiAPI']
+            self.openai_api_key = config['DEFAULT']['OpenAIAPI']
+            self.ai_service = config['DEFAULT']['AIService']
+            self.loading_style = config['DEFAULT']['LoadingStyle']
+            self.instruction_file = config['DEFAULT']['InstructionFile']
+            self.gemini_model = config['DEFAULT']['GeminiModel']
+            self.gpt_model = config['DEFAULT']['GPTModel']
+            ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
+            self.instruction = ChatConfig.chat_instruction(self.instruction_file)
+            self.initialize_chat()
+            self.conversation_log = []
+            return True
+        elif user_input.strip().lower() == ChatConfig.PRINT_COMMAND:
+            """Save conversation log to a JSON file"""
+            current_datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            log_file_name = f"{ChatConfig.LOG_FOLDER}/log_{current_datetime}.json"
+            with open(log_file_name, "w") as file:
+                json.dump(self.conversation_log, file, indent=4)
+            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}Conversation log saved to {log_file_name}{Color.ENDC}\n")
+            return True
+        elif user_input.strip().lower() == ChatConfig.MODEL_COMMAND:
+            if self.change_model():
+                self.initialize_chat()
+            print(f'\n')
+            return True
+        return False
+
+    def process_user_input(self, chat, user_input):
+        """Send user input to the language model and print the response"""
+        set_stop_loading(False)
+        loading_thread = threading.Thread(target=loading_animation, args=(self.loading_style,))
+        loading_thread.start()
+
+        response_text = self.send_message_to_ai(chat, user_input)
+
+        if response_text:
+            sanitized_response = remove_emojis(response_text)
+            self.chat_history.append({"role": "user", "parts": [user_input]})
+            self.chat_history.append({"role": "model", "parts": [sanitized_response]})
+        else:
+            wiki_summary = self.initializer.query_wikipedia(user_input)
+            if wiki_summary:
+                combined_response = combine_responses(response_text, wiki_summary)
+                sanitized_response = remove_emojis(combined_response)
+                self.chat_history.append({"role": "user", "parts": [user_input]})
+                self.chat_history.append({"role": "model", "parts": [sanitized_response]})
+            else:
+                sanitized_response = f"Sorry, I couldn't find enough information on {user_input}."
+                self.chat_history.append({"role": "user", "parts": [user_input]})
+                self.chat_history.append({"role": "model", "parts": [sanitized_response]})
+
+        set_stop_loading(True)
+        loading_thread.join()
+        sanitized_response = sanitized_response.replace('*', '')
+        sanitized_response = re.sub(r'(?i)frea', '𝑓rea', sanitized_response)
+        print(f'{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{sanitized_response}\n')
+
+        """Log the conversation"""
+        self.conversation_log.append(f"User: {user_input}")
+        self.conversation_log.append(f"Model: {sanitized_response}")
+
+    def send_message_to_ai(self, chat, user_input):
+        """Send message to the AI service and get the response"""
+        if self.ai_service == 'gemini':
+            response = chat.send_message(self.instruction + user_input)
+            if isinstance(response, str):
+                return response
+            else:
+                return response.text
+        elif self.ai_service == 'openai':
+            messages = [{"role": "system", "content": self.instruction}]
+            messages.extend([{"role": "user" if msg["role"] == "user" else "assistant", "content": msg["parts"][0]} for msg in self.chat_history])
+            messages.append({"role": "user", "content": user_input})
+            response = self.openai_client.chat.completions.create(
+                model=self.gpt_model,
+                max_tokens=1024,
+                temperature=0.75,
+                top_p=0.65,
+                n=1,
+                stop=[],
+                messages=messages
+            )
+            return response.choices[0].message.content
+        elif self.ai_service == 'langchain':
+            response = chat.send_message(self.instruction + user_input)
+            return response.text
+        return None
         """Change the AI model"""
         print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.WHITE}Current model: {Color.ENDC}{Color.PASTELPINK}{self.ai_service} - {self.gemini_model if self.ai_service == 'gemini' else self.gpt_model}{Color.ENDC}")
         change = input(f"{Color.BRIGHTYELLOW}Do you want to change the model? (yes/no): {Color.ENDC}").lower()
