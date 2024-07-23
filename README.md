@@ -57,7 +57,7 @@ Frea is an interactive terminal-based chat application powered by Google's gener
     ```
 2. **Create a virtual env**:
     ```bash
-    pip -m venv .venv
+    python3 -m venv .venv
     ```
 3. **Activate the venv**:
     ```bash
@@ -86,7 +86,7 @@ Frea is an interactive terminal-based chat application powered by Google's gener
 To start the Frea application, run:
 
 ```bash
-cd code
+cd src
 python main.py
 ```
 
