@@ -8,9 +8,6 @@ import google.generativeai as genai
 import openai
 from openai import OpenAI
 
-
-
-
 # Configure logging with RotatingFileHandler
 log_handler = RotatingFileHandler('error.log', maxBytes=1*1024*1024, backupCount=3)  # 1 MB per file, 3 backups
 log_handler.setLevel(logging.DEBUG)
