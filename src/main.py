@@ -4,7 +4,7 @@ from color import Color
 from chat_initializer import ChatInitializer
 from chat_config import ChatConfig
 from terminal_utils import cursor_hide, cursor_show
-from utils import remove_emojis, run_subprocess, loading_animation, set_stop_loading
+from utils import remove_emojis, run_subprocess, loading_animation, set_stop_loading, combine_responses
 import google.generativeai as genai
 import openai
 from openai import OpenAI
@@ -239,11 +239,10 @@ class AIChat:
                     loading_thread = threading.Thread(target=loading_animation, args=(self.loading_style,))
                     loading_thread.start()
 
+                    response_text = None
                     if self.ai_service == 'gemini':
                         response = chat.send_message(self.instruction + user_input)
-                        sanitized_response = remove_emojis(response.text)
-                        self.chat_history.append({"role": "user", "parts": [user_input]})
-                        self.chat_history.append({"role": "model", "parts": [sanitized_response]})
+                        response_text = response.text
                     elif self.ai_service == 'openai':
                         messages = [{"role": "system", "content": self.instruction}]
                         messages.extend([{"role": "user" if msg["role"] == "user" else "assistant", "content": msg["parts"][0]} for msg in self.chat_history])
@@ -257,13 +256,26 @@ class AIChat:
                             stop=[],
                             messages=messages
                         )
-                        sanitized_response = remove_emojis(response.choices[0].message.content)
-                        self.chat_history.append({"role": "user", "parts": [user_input]})
-                        self.chat_history.append({"role": "model", "parts": [sanitized_response]})
+                        response_text = response.choices[0].message.content
                     elif self.ai_service == 'langchain':
                         response = chat.send_message(self.instruction + user_input)
+                        response_text = response.text
+
+                    if response_text:
+                        sanitized_response = remove_emojis(response_text)
                         self.chat_history.append({"role": "user", "parts": [user_input]})
                         self.chat_history.append({"role": "model", "parts": [sanitized_response]})
+                    else:
+                        wiki_summary = self.initializer.query_wikipedia(user_input)
+                        if wiki_summary:
+                            combined_response = combine_responses(response_text, wiki_summary)
+                            sanitized_response = remove_emojis(combined_response)
+                            self.chat_history.append({"role": "user", "parts": [user_input]})
+                            self.chat_history.append({"role": "model", "parts": [sanitized_response]})
+                        else:
+                            sanitized_response = f"Sorry, I couldn't find enough information on {user_input}."
+                            self.chat_history.append({"role": "user", "parts": [user_input]})
+                            self.chat_history.append({"role": "model", "parts": [sanitized_response]})
 
                     set_stop_loading(True)
                     loading_thread.join()
