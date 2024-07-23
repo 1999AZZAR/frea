@@ -8,6 +8,7 @@ from chat_config import ChatConfig
 import wikipediaapi
 from langchain_openai import ChatOpenAI
 
+
     def initialize_chat(self, chat_history):
         """Initialize the chat session"""
         logging.debug(f"AI Service: {self.ai_service}")
