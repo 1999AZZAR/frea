@@ -93,7 +93,11 @@ class AIChat:
         """Handle special commands"""
         if user_input.strip().lower() == ChatConfig.EXIT_COMMAND:
             print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.LIGHTRED}Exiting.... Goodbye!{Color.ENDC}\n")
-            return True
+            print(f"{Color.PASTELPINK}Switched to {self.ai_service.capitalize()} service. Reinitializing chat...{Color.ENDC}")
+            self.chat_history = self.chat_history or []  # Ensure chat_history is not None
+            self.initialize_chat()
+            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.LIGHTRED}Exiting.... Goodbye!{Color.ENDC}\n")
+            sys.exit(0)
         elif user_input.strip().lower() == ChatConfig.RESET_COMMAND:
             print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}Resetting session...{Color.ENDC}\n")
             time.sleep(0.5)
