@@ -3,7 +3,7 @@ import google.generativeai as genai
 import openai
 from openai import OpenAI
 from chat_config import ChatConfig
-from langchain import LangChain
+from langchain.chat_models import ChatOpenAI
 
 class ChatInitializer:
     def __init__(self):
@@ -16,7 +16,7 @@ class ChatInitializer:
         self.gemini_model = config['DEFAULT']['GeminiModel']
         self.gpt_model = config['DEFAULT']['GPTModel']
         ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
-        self.langchain_client = LangChain(api_key=self.openai_api_key)
+        self.langchain_client = ChatOpenAI(api_key=self.openai_api_key)
         self.openai_client = OpenAI(api_key=self.openai_api_key)
         self.ai_service = config['DEFAULT']['AIService']
         self.instruction = ChatConfig.chat_instruction(self.instruction_file)
