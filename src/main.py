@@ -24,11 +24,11 @@ class AIChat:
         self.ai_service = self._determine_ai_service()
         self.gemini_model = self.initializer.gemini_model
         self.gpt_model = self.initializer.gpt_model
-        self.langchain_client = self.initializer.langchain_client if self.initializer.langchain_client else None
+        self.langchain_client = self.initializer.langchain_client
         self.chat_history = []  # Unified chat history
         self.loading_style = self.initializer.loading_style
         self.instruction = self.initializer.instruction
-        self.openai_client = self.initializer.openai_client if self.initializer.openai_client else None
+        self.openai_client = self.initializer.openai_client
         self.conversation_log = []
 
     def process_user_input(self):
