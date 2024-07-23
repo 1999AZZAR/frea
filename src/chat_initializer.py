@@ -1,5 +1,6 @@
 import os
 import configparser
+import logging
 import google.generativeai as genai
 import openai
 from openai import OpenAI
