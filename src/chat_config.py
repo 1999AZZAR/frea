@@ -15,11 +15,11 @@ class ChatConfig:
     MODEL_COMMAND       = 'model'
     RECONFIGURE_COMMAND = 'reconfigure'
     HELP_COMMAND        = 'help'
-    CONFIG_FILE         = 'config.ini'
+    CONFIG_FILE         = './config/config.ini'
     LOG_FOLDER          = 'logs'
 
     DEFAULT_LOADING_STYLE = 'L1'
-    DEFAULT_INSTRUCTION_FILE = './instructions/general.txt'
+    DEFAULT_INSTRUCTION_FILE = './config/instruction.txt'
     DEFAULT_GEMINI_MODEL = 'gemini-1.5-pro'
     DEFAULT_GPT_MODEL = 'gpt-4o'
     DEFAULT_AI_SERVICE = 'gemini'

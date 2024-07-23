@@ -5,7 +5,7 @@ data/
 src/*.wav
 src/.env
 src/logs/*.*
-src/*.ini
+src/config/*.ini
 .aider*
 __pycache__/
 src/__pycache__/
