@@ -26,6 +26,7 @@ class ChatInitializer:
 
     def initialize_chat(self, chat_history):
         """Initialize the chat session"""
+        logging.debug(f"AI Service: {self.ai_service}")
         if self.ai_service == 'gemini':
             generation_config = ChatConfig.gemini_generation_config()
             safety_settings = ChatConfig.gemini_safety_settings()
@@ -38,7 +39,11 @@ class ChatInitializer:
         elif self.ai_service == 'langchain':
             chat = LangChainChat(self.langchain_client, self.gpt_model, self.instruction, chat_history)
             chat = OpenAIChat(self.openai_client, self.gpt_model, self.instruction, chat_history)
+        elif self.ai_service == 'openai':
+            chat = OpenAIChat(self.openai_client, self.gpt_model, self.instruction, chat_history)
+            chat = None
         else:
+            logging.error(f"Unsupported AI service: {self.ai_service}")
             chat = None
         return chat
 
