@@ -22,6 +22,7 @@ class AIChat:
         self.gemini_api_key = self.initializer.gemini_api_key
         self.openai_api_key = self.initializer.openai_api_key
         self.ai_service = self.initializer.ai_service
+        self.gemini_model = self.initializer.gemini_model
         self.gpt_model = self.initializer.gpt_model
         self.chat_history = []  # Unified chat history
         self.conversation_log = []
