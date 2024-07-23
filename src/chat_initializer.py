@@ -47,8 +47,8 @@ class ChatInitializer:
         config = ChatConfig.initialize_config()
         if not config:
             raise ValueError("Configuration initialization failed")
-        self.gemini_api_key = os.getenv('GEMINI_API_KEY', config['DEFAULT']['GeminiAPI'])
-        self.openai_api_key = os.getenv('OPENAI_API_KEY', config['DEFAULT']['OpenAIAPI'])
+        self.gemini_api_key = self._get_api_key('GEMINI_API_KEY', config['DEFAULT']['GeminiAPI'])
+        self.openai_api_key = self._get_api_key('OPENAI_API_KEY', config['DEFAULT']['OpenAIAPI'])
         self.gemini_model = config['DEFAULT']['GeminiModel']
         self.loading_style = config['DEFAULT']['LoadingStyle']
         self.gpt_model = config['DEFAULT']['GPTModel']
@@ -61,7 +61,11 @@ class ChatInitializer:
         self.langchain_client = ChatOpenAI(api_key=self.openai_api_key)
         self.openai_client = OpenAI(api_key=self.openai_api_key)
 
-    def initialize_chat(self, chat_history):
+    def _get_api_key(self, env_var, default_key):
+        api_key = os.getenv(env_var, default_key)
+        if not api_key:
+            api_key = input(f"Please enter your {env_var} API key: ").strip()
+        return api_key
         """Initialize the chat session"""
         logging.debug(f"AI Service: {self.ai_service}")
         if self.ai_service == 'gemini':
