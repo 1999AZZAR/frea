@@ -62,11 +62,15 @@ class ChatInitializer:
             raise ValueError("Configuration initialization failed")
         self.gemini_api_key = os.getenv('GEMINI_API_KEY', config['DEFAULT']['GeminiAPI'])
         self.openai_api_key = os.getenv('OPENAI_API_KEY', config['DEFAULT']['OpenAIAPI'])
-        self.instruction_file = config['DEFAULT']['InstructionFile']
+        self.gemini_model = config['DEFAULT']['GeminiModel']
         self.loading_style = config['DEFAULT']['LoadingStyle']
+        self.gpt_model = config['DEFAULT']['GPTModel']
         self.ai_service = config['DEFAULT']['AIService']
+        ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
+        self.langchain_client = ChatOpenAI(api_key=self.openai_api_key)
+        self.openai_client = OpenAI(api_key=self.openai_api_key)
+        self.instruction_file = config['DEFAULT']['InstructionFile']
         self.instruction = ChatConfig.chat_instruction(self.instruction_file)
-        self.wiki_wiki = wikipediaapi.Wikipedia(language='en', user_agent="FreaBot/1.0 (https://github.com/1999AZZAR/frea)")
 
     def query_wikipedia(self, query):
         """Query Wikipedia for additional information"""
