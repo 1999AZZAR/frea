@@ -1,0 +1,5 @@
+google.generativeai
+emoji
+openai
+langchain
+wikipedia-api
