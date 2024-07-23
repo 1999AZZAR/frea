@@ -64,6 +64,7 @@ class AIChat:
         logging.debug(f"Chat history: {self.chat_history}")
         chat = self.initializer.initialize_chat(self.chat_history)
         if chat is None:
+            logging.error("Chat initialization returned None")
             logging.error("Failed to initialize chat")
         return chat
 
