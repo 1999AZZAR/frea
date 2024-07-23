@@ -67,7 +67,7 @@ class ChatInitializer:
         self.loading_style = config['DEFAULT']['LoadingStyle']
         self.ai_service = config['DEFAULT']['AIService']
         self.instruction = ChatConfig.chat_instruction(self.instruction_file)
-        self.wiki_wiki = wikipediaapi.Wikipedia('en', user_agent="FreaBot/1.0 (https://github.com/1999AZZAR/frea)")
+        self.wiki_wiki = wikipediaapi.Wikipedia(language='en', user_agent="FreaBot/1.0 (https://github.com/1999AZZAR/frea)")
 
     def query_wikipedia(self, query):
         """Query Wikipedia for additional information"""
