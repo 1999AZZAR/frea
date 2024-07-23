@@ -24,6 +24,7 @@ class AIChat:
         self.ai_service = self.initializer.ai_service
         self.gemini_model = self.initializer.gemini_model
         self.gpt_model = self.initializer.gpt_model
+        self.langchain_client = self.initializer.langchain_client
         self.chat_history = []  # Unified chat history
         self.loading_style = self.initializer.loading_style
         self.instruction = self.initializer.instruction
@@ -239,7 +240,7 @@ class AIChat:
                         sanitized_response = remove_emojis(response.text)
                         self.chat_history.append({"role": "user", "parts": [user_input]})
                         self.chat_history.append({"role": "model", "parts": [sanitized_response]})
-                    else:  # OpenAI GPT
+                    elif self.ai_service == 'openai':
                         messages = [{"role": "system", "content": self.instruction}]
                         messages.extend([{"role": "user" if msg["role"] == "user" else "assistant", "content": msg["parts"][0]} for msg in self.chat_history])
                         messages.append({"role": "user", "content": user_input})
@@ -253,6 +254,10 @@ class AIChat:
                             messages=messages
                         )
                         sanitized_response = remove_emojis(response.choices[0].message.content)
+                        self.chat_history.append({"role": "user", "parts": [user_input]})
+                        self.chat_history.append({"role": "model", "parts": [sanitized_response]})
+                    elif self.ai_service == 'langchain':
+                        response = chat.send_message(self.instruction + user_input)
                         self.chat_history.append({"role": "user", "parts": [user_input]})
                         self.chat_history.append({"role": "model", "parts": [sanitized_response]})
 
