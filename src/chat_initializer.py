@@ -102,6 +102,28 @@ class ChatInitializer:
             messages=messages
         )
         return response.choices[0].message.content
+class OpenAIChat:
+    def __init__(self, client, model, instruction, chat_history):
+        self.client = client
+        self.model = model
+        self.instruction = instruction
+        self.chat_history = chat_history
+
+    def send_message(self, user_input):
+        messages = [{"role": "system", "content": self.instruction}]
+        messages.extend([{"role": "user" if msg["role"] == "user" else "assistant", "content": msg["parts"][0]} for msg in self.chat_history])
+        messages.append({"role": "user", "content": user_input})
+        response = self.client.chat.completions.create(
+            model=self.model,
+            max_tokens=1024,
+            temperature=0.75,
+            top_p=0.65,
+            n=1,
+            stop=[],
+            messages=messages
+        )
+        return response.choices[0].message.content
+
 class LangChainChat:
     def __init__(self, client, model, instruction, chat_history):
         self.client = client
