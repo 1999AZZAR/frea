@@ -208,6 +208,16 @@ class AIChat:
             config['DEFAULT']['GPTModel'] = self.gpt_model
             with open(ChatConfig.CONFIG_FILE, 'w') as configfile:
                 config.write(configfile)
+            # Update config file
+            config = configparser.ConfigParser()
+            config.read(ChatConfig.CONFIG_FILE)
+            config['DEFAULT']['AIService'] = self.ai_service
+            config['DEFAULT']['GeminiAPI'] = self.gemini_api_key
+            config['DEFAULT']['GeminiModel'] = self.gemini_model
+            config['DEFAULT']['OpenAIAPI'] = self.openai_api_key
+            config['DEFAULT']['GPTModel'] = self.gpt_model
+            with open(ChatConfig.CONFIG_FILE, 'w') as configfile:
+                config.write(configfile)
             print(f"{Color.PASTELPINK}Switched to {self.ai_service.capitalize()} service. Reinitializing chat...{Color.ENDC}")
             self.chat_history = self.chat_history or []  # Ensure chat_history is not None
             self.initialize_chat()
