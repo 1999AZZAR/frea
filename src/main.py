@@ -242,7 +242,10 @@ class AIChat:
                     response_text = None
                     if self.ai_service == 'gemini':
                         response = chat.send_message(self.instruction + user_input)
-                        response_text = response.text
+                        if isinstance(response, str):
+                            response_text = response
+                        else:
+                            response_text = response.text
                     elif self.ai_service == 'openai':
                         messages = [{"role": "system", "content": self.instruction}]
                         messages.extend([{"role": "user" if msg["role"] == "user" else "assistant", "content": msg["parts"][0]} for msg in self.chat_history])
