@@ -3,8 +3,8 @@ from logging.handlers import RotatingFileHandler
 from color import Color
 from chat_initializer import ChatInitializer
 from chat_config import ChatConfig
-from terminal_utils import cursor_hide, cursor_show
-from utils import remove_emojis, run_subprocess, loading_animation, set_stop_loading, combine_responses
+# from terminal_utils import cursor_hide, cursor_show
+from utils import remove_emojis, run_subprocess, loading_animation, set_stop_loading, combine_responses, cursor_hide, cursor_show
 import google.generativeai as genai
 import openai
 from openai import OpenAI

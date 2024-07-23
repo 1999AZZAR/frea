@@ -2,7 +2,17 @@ import re
 import subprocess
 import time
 from color import Color
-from terminal_utils import cursor_hide, cursor_show
+import sys
+
+def cursor_hide():
+    """Hide the cursor in the terminal"""
+    sys.stdout.write("\033[?25l")
+    sys.stdout.flush()
+
+def cursor_show():
+    """Show the cursor in the terminal"""
+    sys.stdout.write("\033[?25h")
+    sys.stdout.flush()
 
 def remove_emojis(text):
     """Remove emojis from the model response"""
@@ -66,3 +76,9 @@ def loading_animation(use='L2'):
                 time.sleep(delay)
     cursor_show()
     print("\r" + " " * 20 + "\r", end="")
+def combine_responses(ai_response, wiki_summary):
+    """Combine AI response and Wikipedia summary"""
+    if ai_response:
+        return f"{ai_response}\n\nAdditional information from Wikipedia:\n{wiki_summary}"
+    else:
+        return wiki_summary
