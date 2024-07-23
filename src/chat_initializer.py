@@ -58,8 +58,8 @@ class ChatInitializer:
 
     def _initialize_clients(self):
         ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
-        self.langchain_client = ChatOpenAI(api_key=self.openai_api_key)
-        self.openai_client = OpenAI(api_key=self.openai_api_key)
+        self.langchain_client = ChatOpenAI(api_key=self.openai_api_key) if self.openai_api_key else None
+        self.openai_client = OpenAI(api_key=self.openai_api_key) if self.openai_api_key else None
 
     def _get_api_key(self, env_var, default_key):
         api_key = os.getenv(env_var, default_key)
