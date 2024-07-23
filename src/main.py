@@ -199,9 +199,8 @@ class AIChat:
                 print(f"{Color.BRIGHTRED}Invalid choice. Keeping the current model.{Color.ENDC}")
                 return False
 
-            self.save_config()
-            self.save_config()
             print(f"{Color.PASTELPINK}Switched to {self.ai_service.capitalize()} service. Reinitializing chat...{Color.ENDC}")
+            self.save_config()
             self.chat_history = self.chat_history or []  # Ensure chat_history is not None
             self.initialize_chat()
             return True
