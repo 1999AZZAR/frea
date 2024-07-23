@@ -8,8 +8,10 @@ from langchain_openai import ChatOpenAI
 class ChatInitializer:
     def __init__(self):
         config = ChatConfig.initialize_config()
-        self.gemini_api_key = config['DEFAULT']['GeminiAPI']
-        self.openai_api_key = config['DEFAULT']['OpenAIAPI']
+        if not config:
+            raise ValueError("Configuration initialization failed")
+        self.gemini_api_key = os.getenv('GEMINI_API_KEY', config['DEFAULT']['GeminiAPI'])
+        self.openai_api_key = os.getenv('OPENAI_API_KEY', config['DEFAULT']['OpenAIAPI'])
         self.ai_service = config['DEFAULT']['AIService']
         self.loading_style = config['DEFAULT']['LoadingStyle']
         self.instruction_file = config['DEFAULT']['InstructionFile']
