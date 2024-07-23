@@ -36,10 +36,6 @@ class AIChat:
         readline.set_completer_delims(' \t\n=')
         readline.parse_and_bind("set editing-mode vi")
 
-        """Set delimiters for auto-completion and enable Vi editing mode"""
-        readline.set_completer_delims(' \t\n=')
-        readline.parse_and_bind("set editing-mode vi")
-
         try:
             """Prompt for user input"""
             question = input(f"{Color.BLUE}╭─ 𝔲ser \n╰─❯ {Color.ENDC}")
@@ -173,82 +169,6 @@ class AIChat:
             return True
         return False
 
-    def change_model(self):
-        """Change the AI model"""
-        print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.WHITE}Current model: {Color.ENDC}{Color.PASTELPINK}{self.ai_service} - {self.gemini_model if self.ai_service == 'gemini' else self.gpt_model}{Color.ENDC}")
-        change = input(f"{Color.BRIGHTYELLOW}Do you want to change the model? (yes/no): {Color.ENDC}").lower()
-        if change == 'yes':
-            print(f"\n{Color.BRIGHTGREEN}Available services:{Color.ENDC}")
-            print(f"{Color.PASTELPINK}1. Google Gemini{Color.ENDC}")
-            print(f"{Color.PASTELPINK}2. OpenAI ChatGPT{Color.ENDC}")
-            service = input(f"{Color.BRIGHTYELLOW}Enter the number of the service you want to use: {Color.ENDC}")
-            if service == '1':
-                self.ai_service = 'gemini'
-                if not self.gemini_api_key:
-                    self.gemini_api_key = input("Please enter your GEMINI_API_KEY: ").strip()
-                    self.initializer.gemini_api_key = self.gemini_api_key
-                    ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
-                try:
-                    gemini_models = self.get_gemini_models()
-                except Exception as e:
-                    logging.error(f"Error retrieving Gemini models: {e}")
-                    print(f"{Color.BRIGHTRED}Error retrieving Gemini models. Please check your API key and try again.{Color.ENDC}")
-                    self.gemini_api_key = input("Please enter your GEMINI_API_KEY: ").strip()
-                    self.initializer.gemini_api_key = self.gemini_api_key
-                    ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
-                    gemini_models = self.get_gemini_models()
-                if gemini_models:
-                    print(f"\n{Color.BRIGHTGREEN}Available Gemini models:{Color.ENDC}")
-                    for i, model in enumerate(gemini_models, 1):
-                        print(f"{Color.PASTELPINK}{i}. {model}{Color.ENDC}")
-                    model_choice = input(f"{Color.BRIGHTYELLOW}Enter the number of the model you want to use: {Color.ENDC}")
-                    try:
-                        self.gemini_model = gemini_models[int(model_choice) - 1]
-                    except (ValueError, IndexError):
-                        print(f"{Color.BRIGHTRED}Invalid choice. Using default model.{Color.ENDC}")
-                        self.gemini_model = ChatConfig.DEFAULT_GEMINI_MODEL
-                else:
-                    print(f"{Color.BRIGHTRED}No Gemini models available. Using default model.{Color.ENDC}")
-                    self.gemini_model = ChatConfig.DEFAULT_GEMINI_MODEL
-            elif service == '2':
-                self.ai_service = 'openai'
-                if not self.openai_api_key:
-                    self.openai_api_key = input("Please enter your OPENAI_API_KEY: ").strip()
-                    self.initializer.openai_api_key = self.openai_api_key
-                    ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
-                openai_models = self.get_openai_models()
-                if openai_models:
-                    print(f"\n{Color.BRIGHTGREEN}Available OpenAI models:{Color.ENDC}")
-                    for i, model in enumerate(openai_models, 1):
-                        print(f"{Color.PASTELPINK}{i}. {model}{Color.ENDC}")
-                    model_choice = input(f"{Color.BRIGHTYELLOW}Enter the number of the model you want to use: {Color.ENDC}")
-                    try:
-                        self.gpt_model = openai_models[int(model_choice) - 1]
-                    except (ValueError, IndexError):
-                        print(f"{Color.BRIGHTRED}Invalid choice. Using default model.{Color.ENDC}")
-                        self.gpt_model = ChatConfig.DEFAULT_GPT_MODEL
-                else:
-                    print(f"{Color.BRIGHTRED}No OpenAI models available. Using default model.{Color.ENDC}")
-                    self.gpt_model = ChatConfig.DEFAULT_GPT_MODEL
-            else:
-                print(f"{Color.BRIGHTRED}Invalid choice. Keeping the current model.{Color.ENDC}")
-                return False
-
-            # Update config file
-            config = configparser.ConfigParser()
-            config.read(ChatConfig.CONFIG_FILE)
-            config['DEFAULT']['AIService'] = self.ai_service
-            config['DEFAULT']['GeminiAPI'] = self.gemini_api_key
-            config['DEFAULT']['GeminiModel'] = self.gemini_model
-            config['DEFAULT']['OpenAIAPI'] = self.openai_api_key
-            config['DEFAULT']['GPTModel'] = self.gpt_model
-            with open(ChatConfig.CONFIG_FILE, 'w') as configfile:
-                config.write(configfile)
-            print(f"{Color.PASTELPINK}Switched to {self.ai_service.capitalize()} service. Reinitializing chat...{Color.ENDC}")
-            self.chat_history = self.chat_history or []  # Ensure chat_history is not None
-            self.initialize_chat()
-            return True
-        return False
         """model generation response flow"""
 
         chat = self.initialize_chat()
