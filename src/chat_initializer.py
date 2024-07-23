@@ -23,7 +23,7 @@ class ChatInitializer:
         ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
         self.langchain_client = ChatOpenAI(api_key=self.openai_api_key)
         self.openai_client = OpenAI(api_key=self.openai_api_key)
-        self.ai_service = config['DEFAULT']['AIService']
+        self.instruction_file = config['DEFAULT']['InstructionFile']
         self.instruction = ChatConfig.chat_instruction(self.instruction_file)
 
     def initialize_chat(self, chat_history):
@@ -63,7 +63,7 @@ class ChatInitializer:
             raise ValueError("Configuration initialization failed")
         self.gemini_api_key = os.getenv('GEMINI_API_KEY', config['DEFAULT']['GeminiAPI'])
         self.openai_api_key = os.getenv('OPENAI_API_KEY', config['DEFAULT']['OpenAIAPI'])
-        self.ai_service = config['DEFAULT']['AIService']
+        self.instruction_file = config['DEFAULT']['InstructionFile']
         self.loading_style = config['DEFAULT']['LoadingStyle']
         self.ai_service = config['DEFAULT']['AIService']
         self.instruction = ChatConfig.chat_instruction(self.instruction_file)
