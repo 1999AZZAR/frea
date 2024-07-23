@@ -8,26 +8,26 @@ from chat_config import ChatConfig
 import wikipediaapi
 from langchain_openai import ChatOpenAI
 
-    def initialize_chat(self, chat_history):
-        """Initialize the chat session"""
-        logging.debug(f"AI Service: {self.ai_service}")
-        if self.ai_service == 'gemini':
-            generation_config = ChatConfig.gemini_generation_config()
-            safety_settings = ChatConfig.gemini_safety_settings()
-            model = genai.GenerativeModel(
-                generation_config=generation_config,
-                model_name=self.gemini_model,
-                safety_settings=safety_settings
-            )
-            chat = model.start_chat(history=chat_history)
-        elif self.ai_service == 'langchain':
-            chat = LangChainChat(self.langchain_client, self.gpt_model, self.instruction, chat_history)
-        elif self.ai_service == 'openai':
-            chat = OpenAIChat(self.openai_client, self.gpt_model, self.instruction, chat_history)
-        else:
-            logging.error(f"Unsupported AI service: {self.ai_service}")
-            chat = None
-        return chat
+def initialize_chat(self, chat_history):
+    """Initialize the chat session"""
+    logging.debug(f"AI Service: {self.ai_service}")
+    if self.ai_service == 'gemini':
+        generation_config = ChatConfig.gemini_generation_config()
+        safety_settings = ChatConfig.gemini_safety_settings()
+        model = genai.GenerativeModel(
+            generation_config=generation_config,
+            model_name=self.gemini_model,
+            safety_settings=safety_settings
+        )
+        chat = model.start_chat(history=chat_history)
+    elif self.ai_service == 'langchain':
+        chat = LangChainChat(self.langchain_client, self.gpt_model, self.instruction, chat_history)
+    elif self.ai_service == 'openai':
+        chat = OpenAIChat(self.openai_client, self.gpt_model, self.instruction, chat_history)
+    else:
+        logging.error(f"Unsupported AI service: {self.ai_service}")
+        chat = None
+    return chat
 
     def initialize_chat(self, chat_history):
         """Initialize the chat session"""
