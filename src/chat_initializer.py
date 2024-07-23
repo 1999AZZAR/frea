@@ -15,7 +15,7 @@ class ChatInitializer:
             raise ValueError("Configuration initialization failed")
         self.gemini_api_key = os.getenv('GEMINI_API_KEY', config['DEFAULT']['GeminiAPI'])
         self.openai_api_key = os.getenv('OPENAI_API_KEY', config['DEFAULT']['OpenAIAPI'])
-        self.ai_service = config['DEFAULT']['AIService']
+        self.instruction_file = config['DEFAULT']['InstructionFile']
         self.loading_style = config['DEFAULT']['LoadingStyle']
         self.instruction_file = config['DEFAULT']['InstructionFile']
         self.gemini_model = config['DEFAULT']['GeminiModel']
