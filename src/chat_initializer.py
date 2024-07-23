@@ -66,6 +66,7 @@ class ChatInitializer:
         if not api_key:
             api_key = input(f"Please enter your {env_var} API key: ").strip()
         return api_key
+    def initialize_chat(self, chat_history):
         """Initialize the chat session"""
         logging.debug(f"AI Service: {self.ai_service}")
         if self.ai_service == 'gemini':
