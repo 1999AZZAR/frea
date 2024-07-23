@@ -18,6 +18,7 @@ class ChatInitializer:
         self.gemini_model = config['DEFAULT']['GeminiModel']
         self.loading_style = config['DEFAULT']['LoadingStyle']
         self.gpt_model = config['DEFAULT']['GPTModel']
+        self.ai_service = config['DEFAULT']['AIService']
         ChatConfig.initialize_apis(self.gemini_api_key, self.openai_api_key)
         self.langchain_client = ChatOpenAI(api_key=self.openai_api_key)
         self.openai_client = OpenAI(api_key=self.openai_api_key)
