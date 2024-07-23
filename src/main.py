@@ -93,7 +93,6 @@ class AIChat:
         if user_input.strip().lower() == ChatConfig.EXIT_COMMAND:
             print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.LIGHTRED}Exiting.... Goodbye!{Color.ENDC}\n")
             sys.exit(0)
-            sys.exit(0)
         elif user_input.strip().lower() == ChatConfig.RESET_COMMAND:
             print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}Resetting session...{Color.ENDC}\n")
             time.sleep(0.5)
@@ -277,8 +276,6 @@ class AIChat:
         with open(ChatConfig.CONFIG_FILE, 'w') as configfile:
             config.write(configfile)
 
-
-
     def initialize_chat(self):
         """Initialize the chat session"""
         logging.debug("Initializing chat session")
@@ -289,7 +286,6 @@ class AIChat:
             logging.error("Chat initialization returned None")
             logging.error("Failed to initialize chat. Exiting...")
         return chat
-
 
     def get_gemini_models(self):
         """Retrieve available Gemini models"""

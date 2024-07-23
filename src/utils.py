@@ -47,7 +47,6 @@ def run_subprocess(command):
         print(f"{Color.BRIGHTYELLOW}\n╰─❯ {Color.ENDC}{Color.BRIGHTRED}subprocess execution error: {e}{Color.ENDC}")
 
 stop_loading = False
-
 def set_stop_loading(value):
     global stop_loading
     stop_loading = value
@@ -76,6 +75,7 @@ def loading_animation(use='L2'):
                 time.sleep(delay)
     cursor_show()
     print("\r" + " " * 20 + "\r", end="")
+
 def combine_responses(ai_response, wiki_summary):
     """Combine AI response and Wikipedia summary"""
     if ai_response:

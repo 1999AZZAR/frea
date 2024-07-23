@@ -106,7 +106,6 @@ class ChatConfig:
     def initialize_apis(gemini_api_key, openai_api_key):
         """Initialize the API keys"""
         genai.configure(api_key=gemini_api_key)
-        # openai.api_key = openai_api_key
 
     @staticmethod
     def gemini_generation_config():
