@@ -1,3 +1,4 @@
+import os
 import configparser
 import google.generativeai as genai
 import openai
