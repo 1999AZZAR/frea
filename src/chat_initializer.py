@@ -58,7 +58,8 @@ class ChatInitializer:
 
     def query_wikipedia(self, query):
         """Query Wikipedia for additional information"""
-        page = self.wiki_wiki.page(query)
+        wiki_wiki = wikipediaapi.Wikipedia('en')
+        page = wiki_wiki.page(query)
         if page.exists():
             return page.summary
         else:
