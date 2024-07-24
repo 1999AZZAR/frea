@@ -58,12 +58,12 @@ class ChatInitializer:
 
     def query_wikipedia(self, query):
         """Query Wikipedia for additional information"""
-        user_agent = "frea/1.0 (your-email@example.com)"
+        user_agent = "frea/1.0 (azzarmrzs@gmail.com)"
         wiki_wiki = wikipediaapi.Wikipedia(language='en', user_agent=user_agent)
         page = wiki_wiki.page(query)
         if page.exists():
             summary_paragraphs = page.summary.split('\n')
-            return '\n'.join(summary_paragraphs[:3])
+            return '\n'.join(summary_paragraphs[:4])
         else:
             return None
 
