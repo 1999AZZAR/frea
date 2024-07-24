@@ -210,6 +210,7 @@ class AIChat:
         loading_thread = threading.Thread(target=loading_animation, args=(self.loading_style,))
         loading_thread.start()
 
+        wiki_success = False
         if user_input.strip().endswith("-wiki") and len(user_input.strip()[:-5].strip().split()) > 3:
             query = ' '.join(user_input.strip()[:-5].strip().split()[-3:])
             wiki_summary = self.initializer.query_wikipedia(query)
@@ -223,6 +224,8 @@ class AIChat:
         sanitized_response = remove_emojis(response_text)
 
         ai_success = bool(response_text)
+        ai_success = bool(response_text)
+        logging.info(f"Wiki Success: {wiki_success}, AI Success: {ai_success}")
         self.chat_history.append({"role": "user", "parts": [user_input]})
         self.chat_history.append({"role": "model", "parts": [sanitized_response]})
 
