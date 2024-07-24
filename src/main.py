@@ -213,7 +213,8 @@ class AIChat:
         if user_input.strip().endswith("-wiki") and len(user_input.strip()[:-5].strip().split()) > 3:
             query = ' '.join(user_input.strip()[:-5].strip().split()[-3:])
             wiki_summary = self.initializer.query_wikipedia(query)
-            if wiki_summary:
+            wiki_success = bool(wiki_summary)
+            if wiki_success:
                 user_input += f"\n\nAdditional info from wiki: {wiki_summary}"
             else:
                 user_input = user_input.strip()[:-5].strip()
@@ -221,6 +222,7 @@ class AIChat:
         response_text = self.send_message_to_ai(chat, user_input)
         sanitized_response = remove_emojis(response_text)
 
+        ai_success = bool(response_text)
         self.chat_history.append({"role": "user", "parts": [user_input]})
         self.chat_history.append({"role": "model", "parts": [sanitized_response]})
 
@@ -232,7 +234,8 @@ class AIChat:
 
         """Log the conversation"""
         self.conversation_log.append(f"User: {user_input}")
-        self.conversation_log.append(f"Model: {sanitized_response}")
+        self.conversation_log.append(f"Wiki Success: {wiki_success}")
+        self.conversation_log.append(f"AI Success: {ai_success}")
 
     def send_message_to_ai(self, chat, user_input):
         """Send message to the AI service and get the response"""
