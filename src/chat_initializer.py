@@ -62,7 +62,8 @@ class ChatInitializer:
         wiki_wiki = wikipediaapi.Wikipedia(language='en', user_agent=user_agent)
         page = wiki_wiki.page(query)
         if page.exists():
-            return page.summary
+            summary_paragraphs = page.summary.split('\n')
+            return '\n'.join(summary_paragraphs[:3])
         else:
             return None
 
