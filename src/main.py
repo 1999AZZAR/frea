@@ -229,7 +229,7 @@ class AIChat:
         loading_thread.join()
         sanitized_response = sanitized_response.replace('*', '')
         sanitized_response = re.sub(r'(?i)frea', '𝑓rea', sanitized_response)
-        print(f'{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{sanitized_response}\n')
+        print(f'{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{self.format_response_as_markdown(sanitized_response)}\n')
 
         """Log the conversation"""
         self.conversation_log.append(f"User: {user_input}")
@@ -261,7 +261,12 @@ class AIChat:
             response = chat.send_message(self.instruction + user_input)
             return response.text
         return None
-    def save_config(self):
+    def format_response_as_markdown(self, response_text):
+        """Format the response text using Markdown structure"""
+        # Example formatting, you can adjust as needed
+        response_text = response_text.replace('\n', '\n\n')  # Ensure paragraphs are separated
+        response_text = re.sub(r'(?i)\b(frea)\b', r'**\1**', response_text)  # Bold the word 'frea'
+        return response_text
         """Save the current configuration to config.ini"""
         config = configparser.ConfigParser()
         config.read(ChatConfig.CONFIG_FILE)
