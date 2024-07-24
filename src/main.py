@@ -218,16 +218,13 @@ class AIChat:
             if wiki_summary:
                 combined_response = combine_responses(response_text, wiki_summary)
                 sanitized_response = remove_emojis(combined_response)
-                self.chat_history.append({"role": "user", "parts": [user_input]})
-                self.chat_history.append({"role": "model", "parts": [sanitized_response]})
             else:
                 sanitized_response = f"Sorry, I couldn't find enough information on {query}."
-                self.chat_history.append({"role": "user", "parts": [user_input]})
-                self.chat_history.append({"role": "model", "parts": [sanitized_response]})
         else:
             sanitized_response = remove_emojis(response_text)
-            self.chat_history.append({"role": "user", "parts": [user_input]})
-            self.chat_history.append({"role": "model", "parts": [sanitized_response]})
+
+        self.chat_history.append({"role": "user", "parts": [user_input]})
+        self.chat_history.append({"role": "model", "parts": [sanitized_response]})
 
         set_stop_loading(True)
         loading_thread.join()
