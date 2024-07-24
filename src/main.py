@@ -210,13 +210,16 @@ class AIChat:
         loading_thread.start()
 
         wiki_success = False
-        if user_input.strip().endswith("-wiki") and len(user_input.strip()[:-5].strip().split()) > 3:
+        if user_input.strip().endswith("-wiki"):
             query = ' '.join(user_input.strip()[:-5].strip().split()[-3:])
+            logging.info(f"Querying Wikipedia with: {query}")
             wiki_summary = self.initializer.query_wikipedia(query)
             wiki_success = bool(wiki_summary)
             if wiki_success:
+                logging.info("Wikipedia query successful")
                 user_input += f"\n\nAdditional info from wiki: {wiki_summary}"
             else:
+                logging.info("Wikipedia query returned no results")
                 user_input = user_input.strip()[:-5].strip()
 
         response_text = self.send_message_to_ai(chat, user_input)
