@@ -210,8 +210,8 @@ class AIChat:
         loading_thread = threading.Thread(target=loading_animation, args=(self.loading_style,))
         loading_thread.start()
 
-        if user_input.strip().endswith("-wiki"):
-            query = user_input.strip()[:-5].strip()
+        if user_input.strip().endswith("-wiki") and len(user_input.strip()[:-5].strip().split()) > 3:
+            query = ' '.join(user_input.strip()[:-5].strip().split()[:3])
             wiki_summary = self.initializer.query_wikipedia(query)
             if wiki_summary:
                 user_input += f"\n\nAdditional info from wiki: {wiki_summary}"
