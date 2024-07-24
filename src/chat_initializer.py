@@ -63,7 +63,7 @@ class ChatInitializer:
         page = wiki_wiki.page(query)
         if page.exists():
             summary_paragraphs = page.summary.split('\n')
-            summary = '\n'.join(summary_paragraphs[:4])
+            summary = '\n'.join(summary_paragraphs[:5])
             link = page.fullurl
             return f"{summary}\n\nFor more information, visit: {link}"
         else:

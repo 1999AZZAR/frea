@@ -99,6 +99,7 @@ class ChatConfig:
     {Color.BRIGHTGREEN}{ChatConfig.MODEL_COMMAND}{Color.ENDC} - Change the AI model. Allows you to switch between different AI models (e.g., Gemini, OpenAI).
     {Color.BRIGHTGREEN}{ChatConfig.RECONFIGURE_COMMAND}{Color.ENDC}   - Reconfigure the settings. Prompts you to re-enter configuration settings such as API keys and model preferences.
     {Color.BRIGHTGREEN}run (command){Color.ENDC} - Run a subprocess command. Executes a shell command in the terminal (e.g., run ls).
+    {Color.BRIGHTGREEN}(prompt) -wiki{Color.ENDC} - Get additional info from wikipedia (from the last 3 word of the prompt) to fetch into the model response as the knowladge base (e.g., airplane -wiki).
         """
         print(f"\n{help_text}")
 
