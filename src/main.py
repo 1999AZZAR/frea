@@ -217,14 +217,20 @@ class AIChat:
             self.chat_history.append({"role": "user", "parts": [user_input]})
             self.chat_history.append({"role": "model", "parts": [sanitized_response]})
         else:
-            wiki_summary = self.initializer.query_wikipedia(user_input)
-            if wiki_summary:
-                combined_response = combine_responses(response_text, wiki_summary)
-                sanitized_response = remove_emojis(combined_response)
-                self.chat_history.append({"role": "user", "parts": [user_input]})
-                self.chat_history.append({"role": "model", "parts": [sanitized_response]})
+            if user_input.strip().endswith("-wiki"):
+                query = user_input.strip()[:-5].strip()
+                wiki_summary = self.initializer.query_wikipedia(query)
+                if wiki_summary:
+                    combined_response = combine_responses(response_text, wiki_summary)
+                    sanitized_response = remove_emojis(combined_response)
+                    self.chat_history.append({"role": "user", "parts": [user_input]})
+                    self.chat_history.append({"role": "model", "parts": [sanitized_response]})
+                else:
+                    sanitized_response = f"Sorry, I couldn't find enough information on {query}."
+                    self.chat_history.append({"role": "user", "parts": [user_input]})
+                    self.chat_history.append({"role": "model", "parts": [sanitized_response]})
             else:
-                sanitized_response = f"Sorry, I couldn't find enough information on {user_input}."
+                sanitized_response = remove_emojis(response_text)
                 self.chat_history.append({"role": "user", "parts": [user_input]})
                 self.chat_history.append({"role": "model", "parts": [sanitized_response]})
 
