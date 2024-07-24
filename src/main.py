@@ -217,7 +217,7 @@ class AIChat:
                 user_input += f"\n\nAdditional info from wiki: {wiki_summary}"
             else:
                 print(f"{Color.BRIGHTRED}Sorry, I couldn't find enough information on {query}.{Color.ENDC}")
-                return
+                user_input = user_input.strip()[:-5].strip()
 
         response_text = self.send_message_to_ai(chat, user_input)
         sanitized_response = remove_emojis(response_text)
