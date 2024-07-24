@@ -74,8 +74,7 @@ class OpenAIChat:
 
     def send_message(self, user_input):
         messages = [{"role": "system", "content": self.instruction}]
-        messages.extend([{"role": "user" if msg["role"] == "user" else "assistant", "content":
-msg["parts"][0]} for msg in self.chat_history])
+        messages.extend([{"role": "user" if msg["role"] == "user" else "assistant", "content": msg["parts"][0]} for msg in self.chat_history])
         messages.append({"role": "user", "content": user_input})
         response = self.client.chat.completions.create(
             model=self.model,
@@ -97,8 +96,7 @@ class LangChainChat:
 
     def send_message(self, user_input):
         messages = [{"role": "system", "content": self.instruction}]
-        messages.extend([{"role": "user" if msg["role"] == "user" else "assistant", "content":
-msg["parts"][0]} for msg in self.chat_history])
+        messages.extend([{"role": "user" if msg["role"] == "user" else "assistant", "content": msg["parts"][0]} for msg in self.chat_history])
         messages.append({"role": "user", "content": user_input})
         response = self.client.chat.completions.create(
             model=self.model,
