@@ -58,7 +58,8 @@ class ChatInitializer:
 
     def query_wikipedia(self, query):
         """Query Wikipedia for additional information"""
-        wiki_wiki = wikipediaapi.Wikipedia('en')
+        user_agent = "frea/1.0 (azzarmrzs@gmail.com)"
+        wiki_wiki = wikipediaapi.Wikipedia('en', user_agent=user_agent)
         page = wiki_wiki.page(query)
         if page.exists():
             return page.summary
