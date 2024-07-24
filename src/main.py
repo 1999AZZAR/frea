@@ -210,18 +210,17 @@ class AIChat:
         loading_thread = threading.Thread(target=loading_animation, args=(self.loading_style,))
         loading_thread.start()
 
-        response_text = self.send_message_to_ai(chat, user_input)
-
         if user_input.strip().endswith("-wiki"):
             query = user_input.strip()[:-5].strip()
             wiki_summary = self.initializer.query_wikipedia(query)
             if wiki_summary:
-                combined_response = combine_responses(response_text, wiki_summary)
-                sanitized_response = remove_emojis(combined_response)
+                user_input += f"\n\nAdditional info from wiki: {wiki_summary}"
             else:
-                sanitized_response = f"Sorry, I couldn't find enough information on {query}."
-        else:
-            sanitized_response = remove_emojis(response_text)
+                print(f"{Color.BRIGHTRED}Sorry, I couldn't find enough information on {query}.{Color.ENDC}")
+                return
+
+        response_text = self.send_message_to_ai(chat, user_input)
+        sanitized_response = remove_emojis(response_text)
 
         self.chat_history.append({"role": "user", "parts": [user_input]})
         self.chat_history.append({"role": "model", "parts": [sanitized_response]})
