@@ -178,6 +178,9 @@ class AIChat:
             return True
         return False
 
+    def extract_quoted_texts(self, text):
+        return re.findall(r'"([^"]*)"', text)
+
     def process_user_input(self, chat, user_input):
         """Send user input to the language model and print the response"""
         set_stop_loading(False)
@@ -186,16 +189,36 @@ class AIChat:
 
         wiki_success = False
         if user_input.strip().endswith("-wiki"):
-            query = ' '.join(user_input.strip()[:-5].strip().split()[-2:])
-            logging.info(f"Querying Wikipedia with: {query}")
-            wiki_summary = self.initializer.query_wikipedia(query)
-            wiki_success = bool(wiki_summary)
+            # Extract all quoted texts
+            quoted_texts = self.extract_quoted_texts(user_input)
+
+            wiki_summaries = []
+            for i, query in enumerate(quoted_texts[:3]):  # Limit to 3 queries
+                logging.info(f"Querying Wikipedia with: {query}")
+                wiki_summary = self.initializer.query_wikipedia(query)
+                if wiki_summary:
+                    wiki_summaries.append(f"Info for '{query}': {wiki_summary}")
+                    wiki_success = True
+                    logging.info(f"Wikipedia query {i+1} successful")
+                else:
+                    logging.info(f"Wikipedia query {i+1} returned no results")
+
+            if not quoted_texts:
+                # If no quoted text, fall back to the last two words
+                query = ' '.join(user_input.strip()[:-5].strip().split()[-2:])
+                logging.info(f"Querying Wikipedia with: {query}")
+                wiki_summary = self.initializer.query_wikipedia(query)
+                if wiki_summary:
+                    wiki_summaries.append(f"Info for '{query}': {wiki_summary}")
+                    wiki_success = True
+                    logging.info("Wikipedia query successful")
+                else:
+                    logging.info("Wikipedia query returned no results")
+
             if wiki_success:
-                logging.info("Wikipedia query successful")
                 user_input = user_input[:-5].strip()
-                user_input += f"\n\nAdditional info from wiki (dont forget to add this to your response, and always give me the link): {wiki_summary}"
+                user_input += "\n\nAdditional info from wiki (don't forget to add this to your response, always give me the link on the end of the response.):\n" + "\n".join(wiki_summaries)
             else:
-                logging.info("Wikipedia query returned no results")
                 user_input = user_input[:-5].strip()
 
         response_text = self.send_message_to_ai(chat, user_input)

@@ -87,11 +87,21 @@ class ChatConfig:
     {Color.BRIGHTGREEN}{ChatConfig.EXIT_COMMAND}{Color.ENDC}  - Exit the application. Terminates the chat session and closes the application.
     {Color.BRIGHTGREEN}{ChatConfig.CLEAR_COMMAND}{Color.ENDC} - Clear the terminal screen. Clears all text from the terminal screen.
     {Color.BRIGHTGREEN}{ChatConfig.RESET_COMMAND}{Color.ENDC} - Reset the chat session. Clears the chat history and restarts the chat session.
-    {Color.BRIGHTGREEN}{ChatConfig.PRINT_COMMAND}{Color.ENDC} - Save the conversation log to a file. Saves to current chat session to a log file in JSON format.
-    {Color.BRIGHTGREEN}{ChatConfig.MODEL_COMMAND}{Color.ENDC} - Change the AI model. Allows you to switch between different Gemini models.
-    {Color.BRIGHTGREEN}{ChatConfig.RECONFIGURE_COMMAND}{Color.ENDC}   - Reconfigure the settings. Prompts you to re-enter configuration settings such as API keys and model preferences.
-    {Color.BRIGHTGREEN}run (command){Color.ENDC} - Run a subprocess command. Executes a shell command in the terminal (e.g., run ls).
-    {Color.BRIGHTGREEN}(prompt) -wiki{Color.ENDC} - Get additional info from wikipedia (from the last 3 word of the prompt) to fetch into the model response as the knowladge base (e.g., airplane -wiki).
+    {Color.BRIGHTGREEN}{ChatConfig.PRINT_COMMAND}{Color.ENDC} - Saves to current chat session to a log file in JSON format.
+    {Color.BRIGHTGREEN}{ChatConfig.MODEL_COMMAND}{Color.ENDC} - Change the AI model.
+            Allows you to switch between different Gemini models.
+    {Color.BRIGHTGREEN}{ChatConfig.RECONFIGURE_COMMAND}{Color.ENDC}    - Reconfigure the settings.
+            Prompts you to re-enter configuration settings such as API keys and model preferences.
+    {Color.BRIGHTGREEN}run (command){Color.ENDC}  - Run a subprocess command.
+            Executes a shell command in the terminal (e.g., run ls).
+    {Color.BRIGHTGREEN}(prompt) -wiki{Color.ENDC} - Get additional info from Wikipedia to enhance the model's knowledge base.
+            The system will search for:
+            1. Up to three phrases enclosed in double quotes (e.g., "Python" "machine learning" "data science" -wiki).
+            2. If no quotes are found, it will use the last two words of the prompt.
+            For example:
+                - "artificial intelligence" "neural networks" -wiki
+                - Tell me about "quantum computing" and its applications -wiki
+                - airplane -wiki
         """
         print(f"\n{help_text}")
 
