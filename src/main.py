@@ -19,7 +19,7 @@ class AIChat:
         self.gemini_api_key = self.initializer.gemini_api_key or ""
         self.ai_service = self._determine_ai_service()
         self.gemini_model = self.initializer.gemini_model
-        self.chat_history = []  # Unified chat history
+        self.chat_history = []
         self.loading_style = self.initializer.loading_style
         self.instruction = self.initializer.instruction
         self.conversation_log = []
@@ -60,9 +60,12 @@ class AIChat:
                     multiline_mode = False
                     continue
 
-                if user_input.strip().lower().startswith("run "):
+                if user_input.strip().lower().startswith("run ") or user_input.strip().startswith("/"):
                     """Run a subprocess command"""
-                    command = user_input[4:].strip()
+                    if user_input.strip().startswith("/"):
+                        command = user_input[1:].strip()
+                    else:
+                        command = user_input[4:].strip()
                     print(f'{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.LIGHTRED}Executing 𝔲ser Command{Color.ENDC}\n')
                     run_subprocess(command)
                     user_input = ""
@@ -187,10 +190,17 @@ class AIChat:
         loading_thread = threading.Thread(target=loading_animation, args=(self.loading_style,))
         loading_thread.start()
 
+        # Detect if there is any text enclosed in backticks
+        backtick_texts = re.findall(r'`([^`]+)`', user_input)
+
         wiki_success = False
-        if user_input.strip().endswith("-wiki"):
-            # Extract all quoted texts
-            quoted_texts = self.extract_quoted_texts(user_input)
+
+        if user_input.strip().endswith("-wiki") or backtick_texts:
+            # Extract quoted texts if the input ends with "-wiki"
+            if not backtick_texts:
+                quoted_texts = self.extract_quoted_texts(user_input)
+            else:
+                quoted_texts = backtick_texts
 
             wiki_summaries = []
             for i, query in enumerate(quoted_texts[:3]):  # Limit to 3 queries
@@ -216,16 +226,24 @@ class AIChat:
                     logging.info("Wikipedia query returned no results")
 
             if wiki_success:
-                user_input = user_input[:-5].strip()
-                user_input += "\n\nAdditional info from wiki (don't forget to add this to your response, always give me the link on the end of the response.):\n" + "\n".join(wiki_summaries)
+                # Remove the "-wiki" or backtick texts from the user input
+                if user_input.strip().endswith("-wiki"):
+                    user_input = user_input[:-5].strip()
+                else:
+                    user_input = re.sub(r'`[^`]+`', '', user_input).strip()
+                user_input += "\n\nContext: " + "\n".join(wiki_summaries)
             else:
-                user_input = user_input[:-5].strip()
+                if user_input.strip().endswith("-wiki"):
+                    user_input = user_input[:-5].strip()
+                else:
+                    user_input = user_input
+        else:
+            user_input = user_input
 
         response_text = self.send_message_to_ai(chat, user_input)
         sanitized_response = remove_emojis(response_text)
 
         ai_success = bool(response_text)
-        # ai_success = bool(response_text)
         logging.info(f"Wiki Success: {wiki_success}, AI Success: {ai_success}")
         self.chat_history.append({"role": "user", "parts": [user_input]})
         self.chat_history.append({"role": "model", "parts": [sanitized_response]})
@@ -234,7 +252,7 @@ class AIChat:
         loading_thread.join()
         sanitized_response = sanitized_response.replace('*', '')
         sanitized_response = re.sub(r'(?i)frea', '𝑓rea', sanitized_response)
-        print(f'{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{self.format_response_as_markdown(sanitized_response)}\n')
+        print(f'{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{self.format_response_as_markdown(sanitized_response)}')
 
         """Log the conversation"""
         self.conversation_log.append(f"User: {user_input}")
@@ -259,7 +277,7 @@ class AIChat:
     def initialize_chat(self):
         """Initialize the chat session"""
         logging.debug("Initializing chat session")
-        self.chat_history = self.chat_history or []  # Ensure chat_history is not None
+        self.chat_history = self.chat_history or []
         logging.debug(f"Chat history: {self.chat_history}")
         chat = self.initializer.initialize_chat(self.chat_history)
         if chat is None:

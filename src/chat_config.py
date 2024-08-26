@@ -12,7 +12,7 @@ class ChatConfig:
     RESET_COMMAND       = 'reset'
     PRINT_COMMAND       = 'print'
     MODEL_COMMAND       = 'model'
-    RECONFIGURE_COMMAND = 'reconfigure'
+    RECONFIGURE_COMMAND = 'recon'
     HELP_COMMAND        = 'help'
     CONFIG_FILE         = './config/config.ini'
     LOG_FOLDER          = 'logs'
@@ -90,17 +90,19 @@ class ChatConfig:
     {Color.BRIGHTGREEN}{ChatConfig.PRINT_COMMAND}{Color.ENDC} - Saves to current chat session to a log file in JSON format.
     {Color.BRIGHTGREEN}{ChatConfig.MODEL_COMMAND}{Color.ENDC} - Change the AI model.
             Allows you to switch between different Gemini models.
-    {Color.BRIGHTGREEN}{ChatConfig.RECONFIGURE_COMMAND}{Color.ENDC}    - Reconfigure the settings.
+    {Color.BRIGHTGREEN}{ChatConfig.RECONFIGURE_COMMAND}{Color.ENDC} - Reconfigure the settings.
             Prompts you to re-enter configuration settings such as API keys and model preferences.
-    {Color.BRIGHTGREEN}run (command){Color.ENDC}  - Run a subprocess command.
-            Executes a shell command in the terminal (e.g., run ls).
-    {Color.BRIGHTGREEN}(prompt) -wiki{Color.ENDC} - Get additional info from Wikipedia to enhance the model's knowledge base.
+    {Color.BRIGHTGREEN}run  {Color.ENDC} - Run a subprocess command.
+    {Color.BRIGHTGREEN}'/'  {Color.ENDC} - same as run.
+            Executes a shell command in the terminal (e.g., run ls or /ls).
+    {Color.BRIGHTGREEN}-wiki{Color.ENDC} - Get additional info from Wikipedia to enhance the model's knowledge base.
             The system will search for:
             1. Up to three phrases enclosed in double quotes (e.g., "Python" "machine learning" "data science" -wiki).
-            2. If no quotes are found, it will use the last two words of the prompt.
+            2. If text is enclosed in backticks (e.g., `Python`), it will be treated as a Wikipedia query.
+            3. If no quotes or backticks are found, it will use the last two words of the prompt.
             For example:
                 - "artificial intelligence" "neural networks" -wiki
-                - Tell me about "quantum computing" and its applications -wiki
+                - Tell me about `quantum computing` and its applications
                 - airplane -wiki
         """
         print(f"\n{help_text}")
@@ -118,7 +120,7 @@ class ChatConfig:
         """Configuration for the Gemini language model"""
         return {
             'max_output_tokens': 1024,
-            'temperature': 0.75,
+            'temperature': 0.25,
             'candidate_count': 1,
             'top_k': 35,
             'top_p': 0.65,
