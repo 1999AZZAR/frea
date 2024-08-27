@@ -3,3 +3,4 @@ emoji
 openai
 langchain
 wikipedia-api
+fpdf2

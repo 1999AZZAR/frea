@@ -10,6 +10,7 @@ class ChatConfig:
     EXIT_COMMAND        = 'exit'
     CLEAR_COMMAND       = 'clear'
     RESET_COMMAND       = 'reset'
+    SAVE_COMMAND        = 'save'
     PRINT_COMMAND       = 'print'
     MODEL_COMMAND       = 'model'
     RECONFIGURE_COMMAND = 'recon'
@@ -87,7 +88,8 @@ class ChatConfig:
     {Color.BRIGHTGREEN}{ChatConfig.EXIT_COMMAND}{Color.ENDC}  - Exit the application. Terminates the chat session and closes the application.
     {Color.BRIGHTGREEN}{ChatConfig.CLEAR_COMMAND}{Color.ENDC} - Clear the terminal screen. Clears all text from the terminal screen.
     {Color.BRIGHTGREEN}{ChatConfig.RESET_COMMAND}{Color.ENDC} - Reset the chat session. Clears the chat history and restarts the chat session.
-    {Color.BRIGHTGREEN}{ChatConfig.PRINT_COMMAND}{Color.ENDC} - Saves to current chat session to a log file in JSON format.
+    {Color.BRIGHTGREEN}{ChatConfig.SAVE_COMMAND}{Color.ENDC}  - Saves to current chat history to a file in JSON format.
+    {Color.BRIGHTGREEN}{ChatConfig.PRINT_COMMAND}{Color.ENDC} - Saves to current chat history to a file in PDF format.
     {Color.BRIGHTGREEN}{ChatConfig.MODEL_COMMAND}{Color.ENDC} - Change the AI model.
             Allows you to switch between different Gemini models.
     {Color.BRIGHTGREEN}{ChatConfig.RECONFIGURE_COMMAND}{Color.ENDC} - Reconfigure the settings.
@@ -144,7 +146,7 @@ class ChatConfig:
             with open(instruction_file, 'r') as file:
                 return file.read()
         else:
-            print(f"{Color.BRIGHTRED}Instruction file not found. Using default instructions.{Color.ENDC}")
+            print(f"{Color.BRIGHTRED}Instruction file not found. Using fallback instructions.{Color.ENDC}")
             return "You are frea (freak robotic entity with amusement), a helpful assistant."
 
     @staticmethod

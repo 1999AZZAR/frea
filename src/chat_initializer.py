@@ -1,6 +1,4 @@
 import os
-import configparser
-import logging
 import google.generativeai as genai
 from chat_config import ChatConfig
 import wikipediaapi
@@ -45,6 +43,6 @@ class ChatInitializer:
             summary_paragraphs = page.summary.split('\n')
             summary = '\n'.join(summary_paragraphs[:3])
             link = page.fullurl
-            return f"{summary}\n\nFor more information, visit: {link}"
+            return f"{summary}\nFor more information, visit: {link}"
         else:
             return None

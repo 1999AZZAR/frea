@@ -1,9 +1,9 @@
-import os, readline, termios, tty, sys, threading, configparser, datetime, json, logging, time, re
+import sys, threading, logging, time, re
 from logging.handlers import RotatingFileHandler
 from color import Color
 from chat_initializer import ChatInitializer
 from chat_config import ChatConfig
-from utils import remove_emojis, run_subprocess, loading_animation, set_stop_loading, cursor_hide, cursor_show
+from utils import remove_emojis, run_subprocess, loading_animation, set_stop_loading, cursor_hide, cursor_show, print_log, save_log
 import google.generativeai as genai
 
 # Configure logging with RotatingFileHandler
@@ -22,7 +22,6 @@ class AIChat:
         self.chat_history = []
         self.loading_style = self.initializer.loading_style
         self.instruction = self.initializer.instruction
-        self.conversation_log = []
 
     def generate_chat(self):
         """model generation response flow"""
@@ -99,20 +98,23 @@ class AIChat:
         if user_input.strip().lower() == ChatConfig.EXIT_COMMAND:
             print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.LIGHTRED}Exiting.... Goodbye!{Color.ENDC}\n")
             sys.exit(0)
+
         elif user_input.strip().lower() == ChatConfig.RESET_COMMAND:
             print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}Resetting session...{Color.ENDC}\n")
             time.sleep(0.5)
             ChatConfig.clear_screen()
             self.chat_history = []
             self.initialize_chat()
-            self.conversation_log = []
             return True
+
         elif user_input.strip().lower() == ChatConfig.CLEAR_COMMAND:
             ChatConfig.clear_screen()
             return True
+
         elif user_input.strip().lower() == ChatConfig.HELP_COMMAND:
             ChatConfig.display_help()
             return True
+
         elif user_input.strip().lower() == ChatConfig.RECONFIGURE_COMMAND:
             config = ChatConfig.reconfigure()
             self.gemini_api_key = config['DEFAULT']['GeminiAPI']
@@ -124,21 +126,24 @@ class AIChat:
             ChatConfig.initialize_apis(self.gemini_api_key)
             self.instruction = ChatConfig.chat_instruction(self.instruction_file)
             self.initialize_chat()
-            self.conversation_log = []
             return True
+
+        elif user_input.strip().lower() == ChatConfig.SAVE_COMMAND:
+            file_name = input("Enter the file name to save: ")
+            save_log(file_name, self.chat_history)
+            return True
+
         elif user_input.strip().lower() == ChatConfig.PRINT_COMMAND:
-            """Save conversation log to a JSON file"""
-            current_datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            log_file_name = f"{ChatConfig.LOG_FOLDER}/log_{current_datetime}.json"
-            with open(log_file_name, "w") as file:
-                json.dump(self.conversation_log, file, indent=4)
-            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}Conversation log saved to {log_file_name}{Color.ENDC}\n")
+            file_name = input("Enter the file name to print: ")
+            print_log(file_name, self.chat_history)
             return True
+
         elif user_input.strip().lower() == ChatConfig.MODEL_COMMAND:
             if self.change_model():
                 self.initialize_chat()
             print(f'\n')
             return True
+
         return False
 
     def change_model(self):
@@ -226,12 +231,10 @@ class AIChat:
                     logging.info("Wikipedia query returned no results")
 
             if wiki_success:
-                # Remove the "-wiki" or backtick texts from the user input
+                # Remove the "-wiki" texts from the user input
                 if user_input.strip().endswith("-wiki"):
                     user_input = user_input[:-5].strip()
-                else:
-                    user_input = re.sub(r'`[^`]+`', '', user_input).strip()
-                user_input += "\n\nContext: " + "\n".join(wiki_summaries)
+                user_input += "\nContext: " + "\n".join(wiki_summaries)
             else:
                 if user_input.strip().endswith("-wiki"):
                     user_input = user_input[:-5].strip()
@@ -253,11 +256,6 @@ class AIChat:
         sanitized_response = sanitized_response.replace('*', '')
         sanitized_response = re.sub(r'(?i)frea', '𝑓rea', sanitized_response)
         print(f'{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{self.format_response_as_markdown(sanitized_response)}')
-
-        """Log the conversation"""
-        self.conversation_log.append(f"User: {user_input}")
-        self.conversation_log.append(f"Wiki Success: {wiki_success}")
-        self.conversation_log.append(f"AI Success: {ai_success}")
 
     def send_message_to_ai(self, chat, user_input):
         """Send message to the AI service and get the response"""
@@ -290,14 +288,13 @@ class AIChat:
         return self.initializer.get_gemini_models()
 
     def _determine_ai_service(self):
-        """Determine the AI service to use based on available API keys"""
+        """Determine the AI service based on available API keys"""
         if self.initializer.gemini_api_key:
             return 'gemini'
 
         else:
             print(f"{Color.BRIGHTRED}No valid API keys found. Please provide at least one API key.{Color.ENDC}")
             self.gemini_api_key = input("Please enter your GEMINI_API_KEY : ").strip()
-            # self.openai_api_key = input("Please enter your OPENAI_API_KEY (or press Enter to skip): ").strip()
             if self.gemini_api_key:
                 self.initializer.gemini_api_key = self.gemini_api_key
                 ChatConfig.initialize_apis(self.gemini_api_key)
