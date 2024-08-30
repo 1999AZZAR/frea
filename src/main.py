@@ -3,8 +3,10 @@ from logging.handlers import RotatingFileHandler
 from color import Color
 from chat_initializer import ChatInitializer
 from chat_config import ChatConfig
-from utils import remove_emojis, run_subprocess, loading_animation, set_stop_loading, cursor_hide, cursor_show, print_log, save_log
+from utils import remove_emojis, run_subprocess, loading_animation, set_stop_loading, cursor_hide, cursor_show
 import google.generativeai as genai
+import configparser
+from printer import print_log, save_log
 
 # Configure logging with RotatingFileHandler
 log_handler = RotatingFileHandler('./logs/error.log', maxBytes=0.5*1024*1024, backupCount=3)
@@ -78,8 +80,9 @@ class AIChat:
                 print("\nKeyboard Interrupt")
                 break
             except Exception as e:
+                set_stop_loading(True)
                 logging.error(f"Error during chat generation: {e}", exc_info=True)
-                print(f"{Color.BRIGHTRED}An error occurred. Please check the logs for more details.{Color.ENDC}")
+                print(f"\n{Color.BRIGHTRED}An error occurred. Please check the logs for more details.{Color.ENDC}")
                 break
 
     def save_config(self):
@@ -169,7 +172,7 @@ class AIChat:
                 print(f"\n{Color.BRIGHTGREEN}Available Gemini models:{Color.ENDC}")
                 for i, model in enumerate(gemini_models, 1):
                     print(f"{Color.PASTELPINK}{i}. {model}{Color.ENDC}")
-                model_choice = input(f"{Color.BRIGHTYELLOW}Enter the number of the model you want to use: {Color.ENDC}")
+                model_choice = input(f"{Color.BRIGHTYELLOW}Enter the model number you want to use: {Color.ENDC}")
                 try:
                     self.gemini_model = gemini_models[int(model_choice) - 1]
                 except (ValueError, IndexError):
@@ -179,9 +182,9 @@ class AIChat:
                 print(f"{Color.BRIGHTRED}No Gemini models available. Using default model.{Color.ENDC}")
                 self.gemini_model = ChatConfig.DEFAULT_GEMINI_MODEL
 
-            print(f"{Color.PASTELPINK}Switched to {self.ai_service.capitalize()} service. Reinitializing chat...{Color.ENDC}")
+            print(f"{Color.PASTELPINK}Switched to {self.gemini_model.capitalize()} model. Reinitializing chat...{Color.ENDC}")
             self.save_config()
-            self.chat_history = self.chat_history or []  # Ensure chat_history is not None
+            self.chat_history = self.chat_history or []
             self.initialize_chat()
             return True
         return False
@@ -194,6 +197,7 @@ class AIChat:
         set_stop_loading(False)
         loading_thread = threading.Thread(target=loading_animation, args=(self.loading_style,))
         loading_thread.start()
+        user_prompt = user_input
 
         # Detect if there is any text enclosed in backticks
         backtick_texts = re.findall(r'`([^`]+)`', user_input)
@@ -219,7 +223,6 @@ class AIChat:
                     logging.info(f"Wikipedia query {i+1} returned no results")
 
             if not quoted_texts:
-                # If no quoted text, fall back to the last two words
                 query = ' '.join(user_input.strip()[:-5].strip().split()[-2:])
                 logging.info(f"Querying Wikipedia with: {query}")
                 wiki_summary = self.initializer.query_wikipedia(query)
@@ -234,7 +237,7 @@ class AIChat:
                 # Remove the "-wiki" texts from the user input
                 if user_input.strip().endswith("-wiki"):
                     user_input = user_input[:-5].strip()
-                user_input += "\nContext: " + "\n".join(wiki_summaries)
+                user_input += "\nContext: " + "\n".join(wiki_summaries) + "always give me back all the link(s)"
             else:
                 if user_input.strip().endswith("-wiki"):
                     user_input = user_input[:-5].strip()
@@ -248,14 +251,14 @@ class AIChat:
 
         ai_success = bool(response_text)
         logging.info(f"Wiki Success: {wiki_success}, AI Success: {ai_success}")
-        self.chat_history.append({"role": "user", "parts": [user_input]})
-        self.chat_history.append({"role": "model", "parts": [sanitized_response]})
+        self.chat_history.append({"role": "user", "parts": [user_prompt]})
+        self.chat_history.append({"role": "model", "parts": [response_text]})
 
         set_stop_loading(True)
         loading_thread.join()
         sanitized_response = sanitized_response.replace('*', '')
         sanitized_response = re.sub(r'(?i)frea', '𝑓rea', sanitized_response)
-        print(f'{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{self.format_response_as_markdown(sanitized_response)}')
+        print(f'{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{self.format_response_as_markdown(sanitized_response)}\n')
 
     def send_message_to_ai(self, chat, user_input):
         """Send message to the AI service and get the response"""
