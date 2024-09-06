@@ -38,9 +38,9 @@ class AIChat:
             try:
                 """multiline automation"""
                 if multiline_mode:
-                    print(f"{Color.BLUE}╰─❯ {Color.ENDC}", end="")
+                    print(f"{Color.BLUE}╰─❯❯ {Color.ENDC}", end="")
                 else:
-                    print(f"{Color.BLUE}╭─ 𝔲ser \n╰─❯ {Color.ENDC}", end="")
+                    print(f"{Color.BLUE}╭─ 𝔲ser \n╰─❯❯ {Color.ENDC}", end="")
                 user_input_line = input()
 
                 if user_input_line.endswith("\\"):
@@ -56,7 +56,7 @@ class AIChat:
                     continue
 
                 if not user_input:
-                    print(f'\n{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.LIGHTRED}Please enter your command/prompt{Color.ENDC}\n')
+                    print(f'\n{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯❯ {Color.ENDC}{Color.LIGHTRED}Please enter your command/prompt{Color.ENDC}\n')
                     user_input = ""
                     multiline_mode = False
                     continue
@@ -67,7 +67,7 @@ class AIChat:
                         command = user_input[1:].strip()
                     else:
                         command = user_input[4:].strip()
-                    print(f'{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.LIGHTRED}Executing 𝔲ser Command{Color.ENDC}\n')
+                    print(f'{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯❯ {Color.ENDC}{Color.LIGHTRED}Executing 𝔲ser Command{Color.ENDC}\n')
                     run_subprocess(command)
                     user_input = ""
                     multiline_mode = False
@@ -99,11 +99,11 @@ class AIChat:
     def handle_special_commands(self, user_input):
         """Handle special commands"""
         if user_input.strip().lower() == ChatConfig.EXIT_COMMAND:
-            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.LIGHTRED}Exiting.... Goodbye!{Color.ENDC}\n")
+            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯❯ {Color.ENDC}{Color.LIGHTRED}Exiting.... Goodbye!{Color.ENDC}\n")
             sys.exit(0)
 
         elif user_input.strip().lower() == ChatConfig.RESET_COMMAND:
-            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}Resetting session...{Color.ENDC}\n")
+            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯❯ {Color.ENDC}{Color.PASTELPINK}Resetting session...{Color.ENDC}\n")
             time.sleep(0.5)
             ChatConfig.clear_screen()
             self.chat_history = []
@@ -151,7 +151,7 @@ class AIChat:
 
     def change_model(self):
         """Change the AI model"""
-        print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.WHITE}Current model: {Color.ENDC}{Color.PASTELPINK}{self.ai_service} - {self.gemini_model}{Color.ENDC}")
+        print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯❯ {Color.ENDC}{Color.WHITE}Current model: {Color.ENDC}{Color.PASTELPINK}{self.ai_service} - {self.gemini_model}{Color.ENDC}")
         change = input(f"{Color.BRIGHTYELLOW}Do you want to change the model? (yes/no): {Color.ENDC}").lower()
         if change == 'yes':
             self.ai_service = 'gemini'
@@ -258,7 +258,7 @@ class AIChat:
         loading_thread.join()
         sanitized_response = sanitized_response.replace('*', '')
         sanitized_response = re.sub(r'(?i)frea', '𝑓rea', sanitized_response)
-        print(f'{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{self.format_response_as_markdown(sanitized_response)}\n')
+        print(f'{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯❯ {Color.ENDC}{self.format_response_as_markdown(sanitized_response)}\n')
 
     def send_message_to_ai(self, chat, user_input):
         """Send message to the AI service and get the response"""

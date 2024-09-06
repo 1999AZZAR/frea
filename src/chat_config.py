@@ -28,7 +28,7 @@ class ChatConfig:
         """Initialize the config.ini file"""
         config = configparser.ConfigParser()
         if not os.path.exists(ChatConfig.CONFIG_FILE):
-            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}No Configuration found Creating configuration file.{Color.ENDC}\n")
+            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯❯ {Color.ENDC}{Color.PASTELPINK}No Configuration found Creating configuration file.{Color.ENDC}\n")
             gemini_api = input("Enter the Gemini API key: ")
 
             if not gemini_api:
@@ -44,7 +44,7 @@ class ChatConfig:
             }
             with open(ChatConfig.CONFIG_FILE, 'w') as configfile:
                 config.write(configfile)
-            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}Configuration saved successfully!{Color.ENDC}\n")
+            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯❯ {Color.ENDC}{Color.PASTELPINK}Configuration saved successfully!{Color.ENDC}\n")
         else:
             config.read(ChatConfig.CONFIG_FILE)
         return config
@@ -68,7 +68,7 @@ class ChatConfig:
         }
         with open(ChatConfig.CONFIG_FILE, 'w') as configfile:
             config.write(configfile)
-        print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}Configuration updated successfully!{Color.ENDC}\n")
+        print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯❯ {Color.ENDC}{Color.PASTELPINK}Configuration updated successfully!{Color.ENDC}\n")
         return config
 
     @staticmethod
