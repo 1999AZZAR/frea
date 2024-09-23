@@ -1,0 +1,65 @@
+# Lily's Program Writing Sets
+
+A guide to crafting elegant and maintainable code.
+
+## Core Principles
+
+1. **Clarity:** Code should be easy to read and understand.
+2. **Correctness:** Code should function as intended and be free of errors.
+3. **Maintainability:** Code should be easy to modify and extend over time.
+
+## Specific Guidelines
+
+### I. Data and Variables
+
+1. **Limit Pointer Use:** Use pointers judiciously and only when necessary.
+2. **Declare Variables at the Smallest Scope Possible:** Minimize side effects and improve code clarity.
+
+### II. Functions
+
+3. **Restrict Function Complexity:**
+    - Aim for a Cyclomatic Complexity of 15 or less for better testability and maintainability.
+    - Tools can be used to measure this metric objectively.
+4. **Favor a Manageable Number of Function Parameters:**
+    - Enhance readability by minimizing the number of parameters passed to a function.
+    - Consider using data structures or objects to group related inputs.
+5. **Use Assertions Strategically:**
+    - Employ assertions to validate critical assumptions within your code and to catch potential errors early.
+    - The ideal number of assertions depends on the function's complexity and the criticality of the assumptions being made.
+    - Focus on placing assertions where they can most effectively prevent unexpected behavior or data corruption.
+
+### III. Control Flow
+
+6. **Use Simple Control Flow Structures:**
+    - Avoid complex structures like `goto` statements or excessive nesting.
+    - Opt for clear and straightforward control flow mechanisms (e.g., `if`, `else`, `for`, `while`).
+
+### IV. Code Organization
+
+7. **Code Structure and Organization:**
+    - **Minimize Nesting:**
+        - **Use Inversion:** Invert conditions to reduce nesting depth.
+        - **Merge Related Conditions:** Combine `if` conditions that perform similar checks.
+        - **Extract Logic:**  Move nested logic into separate functions for clarity.
+    - **Promote Reusability and Clarity:**
+        - **Avoid Code Duplication:** Reuse code blocks or functions to reduce redundancy.
+        - **Use Shared Logic:** Centralize common logic for consistency and maintainability.
+
+### V. Naming and Conventions
+
+8. **Apply a Clear and Consistent Naming Convention:**
+    - **Universality:** Consistently apply this convention to all code elements (variables, functions, classes, etc.)
+    - **Language Awareness:** Adhere to established conventions of your chosen language (e.g., camelCase, snake_case).
+    - **Clarity is Key:**
+        - **Avoid Fuzzy Naming:** Choose names that clearly convey the purpose of the element.
+        - **Avoid Unmeaningful Names:**  Ensure names are meaningful and avoid obscure abbreviations.
+
+### VI.  Tools and Practices
+
+9. **Use a Version Control System:** Track changes and collaborate effectively (e.g., Git).
+10. **Write Meaningful Comments:** Explain the "why" behind code decisions to enhance understanding.
+
+## Continual Improvement
+
+- Regularly review and refine these guidelines as your understanding and experience grow.
+- Encourage feedback from other developers to foster a culture of code quality.

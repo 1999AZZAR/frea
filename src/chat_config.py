@@ -5,19 +5,27 @@ import google.generativeai as genai
 import subprocess
 from color import Color
 
-class ChatConfig:
-    """Special commands and configuration for chat"""
-    EXIT_COMMAND        = 'exit'
-    CLEAR_COMMAND       = 'clear'
-    RESET_COMMAND       = 'reset'
-    SAVE_COMMAND        = 'save'
-    PRINT_COMMAND       = 'print'
-    MODEL_COMMAND       = 'model'
-    RECONFIGURE_COMMAND = 'recon'
-    HELP_COMMAND        = 'help'
-    CONFIG_FILE         = './config/config.ini'
-    LOG_FOLDER          = 'logs'
 
+class ChatConfig:
+    """
+    Manages chat commands and configurations.
+    """
+
+    # Command constants
+    EXIT_COMMAND = 'exit'
+    CLEAR_COMMAND = 'clear'
+    RESET_COMMAND = 'reset'
+    SAVE_COMMAND = 'save'
+    PRINT_COMMAND = 'print'
+    MODEL_COMMAND = 'model'
+    RECONFIGURE_COMMAND = 'recon'
+    HELP_COMMAND = 'help'
+
+    # Configuration file paths
+    CONFIG_FILE = './config/config.ini'
+    LOG_FOLDER = 'logs'
+
+    # Default settings
     DEFAULT_LOADING_STYLE = 'L1'
     DEFAULT_INSTRUCTION_FILE = './config/instruction.txt'
     DEFAULT_GEMINI_MODEL = 'models/gemini-1.5-pro'
@@ -25,55 +33,72 @@ class ChatConfig:
 
     @staticmethod
     def initialize_config():
-        """Initialize the config.ini file"""
+        """
+        Initializes the configuration file, prompting user input if necessary.
+        """
         config = configparser.ConfigParser()
+
         if not os.path.exists(ChatConfig.CONFIG_FILE):
-            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯❯ {Color.ENDC}{Color.PASTELPINK}No Configuration found Creating configuration file.{Color.ENDC}\n")
-            gemini_api = input("Enter the Gemini API key: ")
-
-            if not gemini_api:
-                print(f"{Color.BRIGHTRED}Error: Gemini API key is required.{Color.ENDC}")
-                sys.exit(1)
-
-            config['DEFAULT'] = {
-                'GeminiAPI': gemini_api,
-                'AIService': ChatConfig.DEFAULT_AI_SERVICE,
-                'LoadingStyle': input(f"Enter the loading style (e.g., L2, random, or press Enter for default'{ChatConfig.DEFAULT_LOADING_STYLE}'): ") or ChatConfig.DEFAULT_LOADING_STYLE,
-                'InstructionFile': input(f"Enter the path to the instruction file (or press Enter for default'{ChatConfig.DEFAULT_INSTRUCTION_FILE}'): ") or ChatConfig.DEFAULT_INSTRUCTION_FILE,
-                'GeminiModel': input(f"Enter the Gemini model name (or press Enter for default'{ChatConfig.DEFAULT_GEMINI_MODEL}'): ") or ChatConfig.DEFAULT_GEMINI_MODEL,
-            }
-            with open(ChatConfig.CONFIG_FILE, 'w') as configfile:
-                config.write(configfile)
-            print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯❯ {Color.ENDC}{Color.PASTELPINK}Configuration saved successfully!{Color.ENDC}\n")
+            ChatConfig._create_new_config(config)
         else:
             config.read(ChatConfig.CONFIG_FILE)
+
         return config
 
     @staticmethod
-    def reconfigure():
-        """Reconfigure the settings"""
-        config = configparser.ConfigParser()
-        gemini_api = input("Enter the New Gemini API key: ")
+    def _create_new_config(config):
+        """
+        Handles creation of a new configuration file.
+        """
+        print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯❯ {Color.ENDC}{Color.PASTELPINK}No Configuration found. Creating new configuration file.{Color.ENDC}\n")
 
+        gemini_api = input("Enter the Gemini API key: ")
         if not gemini_api:
-            print(f"{Color.BRIGHTRED}Error: Gemini API key is required.{Color.ENDC}")
-            sys.exit(1)
+            ChatConfig._exit_with_error("Gemini API key is required.")
 
         config['DEFAULT'] = {
             'GeminiAPI': gemini_api,
             'AIService': ChatConfig.DEFAULT_AI_SERVICE,
-            'LoadingStyle': input(f"Enter the loading style (e.g., L1, random, or press Enter for default'{ChatConfig.DEFAULT_LOADING_STYLE}'): ") or ChatConfig.DEFAULT_LOADING_STYLE,
-            'InstructionFile': input(f"Enter the path to the instruction file (or press Enter for default'{ChatConfig.DEFAULT_INSTRUCTION_FILE}'): ") or ChatConfig.DEFAULT_INSTRUCTION_FILE,
-            'GeminiModel': input(f"Enter the Gemini model name (or press Enter for default'{ChatConfig.DEFAULT_GEMINI_MODEL}'): ") or ChatConfig.DEFAULT_GEMINI_MODEL,
+            'LoadingStyle': input(f"Enter the loading style (default: '{ChatConfig.DEFAULT_LOADING_STYLE}'): ") or ChatConfig.DEFAULT_LOADING_STYLE,
+            'InstructionFile': input(f"Enter the instruction file path (default: '{ChatConfig.DEFAULT_INSTRUCTION_FILE}'): ") or ChatConfig.DEFAULT_INSTRUCTION_FILE,
+            'GeminiModel': input(f"Enter the Gemini model name (default: '{ChatConfig.DEFAULT_GEMINI_MODEL}'): ") or ChatConfig.DEFAULT_GEMINI_MODEL
         }
+
         with open(ChatConfig.CONFIG_FILE, 'w') as configfile:
             config.write(configfile)
+
+        print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯❯ {Color.ENDC}{Color.PASTELPINK}Configuration saved successfully!{Color.ENDC}\n")
+
+    @staticmethod
+    def reconfigure():
+        """
+        Prompts the user to re-enter configuration settings.
+        """
+        config = configparser.ConfigParser()
+
+        gemini_api = input("Enter the new Gemini API key: ")
+        if not gemini_api:
+            ChatConfig._exit_with_error("Gemini API key is required.")
+
+        config['DEFAULT'] = {
+            'GeminiAPI': gemini_api,
+            'AIService': ChatConfig.DEFAULT_AI_SERVICE,
+            'LoadingStyle': input(f"Enter the loading style (default: '{ChatConfig.DEFAULT_LOADING_STYLE}'): ") or ChatConfig.DEFAULT_LOADING_STYLE,
+            'InstructionFile': input(f"Enter the instruction file path (default: '{ChatConfig.DEFAULT_INSTRUCTION_FILE}'): ") or ChatConfig.DEFAULT_INSTRUCTION_FILE,
+            'GeminiModel': input(f"Enter the Gemini model name (default: '{ChatConfig.DEFAULT_GEMINI_MODEL}'): ") or ChatConfig.DEFAULT_GEMINI_MODEL
+        }
+
+        with open(ChatConfig.CONFIG_FILE, 'w') as configfile:
+            config.write(configfile)
+
         print(f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯❯ {Color.ENDC}{Color.PASTELPINK}Configuration updated successfully!{Color.ENDC}\n")
         return config
 
     @staticmethod
     def display_help():
-        """Display help information"""
+        """
+        Displays help information with a list of available commands.
+        """
         help_text = f"""
     {Color.BRIGHTPURPLE}▒▓████████▓▒ ▒▓███████▓▒  ▒▓████████▓▒  ▒▓██████▓▒{Color.ENDC}
     {Color.BRIGHTPURPLE}▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒ ▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒{Color.ENDC}
@@ -111,15 +136,19 @@ class ChatConfig:
 
     @staticmethod
     def initialize_apis(gemini_api_key):
-        """Initialize the API keys"""
+        """
+        Configures the Gemini API key.
+        """
         if gemini_api_key:
             genai.configure(api_key=gemini_api_key)
         else:
-            raise ValueError("Gemini API key is required")
+            ChatConfig._exit_with_error("Gemini API key is required.")
 
     @staticmethod
     def gemini_generation_config():
-        """Configuration for the Gemini language model"""
+        """
+        Returns configuration settings for the Gemini language model.
+        """
         return {
             'max_output_tokens': 1024,
             'temperature': 0.25,
@@ -131,17 +160,21 @@ class ChatConfig:
 
     @staticmethod
     def gemini_safety_settings():
-        """Safety settings for the Gemini model"""
+        """
+        Returns safety settings for the Gemini model.
+        """
         return [
             {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
             {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
             {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
-            {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_ONLY_HIGH"}
+            {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"}
         ]
 
     @staticmethod
     def chat_instruction(instruction_file):
-        """Load instructions from the file"""
+        """
+        Loads chat instructions from a file or falls back to default.
+        """
         if os.path.exists(instruction_file):
             with open(instruction_file, 'r') as file:
                 return file.read()
@@ -151,5 +184,15 @@ class ChatConfig:
 
     @staticmethod
     def clear_screen():
-        """Clear the terminal screen"""
+        """
+        Clears the terminal screen.
+        """
         subprocess.run('clear', shell=True)
+
+    @staticmethod
+    def _exit_with_error(message):
+        """
+        Prints error message and exits the program.
+        """
+        print(f"{Color.BRIGHTRED}Error: {message}{Color.ENDC}")
+        sys.exit(1)
