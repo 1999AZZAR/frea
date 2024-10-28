@@ -258,7 +258,7 @@ class AIChat:
         loading_thread.join()
         sanitized_response = sanitized_response.replace('*', '')
         sanitized_response = re.sub(r'(?i)frea', '𝑓rea', sanitized_response)
-        print(f'{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯❯ {Color.ENDC}{self.format_response_as_markdown(sanitized_response)}\n')
+        print(f'{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯❯ {Color.ENDC}{self.format_response_as_markdown(sanitized_response)}')
 
     def send_message_to_ai(self, chat, user_input):
         """Send message to the AI service and get the response"""
