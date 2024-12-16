@@ -40,7 +40,7 @@ class AIChat:
                 if multiline_mode:
                     print(f"{Color.BLUE}╰─❯❯ {Color.ENDC}", end="")
                 else:
-                    print(f"\n{Color.BLUE}╭─ 𝔲ser \n╰─❯❯ {Color.ENDC}", end="")
+                    print(f"\n{Color.BLUE}╭─ master \n╰─❯❯ {Color.ENDC}", end="")
                 user_input_line = input()
 
                 if user_input_line.endswith("\\"):
@@ -67,7 +67,7 @@ class AIChat:
                         command = user_input[1:].strip()
                     else:
                         command = user_input[4:].strip()
-                    print(f'{Color.BRIGHTYELLOW}\n╭─ 𝑓rea ───────────────────────╮\n╰─❯❯ {Color.ENDC}{Color.LIGHTRED}Executing 𝔲ser Command{Color.ENDC}{Color.BRIGHTYELLOW} ❮❮─╯{Color.ENDC}')
+                    print(f'{Color.BRIGHTYELLOW}\n╭─ 𝑓rea ───────────────────────╮\n╰─❯❯ {Color.ENDC}{Color.LIGHTRED}Executing master Command{Color.ENDC}{Color.BRIGHTYELLOW} ❮❮─╯{Color.ENDC}')
                     run_subprocess(command)
                     user_input = ""
                     multiline_mode = False
