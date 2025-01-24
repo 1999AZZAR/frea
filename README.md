@@ -1,3 +1,6 @@
+Here’s the fully updated `README.md` file with the new Mermaid state diagram integrated:
+
+```markdown
 # Frea - Freak Robotic Entity with Amusement
 
 ## Table Of Content
@@ -23,7 +26,6 @@
 7. [Flowchart](#Flowchart)
 8. [Demo](#Demo)
 
-
 ## Overview
 
 Frea is an interactive terminal-based chat application powered by Google's generative AI, designed to provide seamless user interactions with advanced natural language processing capabilities. This application offers a variety of features, including multi-line input, special commands, and a customizable loading animation.
@@ -43,7 +45,6 @@ Frea is an interactive terminal-based chat application powered by Google's gener
 
 ### Prerequisites
 
-- Openai API key
 - Gemini API key
 - Python 3.8 or later
 - Required Python packages listed in `requirements.txt`
@@ -145,7 +146,7 @@ Enter the path to the instruction file: /path/to/instruction_file.txt
 Configuration saved successfully!
 ```
 
-you can get your own gemini api key from [here](https://aistudio.google.com/app/apikey)
+You can get your own Gemini API key from [here](https://aistudio.google.com/app/apikey).
 
 ### Reconfiguration
 
@@ -177,48 +178,80 @@ The application includes predefined safety settings to block harmful content cat
 - Dangerous Content
 
 These settings can be adjusted in the `gemini_safety_settings` method.
+
 ## Flowchart
 
 ```mermaid
-flowchart TD
-    A[Start] --> B[Initialize AIChat Class]
-    B --> C{User Input?}
-    C -- "Help Command" --> D[Display Help Information]
-    C -- "Exit Command" --> E[Exit Application]
-    C -- "Clear Command" --> F[Clear Terminal Screen]
-    C -- "Reset Command" --> G[Reset Chat Session]
-    C -- "Print Command" --> H[Save Conversation Log to File]
-    C -- "Model Command" --> I[Change AI Model]
-    C -- "Reconfigure Command" --> J[Reconfigure Settings]
-    C -- "Run Command" --> K[Run Subprocess Command]
-    C -- "Other Input" --> L[Process Input with AI Model]
-
-    L --> M{API Key Initialized?}
-    M -- "Yes" --> N[Generate Response with Gemini]
-    M -- "No" --> O[Generate Response with OpenAI GPT]
-
-    N --> P[Sanitize Response]
-    O --> P
-    P --> Q[Print Response]
-    Q --> R[Log Conversation]
-    Q --> C
-
-    E --> S[Goodbye Message]
-    S --> T[End]
-
-    subgraph Error Handling
-        P --> U{Error Occurred?}
-        U -- "Yes" --> V[Display Error Message]
-        U -- "No" --> W[Continue]
-    end
-
-    W --> Q
-
-    subgraph Generate Response
-        L --> X[Add User Input to Chat History]
-        X --> Y[Determine AI Model to Use]
-        Y --> M
-    end
+---
+config:
+  layout: elk
+---
+stateDiagram
+  direction LR
+  state HandleSpecialCommand {
+    direction TB
+    [*] --> CheckCommandType
+    CheckCommandType --> ExitCommand:"exit"
+    CheckCommandType --> ResetCommand:"reset"
+    CheckCommandType --> ClearCommand:"clear"
+    CheckCommandType --> HelpCommand:"help"
+    CheckCommandType --> ReconfigureCommand:"recon"
+    CheckCommandType --> SaveCommand:"save"
+    CheckCommandType --> PrintCommand:"print"
+    CheckCommandType --> ModelCommand:"model"
+    ExitCommand --> [*]
+    ResetCommand --> [*]
+    ClearCommand --> [*]
+    HelpCommand --> [*]
+    ReconfigureCommand --> [*]
+    SaveCommand --> [*]
+    PrintCommand --> [*]
+    ModelCommand --> [*]
+    ExitCommand
+    ResetCommand
+    ClearCommand
+    HelpCommand
+    ReconfigureCommand
+    SaveCommand
+    PrintCommand
+    ModelCommand
+[*]    CheckCommandType
+[*]  }
+  state ProcessUserInput {
+    direction TB
+    SendMessageToAI --> DisplayResponse:Receive AI response
+    [*] --> SendMessageToAI
+    SendMessageToAI --> DisplayResponse
+    DisplayResponse --> [*]
+    SendMessageToAI
+    DisplayResponse
+[*][*]  }
+  [*] --> Initialization
+  Initialization --> ConfigurationLoaded:Load configuration
+  ConfigurationLoaded --> ChatInitialized:Initialize chat session
+  ChatInitialized --> WaitingForInput:Wait for user input
+  WaitingForInput --> HandleSpecialCommand:User enters special command
+  WaitingForInput --> HandleSubprocessCommand:User enters subprocess command
+  WaitingForInput --> ProcessUserInput:User enters regular input
+  HandleSpecialCommand --> ExitCommand:Command is "exit"
+  HandleSpecialCommand --> ResetCommand:Command is "reset"
+  HandleSpecialCommand --> ClearCommand:Command is "clear"
+  HandleSpecialCommand --> HelpCommand:Command is "help"
+  HandleSpecialCommand --> ReconfigureCommand:Command is "recon"
+  HandleSpecialCommand --> SaveCommand:Command is "save"
+  HandleSpecialCommand --> PrintCommand:Command is "print"
+  HandleSpecialCommand --> ModelCommand:Command is "model"
+  ExitCommand --> [*]:Exit application
+  ResetCommand --> ChatInitialized:Reset chat session
+  ClearCommand --> WaitingForInput:Clear terminal screen
+  HelpCommand --> WaitingForInput:Display help information
+  ReconfigureCommand --> ConfigurationLoaded:Reconfigure settings
+  SaveCommand --> WaitingForInput:Save chat history
+  PrintCommand --> WaitingForInput:Print chat history
+  ModelCommand --> ChatInitialized:Change AI model
+  HandleSubprocessCommand --> WaitingForInput:Execute subprocess command
+  ProcessUserInput --> SendMessageToAI:Send user input to AI
+  DisplayResponse --> WaitingForInput:Display response and wait for next input
 ```
 
 ## Demo
@@ -226,8 +259,5 @@ flowchart TD
 [![asciicast](https://asciinema.org/a/663984.svg)](https://asciinema.org/a/663984)
 
 > note:
-> you can incorporate frea to your bash terminal by doing [this step](docs/alias.md).
+> You can incorporate Frea into your bash terminal by following [this step](docs/alias.md).
 
----
-
-By following this README, you should be able to set up, configure, and run the Frea application seamlessly. Enjoy interacting with your AI chat assistant!
