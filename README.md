@@ -1,6 +1,3 @@
-Here’s the fully updated `README.md` file with the new Mermaid state diagram integrated:
-
-```markdown
 # Frea - Freak Robotic Entity with Amusement
 
 ## Table Of Content
