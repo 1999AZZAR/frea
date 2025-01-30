@@ -3,6 +3,7 @@ import threading
 import logging
 import time
 import re
+import readline  # Import the readline library
 from logging.handlers import RotatingFileHandler
 from color import Color
 from chat_initializer import ChatInitializer
@@ -69,10 +70,12 @@ class AIChat:
             try:
                 # Multiline input handling
                 if multiline_mode:
-                    print(f"{Color.BLUE}╰─❯❯ {Color.ENDC}", end="")
+                    pass
+                    # print(f"{Color.AQUA}╰─❯❯ {Color.ENDC}", end="")
                 else:
-                    print(f"\n{Color.BLUE}╭─ master \n╰─❯❯ {Color.ENDC}", end="")
+                    print(f"\n{Color.AQUA}╭─ master \n╰─❯❯ {Color.ENDC}", end="")
 
+                # Use readline for input with history navigation
                 user_input_line = input()
 
                 if user_input_line.endswith("\\"):
