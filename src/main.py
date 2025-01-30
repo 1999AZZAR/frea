@@ -340,6 +340,35 @@ class AIChat:
             return True
         return False
 
+    def extract_wikipedia_query(self, user_input):
+        """
+        Extracts the Wikipedia query from the user input based on the specified rules.
+
+        Args:
+            user_input (str): The user input to parse.
+
+        Returns:
+            str: The extracted Wikipedia query, or None if no valid query is found.
+        """
+        # Rule 1: Check for up to three phrases enclosed in double quotes
+        quoted_phrases = re.findall(r'"(.*?)"', user_input)
+        if quoted_phrases:
+            # Use the first quoted phrase as the query
+            return quoted_phrases[0]
+
+        # Rule 2: Check for text enclosed in backticks
+        backtick_phrases = re.findall(r"`(.*?)`", user_input)
+        if backtick_phrases:
+            # Use the first backtick phrase as the query
+            return backtick_phrases[0]
+
+        # Rule 3: Use the last two words of the prompt if no quotes or backticks are found
+        words = user_input.split()
+        if len(words) >= 2:
+            return " ".join(words[-2:])
+
+        return None
+
     def process_user_input(self, chat, user_input):
         """
         Processes user input, sends it to the AI model, and displays the response.
@@ -355,6 +384,19 @@ class AIChat:
         loading_thread.start()
 
         user_prompt = user_input
+
+        # Check if the user wants to use Wikipedia
+        if "-wiki" in user_input.lower():
+            # Extract the Wikipedia query from the user input
+            query = self.extract_wikipedia_query(user_input)
+            if query:
+                # Query Wikipedia for additional information
+                wiki_info = self.initializer.query_wikipedia(query)
+                if wiki_info:
+                    # Append Wikipedia information to the user input
+                    user_input += f"\n\nHere's some additional information from Wikipedia:\n{wiki_info}"
+
+        # Send the updated user input to the AI
         response_text = self.send_message_to_ai(chat, user_input)
         sanitized_response = remove_emojis(response_text)
 
