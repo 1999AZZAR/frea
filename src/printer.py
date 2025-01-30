@@ -33,17 +33,16 @@ def format_markdown(chat_history):
     markdown_content = "# Conversation Log\n\n"
     for entry in chat_history:
         role = entry.get("role", "unknown")
-        parts = entry.get("parts", [])
+        content = entry.get("content", "")
 
         if role == "user":
             markdown_content += "## User:\n"
-        elif role == "model":
-            markdown_content += "## Model:\n"
+        elif role == "assistant":
+            markdown_content += "## Assistant:\n"
         else:
             markdown_content += f"## {role.capitalize()}:\n"
 
-        for part in parts:
-            markdown_content += f"{part}\n\n"
+        markdown_content += f"{content}\n\n"
     return markdown_content
 
 

@@ -15,7 +15,7 @@ from utils import (
     cursor_hide,
     cursor_show,
 )
-import google.generativeai as genai
+import openai
 import configparser
 from printer import save_log, print_log
 import atexit
@@ -36,23 +36,22 @@ class AIChat:
         Initializes the AIChat application by loading configuration and setting up the chat session.
         """
         self.initializer = ChatInitializer()
-        self.gemini_api_key = self.initializer.gemini_api_key or ""
-        self.ai_service = self._determine_ai_service()
-        self.gemini_model = self.initializer.gemini_model
+        self.gemini_api_key = self.initializer.gemini_api_key
+        self.groq_api_key = self.initializer.groq_api_key
+        self.ai_service = self.initializer.ai_service
+        self.model = self.initializer.model
         self.chat_history = []
         self.loading_style = self.initializer.loading_style
         self.instruction = self.initializer.instruction
 
-        # Register cleanup function to handle gRPC shutdown
+        # Register cleanup function
         atexit.register(self.cleanup)
 
     def cleanup(self):
         """
-        Cleans up resources (e.g., gRPC connections) when the application exits.
+        Cleans up resources when the application exits.
         """
-        if hasattr(genai, "_grpc_channel"):
-            genai._grpc_channel.close()
-            logging.info("gRPC channel closed.")
+        pass  # No cleanup needed for OpenAI client
 
     def generate_chat(self):
         """
@@ -157,6 +156,8 @@ class AIChat:
             self._handle_print_command()
         elif command == ChatConfig.MODEL_COMMAND:
             self._handle_model_command()
+        elif command == ChatConfig.SERVICE_COMMAND:
+            self._handle_change_ai_service()
         else:
             return False
         return True
@@ -190,11 +191,12 @@ class AIChat:
         """Handles the reconfigure command."""
         config = ChatConfig.reconfigure()
         self.gemini_api_key = config["DEFAULT"]["GeminiAPI"]
+        self.groq_api_key = config["DEFAULT"]["GroqAPI"]
         self.ai_service = config["DEFAULT"]["AIService"]
         self.loading_style = config["DEFAULT"]["LoadingStyle"]
         self.instruction_file = config["DEFAULT"]["InstructionFile"]
-        self.gemini_model = config["DEFAULT"]["GeminiModel"]
-        ChatConfig.initialize_apis(self.gemini_api_key)
+        self.model = config["DEFAULT"]["AIModel"]
+        self.initializer = ChatInitializer()  # Reinitialize with new config
         self.instruction = ChatConfig.chat_instruction(self.instruction_file)
         self.initialize_chat()
 
@@ -214,53 +216,72 @@ class AIChat:
             self.initialize_chat()
         print(f"\n")
 
-    def save_config(self):
+    def _handle_change_ai_service(self):
         """
-        Save the current configuration to config.ini.
+        Changes the AI service (Gemini or Groq) and updates the config file.
+
+        Returns:
+            bool: True if the service was changed successfully, False otherwise.
         """
-        config = configparser.ConfigParser()
-        config.read(ChatConfig.CONFIG_FILE)
-        config["DEFAULT"]["AIService"] = self.ai_service
-        config["DEFAULT"]["GeminiAPI"] = self.gemini_api_key
-        config["DEFAULT"]["GeminiModel"] = self.gemini_model
-        with open(ChatConfig.CONFIG_FILE, "w") as configfile:
-            config.write(configfile)
-        logging.info("Configuration saved.")
+        print(
+            f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯❯ {Color.ENDC}{Color.WHITE}Current AI service: {Color.ENDC}{Color.PASTELPINK}{self.ai_service}{Color.ENDC}\n"
+        )
+        change = input(
+            f"{Color.BRIGHTYELLOW}Do you want to change the AI service? (yes/no): {Color.ENDC}"
+        ).lower()
+        if change == "yes":
+            new_service = input(f"Enter the new AI service (gemini/groq): ").lower()
+            if new_service not in ["gemini", "groq"]:
+                print(
+                    f"{Color.BRIGHTRED}Invalid AI service. Must be 'gemini' or 'groq'.{Color.ENDC}"
+                )
+                return False
+
+            # Update the AI service
+            self.ai_service = new_service
+
+            # Load the current config
+            config = ChatConfig.initialize_config()
+            config["DEFAULT"]["AIService"] = new_service
+
+            # Save the updated config
+            ChatConfig.save_config(config)
+
+            # Reinitialize the chat with the new service
+            self.initializer = ChatInitializer()
+            self.model = self.initializer.model
+            print(
+                f"{Color.PASTELPINK}Switched to {self.ai_service} service. Reinitializing chat...{Color.ENDC}"
+            )
+            return True
+        return False
 
     def change_model(self):
         """
-        Changes the AI model.
+        Changes the AI model and updates the config file.
 
         Returns:
             bool: True if the model was changed successfully, False otherwise.
         """
         print(
-            f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯❯ {Color.ENDC}{Color.WHITE}Current model: {Color.ENDC}{Color.PASTELPINK}{self.ai_service} - {self.gemini_model}{Color.ENDC}\n"
+            f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯❯ {Color.ENDC}{Color.WHITE}Current model: {Color.ENDC}{Color.PASTELPINK}{self.model}{Color.ENDC}\n"
         )
         change = input(
             f"{Color.BRIGHTYELLOW}Do you want to change the model? (yes/no): {Color.ENDC}"
         ).lower()
         if change == "yes":
-            self.ai_service = "gemini"
-            if not self.gemini_api_key:
-                self.gemini_api_key = input(
-                    "Please enter your GEMINI_API_KEY: "
-                ).strip()
-                self.initializer.gemini_api_key = self.gemini_api_key
-                ChatConfig.initialize_apis(self.gemini_api_key)
-
             try:
-                gemini_models = self.get_gemini_models()
+                models = self.initializer.get_models()
             except Exception as e:
-                logging.error(f"Error retrieving Gemini models: {e}")
+                logging.error(f"Error retrieving models: {e}")
                 print(
-                    f"{Color.BRIGHTRED}Error retrieving Gemini models. Please check your API key and try again.{Color.ENDC}"
+                    f"{Color.BRIGHTRED}Error retrieving models. Please check your API key and try again.{Color.ENDC}"
                 )
                 return False
 
-            if gemini_models:
-                print(f"\n{Color.BRIGHTGREEN}Available Gemini models:{Color.ENDC}")
-                for i, model in enumerate(gemini_models, 1):
+            if models:
+                print(f"\n{Color.BRIGHTGREEN}Available models:{Color.ENDC}")
+                for i, model in enumerate(models, 1):
                     print(f"{Color.PASTELPINK}{i}. {model}{Color.ENDC}")
 
                 try:
@@ -268,28 +289,49 @@ class AIChat:
                         f"{Color.BRIGHTYELLOW}Enter the model number you want to use: {Color.ENDC}"
                     )
                     model_index = int(model_choice) - 1
-                    if 0 <= model_index < len(gemini_models):
-                        self.gemini_model = gemini_models[model_index]
+                    if 0 <= model_index < len(models):
+                        self.model = models[model_index]
                     else:
                         print(
                             f"{Color.BRIGHTRED}Invalid choice. Using default model.{Color.ENDC}"
                         )
-                        self.gemini_model = ChatConfig.DEFAULT_GEMINI_MODEL
+                        # Use the default model for the current AI service
+                        self.model = (
+                            ChatConfig.DEFAULT_GEMINI_MODEL
+                            if self.ai_service == "gemini"
+                            else ChatConfig.DEFAULT_GROQ_MODEL
+                        )
                 except (ValueError, IndexError):
                     print(
                         f"{Color.BRIGHTRED}Invalid choice. Using default model.{Color.ENDC}"
                     )
-                    self.gemini_model = ChatConfig.DEFAULT_GEMINI_MODEL
+                    # Use the default model for the current AI service
+                    self.model = (
+                        ChatConfig.DEFAULT_GEMINI_MODEL
+                        if self.ai_service == "gemini"
+                        else ChatConfig.DEFAULT_GROQ_MODEL
+                    )
             else:
                 print(
-                    f"{Color.BRIGHTRED}No Gemini models available. Using default model.{Color.ENDC}"
+                    f"{Color.BRIGHTRED}No models available. Using default model.{Color.ENDC}"
                 )
-                self.gemini_model = ChatConfig.DEFAULT_GEMINI_MODEL
+                # Use the default model for the current AI service
+                self.model = (
+                    ChatConfig.DEFAULT_GEMINI_MODEL
+                    if self.ai_service == "gemini"
+                    else ChatConfig.DEFAULT_GROQ_MODEL
+                )
+
+            # Load the current config
+            config = ChatConfig.initialize_config()
+            config["DEFAULT"]["AIModel"] = self.model
+
+            # Save the updated config
+            ChatConfig.save_config(config)
 
             print(
-                f"{Color.PASTELPINK}Switched to {self.gemini_model} model. Reinitializing chat...{Color.ENDC}"
+                f"{Color.PASTELPINK}Switched to {self.model} model. Reinitializing chat...{Color.ENDC}"
             )
-            self.save_config()
             self.chat_history = self.chat_history or []
             self.initialize_chat()
             return True
@@ -313,8 +355,9 @@ class AIChat:
         response_text = self.send_message_to_ai(chat, user_input)
         sanitized_response = remove_emojis(response_text)
 
-        self.chat_history.append({"role": "user", "parts": [user_prompt]})
-        self.chat_history.append({"role": "model", "parts": [response_text]})
+        # Append user input and AI response to chat history
+        self.chat_history.append({"role": "user", "content": user_prompt})
+        self.chat_history.append({"role": "assistant", "content": response_text})
 
         set_stop_loading(True)
         loading_thread.join()
@@ -323,6 +366,29 @@ class AIChat:
         print(
             f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯❯ {Color.ENDC}{self.format_response_as_markdown(sanitized_response)}"
         )
+
+    def truncate_chat_history(self, chat_history, max_tokens=2048):
+        """
+        Truncates the chat history to stay within the token limit.
+
+        Args:
+            chat_history (list): The chat history to truncate.
+            max_tokens (int): The maximum number of tokens allowed.
+
+        Returns:
+            list: The truncated chat history.
+        """
+        # Calculate the total token count (this is a simplified example)
+        total_tokens = sum(len(message["content"].split()) for message in chat_history)
+
+        # Remove older messages until the token count is within the limit
+        while total_tokens > max_tokens and len(chat_history) > 1:
+            removed_message = chat_history.pop(
+                1
+            )  # Remove the oldest user-assistant pair
+            total_tokens -= len(removed_message["content"].split())
+
+        return chat_history
 
     def send_message_to_ai(self, chat, user_input):
         """
@@ -335,10 +401,38 @@ class AIChat:
         Returns:
             str: The AI model's response.
         """
-        if self.ai_service == "gemini":
-            response = chat.send_message(self.instruction + user_input)
-            return response.text if hasattr(response, "text") else str(response)
-        return None
+        # Get the generation config and safety settings from ChatConfig
+        generation_config = ChatConfig.generation_config()
+
+        # Prepare the messages for the API request
+        messages = [
+            {"role": "system", "content": self.instruction}
+        ]  # System instruction
+
+        # Truncate the chat history to avoid exceeding token limits
+        truncated_history = self.truncate_chat_history(self.chat_history.copy())
+        messages.extend(truncated_history)  # Add the truncated chat history
+
+        messages.append(
+            {"role": "user", "content": user_input}
+        )  # Add the latest user input
+
+        # Create the request payload with the necessary configurations
+        response = self.initializer.client.chat.completions.create(
+            model=self.model,
+            messages=messages,
+            stream=True,
+            max_tokens=generation_config.get("max_output_tokens", 2048),
+            temperature=generation_config.get("temperature", 0.25),
+            top_p=generation_config.get("top_p", 0.65),
+            # frequency_penalty=generation_config.get("frequency_penalty", 1.2), # only works on Groq
+        )
+
+        full_response = ""
+        for chunk in response:
+            if chunk.choices[0].delta.content:
+                full_response += chunk.choices[0].delta.content
+        return full_response
 
     def format_response_as_markdown(self, response_text):
         """
@@ -369,35 +463,29 @@ class AIChat:
             logging.error("Failed to initialize chat. Exiting...")
         return chat
 
-    def get_gemini_models(self):
+    def print_log(file_name, chat_history):
         """
-        Retrieves available Gemini models.
+        Saves the chat history to a file in Markdown format.
 
-        Returns:
-            list: A list of available Gemini model names.
+        Args:
+            file_name (str): The name of the file to save the chat history.
+            chat_history (list): The chat history to save.
         """
-        return self.initializer.get_gemini_models()
+        if not file_name.endswith(".md"):
+            file_name += ".md"
 
-    def _determine_ai_service(self):
-        """
-        Determines the AI service based on available API keys.
-
-        Returns:
-            str: The selected AI service.
-        """
-        if self.initializer.gemini_api_key:
-            return "gemini"
-        else:
-            print(
-                f"{Color.BRIGHTRED}No valid API keys found. Please provide at least one API key.{Color.ENDC}"
-            )
-            self.gemini_api_key = input("Please enter your GEMINI_API_KEY: ").strip()
-            if self.gemini_api_key:
-                self.initializer.gemini_api_key = self.gemini_api_key
-                ChatConfig.initialize_apis(self.gemini_api_key)
-                return "gemini"
-            else:
-                raise ValueError("No valid API keys provided. Exiting...")
+        try:
+            with open(file_name, "w", encoding="utf-8") as file:
+                file.write("# Conversation Log\n\n")
+                for entry in chat_history:
+                    role = entry["role"]
+                    content = entry["content"]
+                    if isinstance(content, list):
+                        content = "\n".join(content)
+                    file.write(f"## {role.capitalize()}:\n{content}\n\n")
+            print(f"{Color.BRIGHTGREEN}Chat history saved to {file_name}{Color.ENDC}")
+        except Exception as e:
+            print(f"{Color.BRIGHTRED}Error saving chat history: {e}{Color.ENDC}")
 
 
 if __name__ == "__main__":

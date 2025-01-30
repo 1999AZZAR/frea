@@ -1,5 +1,5 @@
 import os
-import google.generativeai as genai
+import openai
 from chat_config import ChatConfig
 import wikipediaapi
 
@@ -18,12 +18,25 @@ class ChatInitializer:
         self.gemini_api_key = os.getenv(
             "GEMINI_API_KEY", config["DEFAULT"]["GeminiAPI"]
         )
-        self.gemini_model = config["DEFAULT"]["GeminiModel"]
-        self.loading_style = config["DEFAULT"]["LoadingStyle"]
+        self.groq_api_key = os.getenv("GROQ_API_KEY", config["DEFAULT"]["GroqAPI"])
         self.ai_service = config["DEFAULT"]["AIService"]
-        ChatConfig.initialize_apis(self.gemini_api_key)
+        self.model = config["DEFAULT"]["AIModel"]
+        self.loading_style = config["DEFAULT"]["LoadingStyle"]
         self.instruction_file = config["DEFAULT"]["InstructionFile"]
         self.instruction = ChatConfig.chat_instruction(self.instruction_file)
+
+        # Initialize the OpenAI client based on the AI service
+        if self.ai_service == "gemini":
+            self.client = openai.OpenAI(
+                api_key=self.gemini_api_key,
+                base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+            )
+        elif self.ai_service == "groq":
+            self.client = openai.OpenAI(
+                api_key=self.groq_api_key, base_url="https://api.groq.com/openai/v1"
+            )
+        else:
+            raise ValueError(f"Unsupported AI service: {self.ai_service}")
 
     def initialize_chat(self, chat_history):
         """
@@ -35,31 +48,32 @@ class ChatInitializer:
         Returns:
             Chat: The initialized chat session.
         """
-        if self.ai_service == "gemini":
-            generation_config = ChatConfig.gemini_generation_config()
-            safety_settings = ChatConfig.gemini_safety_settings()
-            model = genai.GenerativeModel(
-                generation_config=generation_config,
-                model_name=self.gemini_model,
-                safety_settings=safety_settings,
-            )
-            chat = model.start_chat(history=chat_history)
-            return chat
-        return None
+        return chat_history  # Return the chat history as the "chat" object
 
-    def get_gemini_models(self):
+    def get_models(self):
         """
-        Retrieves available Gemini models.
+        Retrieves available models for the current AI service.
 
         Returns:
-            list: A list of available Gemini model names.
+            list: A list of available model names.
         """
-        models = genai.list_models()
-        return [
-            model.name
-            for model in models
-            if "generateContent" in model.supported_generation_methods
-        ]
+        if self.ai_service == "gemini":
+            return [
+                "gemini-1.5-flash",
+                "gemini-1.5-pro",
+                "gemini-2.0-flash-exp",
+                "gemini-2.0-flash-thinking-exp-01-21",
+            ]
+        elif self.ai_service == "groq":
+            return [
+                "llama3-8b-8192",
+                "llama3-70b-8192",
+                "gemma2-9b-it",
+                "mixtral-8x7b-32768",
+                "deepseek-r1-distill-llama-70b",
+            ]
+        else:
+            return []
 
     def query_wikipedia(self, query):
         """
