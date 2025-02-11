@@ -71,9 +71,9 @@ class AIChat:
                 # Multiline input handling
                 if multiline_mode:
                     pass
-                    # print(f"{Color.AQUA}╰─❯❯ {Color.ENDC}", end="")
+                    print(f"{Color.AQUA}╰─❯❯ {Color.ENDC}", end="")
                 else:
-                    print(f"\n{Color.AQUA}╭─ master \n╰─❯❯ {Color.ENDC}", end="")
+                    print(f"{Color.AQUA}╭─ master \n╰─❯❯ {Color.ENDC}", end="")
 
                 # Use readline for input with history navigation
                 user_input_line = input()
@@ -115,6 +115,7 @@ class AIChat:
                     run_subprocess(command)
                     user_input = ""
                     multiline_mode = False
+                    print("\n")
                 else:
                     # Process user input and get AI response
                     self.process_user_input(chat, user_input)
@@ -217,7 +218,6 @@ class AIChat:
         """Handles the model command."""
         if self.change_model():
             self.initialize_chat()
-        print(f"\n")
 
     def _handle_change_ai_service(self):
         """
@@ -256,6 +256,8 @@ class AIChat:
             print(
                 f"{Color.PASTELPINK}Switched to {self.ai_service} service. Reinitializing chat...{Color.ENDC}"
             )
+            time.sleep(1)
+            ChatConfig.clear_screen()
             return True
         return False
 
@@ -335,6 +337,8 @@ class AIChat:
             print(
                 f"{Color.PASTELPINK}Switched to {self.model} model. Reinitializing chat...{Color.ENDC}"
             )
+            time.sleep(1)
+            ChatConfig.clear_screen()
             self.chat_history = self.chat_history or []
             self.initialize_chat()
             return True
@@ -409,7 +413,7 @@ class AIChat:
         sanitized_response = sanitized_response.replace("*", "")
         sanitized_response = re.sub(r"(?i)frea", "𝑓rea", sanitized_response)
         print(
-            f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯❯ {Color.ENDC}{self.format_response_as_markdown(sanitized_response)}"
+            f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯❯ {Color.ENDC}{self.format_response_as_markdown(sanitized_response)}\n"
         )
 
     def truncate_chat_history(self, chat_history, max_tokens=2048):
