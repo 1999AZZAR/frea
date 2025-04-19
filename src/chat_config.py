@@ -13,6 +13,7 @@ class ChatConfig:
     RESET_COMMAND = "reset"
     SAVE_COMMAND = "save"
     PRINT_COMMAND = "print"
+    EXPORT_COMMAND = "export"
     MODEL_COMMAND = "model"
     SERVICE_COMMAND = "provider"
     RECONFIGURE_COMMAND = "recon"
@@ -21,6 +22,7 @@ class ChatConfig:
     # Configuration file paths
     CONFIG_FILE = "./config/config.ini"
     LOG_FOLDER = "logs"
+    EXPORT_FOLDER = "exports"
 
     # Default settings
     DEFAULT_LOADING_STYLE = "L1"
@@ -244,40 +246,48 @@ class ChatConfig:
         Displays help information with a list of available commands.
         """
         help_text = f"""
-    {Color.BRIGHTPURPLE}▒▓████████▓▒ ▒▓███████▓▒  ▒▓████████▓▒  ▒▓██████▓▒{Color.ENDC}
-    {Color.BRIGHTPURPLE}▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒ ▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒{Color.ENDC}
-    {Color.BRIGHTPURPLE}▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒ ▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒{Color.ENDC}
-    {Color.BRIGHTPURPLE}▒▓██████▓▒   ▒▓███████▓▒  ▒▓██████▓▒   ▒▓████████▓▒{Color.ENDC}
-    {Color.BRIGHTPURPLE}▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒ ▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒{Color.ENDC}
-    {Color.BRIGHTPURPLE}▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒ ▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒{Color.ENDC}
-    {Color.BRIGHTPURPLE}▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒ ▒▓████████▓▒ ▒▓█▓▒  ▒▓█▓▒{Color.ENDC}
-    {Color.RED}freak        Robotic      Entity with  Amusement{Color.ENDC}\n
-    {Color.BRIGHTCYAN}Command List:{Color.ENDC}
-    {Color.BRIGHTGREEN}{ChatConfig.HELP_COMMAND}{Color.ENDC}  - Display this help information. Provides a list of all available commands and their descriptions.
-    {Color.BRIGHTGREEN}{ChatConfig.EXIT_COMMAND}{Color.ENDC}  - Exit the application. Terminates the chat session and closes the application.
-    {Color.BRIGHTGREEN}{ChatConfig.CLEAR_COMMAND}{Color.ENDC} - Clear the terminal screen. Clears all text from the terminal screen.
-    {Color.BRIGHTGREEN}{ChatConfig.RESET_COMMAND}{Color.ENDC} - Reset the chat session. Clears the chat history and restarts the chat session.
-    {Color.BRIGHTGREEN}{ChatConfig.SAVE_COMMAND}{Color.ENDC}  - Saves the current chat history to a file in JSON format.
-    {Color.BRIGHTGREEN}{ChatConfig.PRINT_COMMAND}{Color.ENDC} - Saves the current chat history to a file in Markdown format.
-    {Color.BRIGHTGREEN}{ChatConfig.SERVICE_COMMAND}{Color.ENDC} - Change the AI Provider.
-            Allows you to switch between different provider.
-    {Color.BRIGHTGREEN}{ChatConfig.MODEL_COMMAND}{Color.ENDC} - Change the AI model.
-            Allows you to switch between different models.
-    {Color.BRIGHTGREEN}{ChatConfig.RECONFIGURE_COMMAND}{Color.ENDC} - Reconfigure the settings.
-            Prompts you to re-enter configuration settings such as API keys and model preferences.
-    {Color.BRIGHTGREEN}run  {Color.ENDC} - Run a subprocess command.
-    {Color.BRIGHTGREEN}'/'  {Color.ENDC} - same as run.
-            Executes a shell command in the terminal (e.g., run ls or /ls).
-    {Color.BRIGHTGREEN}send{Color.ENDC}  - Send a file to the AI for review.
-            Usage: send <file_path> or /send <file_path>.
-    {Color.BRIGHTGREEN}-wiki{Color.ENDC} - Get additional info from Wikipedia to enhance the model's knowledge base.
-            The system will search for:
-            1. Up to three phrases enclosed in double quotes (e.g., "Python" "machine learning" "data science" -wiki).
-            2. If text is enclosed in backticks (e.g., `Python`), it will be treated as a Wikipedia query.
-            3. If no quotes or backticks are found, it will use the last two words of the prompt.
-            For example:
-                - "artificial intelligence" "neural networks" -wiki
-                - Tell me about `quantum computing` and its applications
-                - airplane -wiki
-        """
+{Color.BRIGHTPURPLE}▒▓████████▓▒ ▒▓███████▓▒  ▒▓████████▓▒  ▒▓██████▓▒{Color.ENDC}
+{Color.BRIGHTPURPLE}▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒ ▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒{Color.ENDC}
+{Color.BRIGHTPURPLE}▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒ ▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒{Color.ENDC}
+{Color.BRIGHTPURPLE}▒▓██████▓▒   ▒▓███████▓▒  ▒▓██████▓▒   ▒▓████████▓▒{Color.ENDC}
+{Color.BRIGHTPURPLE}▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒ ▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒{Color.ENDC}
+{Color.BRIGHTPURPLE}▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒ ▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒{Color.ENDC}
+{Color.BRIGHTPURPLE}▒▓█▓▒        ▒▓█▓▒  ▒▓█▓▒ ▒▓████████▓▒ ▒▓█▓▒  ▒▓█▓▒{Color.ENDC}
+{Color.RED}freak        Robotic      Entity with  Amusement{Color.ENDC}
+
+{Color.BRIGHTCYAN}Available Commands:{Color.ENDC}
+
+{Color.BRIGHTYELLOW}General:{Color.ENDC}
+  {Color.BRIGHTGREEN}{ChatConfig.HELP_COMMAND}{Color.ENDC}      Show help menu
+  {Color.BRIGHTGREEN}{ChatConfig.EXIT_COMMAND}{Color.ENDC}      Exit application
+  {Color.BRIGHTGREEN}{ChatConfig.CLEAR_COMMAND}{Color.ENDC}     Clear screen
+  {Color.BRIGHTGREEN}{ChatConfig.RESET_COMMAND}{Color.ENDC}     Reset chat session
+  {Color.BRIGHTGREEN}{ChatConfig.SAVE_COMMAND}{Color.ENDC}      Save chat as JSON (exports/)
+  {Color.BRIGHTGREEN}{ChatConfig.PRINT_COMMAND}{Color.ENDC}     Save chat as Markdown (exports/)
+  {Color.BRIGHTGREEN}{ChatConfig.EXPORT_COMMAND}{Color.ENDC}    Export code blocks (exports/)
+  {Color.BRIGHTGREEN}{ChatConfig.SERVICE_COMMAND}{Color.ENDC}   Switch AI provider
+  {Color.BRIGHTGREEN}{ChatConfig.MODEL_COMMAND}{Color.ENDC}     Switch AI model
+  {Color.BRIGHTGREEN}{ChatConfig.RECONFIGURE_COMMAND}{Color.ENDC}  Reconfigure settings
+
+{Color.BRIGHTYELLOW}Shell Commands:{Color.ENDC}
+  {Color.BRIGHTGREEN}run /<cmd>{Color.ENDC}     Execute shell command
+  {Color.BRIGHTGREEN}send <file_path>{Color.ENDC}        Send file for review
+
+{Color.BRIGHTYELLOW}AI Tools:{Color.ENDC}
+  {Color.BRIGHTGREEN}wiki <query>{Color.ENDC}      Wikipedia summary
+  {Color.BRIGHTGREEN}calc <expression>{Color.ENDC}  Calculate expression
+  {Color.BRIGHTGREEN}vim <file_path>{Color.ENDC}  Open file in Vim
+
+{Color.BRIGHTYELLOW}File Operations:{Color.ENDC}
+  {Color.BRIGHTGREEN}ls [path]{Color.ENDC}          List directory contents
+  {Color.BRIGHTGREEN}cat <file_path>{Color.ENDC}    Display file content
+  {Color.BRIGHTGREEN}head <file_path> [N]{Color.ENDC}  Show first N lines
+  {Color.BRIGHTGREEN}tail <file_path> [N]{Color.ENDC}  Show last N lines
+  {Color.BRIGHTGREEN}grep <pattern> [path]{Color.ENDC}  Search regex in files
+  {Color.BRIGHTGREEN}write <file_path> <content>{Color.ENDC}  Overwrite file
+  {Color.BRIGHTGREEN}append <file_path> <content>{Color.ENDC}  Append to file
+  {Color.BRIGHTGREEN}delete <file_path>{Color.ENDC}       Delete file
+  {Color.BRIGHTGREEN}move <src> <dst>{Color.ENDC}         Move/rename file
+  {Color.BRIGHTGREEN}copy <src> <dst>{Color.ENDC}         Copy file
+"""
         print(f"\n{help_text}")

@@ -1,7 +1,0 @@
-notes command
-
-record :
-
-    ```sh
-    arecord filename.wav
-    ```

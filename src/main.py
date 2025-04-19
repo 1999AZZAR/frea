@@ -21,6 +21,8 @@ import configparser
 from printer import save_log, print_log
 import atexit
 import os  # Added to handle file commands
+import agent_tools as tools
+import json
 
 # Configure logging with RotatingFileHandler
 log_handler = RotatingFileHandler(
@@ -174,7 +176,84 @@ class AIChat:
             bool: True if a special command was handled, False otherwise.
         """
         command = user_input.strip().lower()
-        if command == ChatConfig.EXIT_COMMAND:
+        stripped = user_input.strip()
+        lower = stripped.lower()
+        if lower.startswith("wiki "):
+            res = tools.wiki(stripped.split(maxsplit=1)[1])
+            print(res)
+            return True
+        elif lower.startswith("calc "):
+            res = tools.calc(stripped.split(maxsplit=1)[1])
+            print(res)
+            return True
+        elif lower.startswith("ls"):
+            parts = stripped.split(maxsplit=1)
+            path = parts[1] if len(parts) > 1 else '.'
+            res = tools.ls(path)
+            if res: print(res)
+            return True
+        elif lower.startswith("cat "):
+            res = tools.cat(stripped.split(maxsplit=1)[1])
+            print(res)
+            return True
+        elif lower.startswith("head "):
+            parts = stripped.split()
+            path = parts[1] if len(parts) > 1 else ''
+            n = int(parts[2]) if len(parts) > 2 and parts[2].isdigit() else 10
+            res = tools.head(path, n)
+            print(res)
+            return True
+        elif lower.startswith("tail "):
+            parts = stripped.split()
+            path = parts[1] if len(parts) > 1 else ''
+            n = int(parts[2]) if len(parts) > 2 and parts[2].isdigit() else 10
+            res = tools.tail(path, n)
+            print(res)
+            return True
+        elif lower.startswith("grep "):
+            parts = stripped.split(maxsplit=2)
+            pattern = parts[1] if len(parts) > 1 else ''
+            path = parts[2] if len(parts) > 2 else '.'
+            res = tools.grep(pattern, path)
+            print(res)
+            return True
+        elif lower.startswith("write "):
+            parts = stripped.split(maxsplit=2)
+            path = parts[1] if len(parts) > 1 else ''
+            content = parts[2] if len(parts) > 2 else ''
+            res = tools.write_file(path, content)
+            print(res)
+            return True
+        elif lower.startswith("append "):
+            parts = stripped.split(maxsplit=2)
+            path = parts[1] if len(parts) > 1 else ''
+            content = parts[2] if len(parts) > 2 else ''
+            res = tools.append_file(path, content)
+            print(res)
+            return True
+        elif lower.startswith("delete "):
+            res = tools.delete_file(stripped.split(maxsplit=1)[1])
+            print(res)
+            return True
+        elif lower.startswith("move "):
+            parts = stripped.split(maxsplit=2)
+            src = parts[1] if len(parts) > 1 else ''
+            dst = parts[2] if len(parts) > 2 else ''
+            res = tools.move(src, dst)
+            print(res)
+            return True
+        elif lower.startswith("copy "):
+            parts = stripped.split(maxsplit=2)
+            src = parts[1] if len(parts) > 1 else ''
+            dst = parts[2] if len(parts) > 2 else ''
+            res = tools.copy(src, dst)
+            print(res)
+            return True
+        elif lower.startswith("vim "):
+            res = tools.vim(stripped.split(maxsplit=1)[1])
+            print(res)
+            return True
+        elif command == ChatConfig.EXIT_COMMAND:
             self._handle_exit_command()
         elif command == ChatConfig.RESET_COMMAND:
             self._handle_reset_command()
@@ -188,6 +267,8 @@ class AIChat:
             self._handle_save_command()
         elif command == ChatConfig.PRINT_COMMAND:
             self._handle_print_command()
+        elif command == ChatConfig.EXPORT_COMMAND:
+            self._handle_export_command()
         elif command == ChatConfig.MODEL_COMMAND:
             self._handle_model_command()
         elif command == ChatConfig.SERVICE_COMMAND:
@@ -243,6 +324,30 @@ class AIChat:
         """Handles the print command."""
         file_name = input("Enter the file name to print: ")
         print_log(file_name, self.chat_history)
+
+    def _handle_export_command(self):
+        """Handles the export command: extracts code blocks and saves to a file."""
+        file_name = input("Enter the file name to export code blocks: ")
+        if not file_name:
+            print(f"{Color.BRIGHTRED}No file name provided.{Color.ENDC}")
+            return
+        # Extract code blocks from assistant messages
+        combined = "".join(entry["content"] for entry in self.chat_history if entry.get("role") == "assistant")
+        pattern = r"```(?:[a-zA-Z0-9_#+-]*\n)?(.*?)```"
+        blocks = re.findall(pattern, combined, flags=re.DOTALL)
+        if not blocks:
+            print(f"{Color.BRIGHTYELLOW}No code blocks found in the conversation.{Color.ENDC}")
+            return
+        code_content = "\n\n".join(block.strip() for block in blocks)
+        # Ensure export directory exists
+        os.makedirs(ChatConfig.EXPORT_FOLDER, exist_ok=True)
+        filepath = os.path.join(ChatConfig.EXPORT_FOLDER, file_name)
+        try:
+            with open(filepath, "w", encoding="utf-8") as f:
+                f.write(code_content)
+            print(f"{Color.BRIGHTGREEN}Exported code blocks to {filepath}{Color.ENDC}")
+        except Exception as e:
+            print(f"{Color.BRIGHTRED}Error exporting code blocks: {e}{Color.ENDC}")
 
     def _handle_model_command(self):
         """Handles the model command."""
@@ -434,12 +539,6 @@ class AIChat:
             chat: The chat session.
             user_input (str): The user input to process.
         """
-        set_stop_loading(False)
-        loading_thread = threading.Thread(
-            target=loading_animation, args=(self.loading_style,)
-        )
-        loading_thread.start()
-
         user_prompt = user_input
 
         # Check if the user wants to use Wikipedia
@@ -452,10 +551,6 @@ class AIChat:
                 if wiki_info:
                     # Append Wikipedia information to the user input
                     user_input += f"\n\nHere's some additional information from Wikipedia:\n{wiki_info}"
-
-        # Stop loading spinner before streaming answer
-        set_stop_loading(True)
-        loading_thread.join()
 
         print()  # blank line before frea prompt
         print(f"{Color.LIGHTPURPLE}╭─ 𝑓rea\n╰─❯❯ {Color.ENDC}", end="", flush=True)
@@ -511,32 +606,99 @@ class AIChat:
         truncated_history = self.truncate_chat_history(self.chat_history.copy())
         messages.extend(truncated_history)  # Add the truncated chat history
 
-        messages.append(
-            {"role": "user", "content": user_input}
-        )  # Add the latest user input
+        messages.append({"role": "user", "content": user_input})
 
-        # Create the request payload with the necessary configurations
-        response = self.initializer.client.chat.completions.create(
-            model=self.model,
-            messages=messages,
-            stream=True,
-            max_tokens=generation_config.get("max_output_tokens", 2048),
-            temperature=generation_config.get("temperature", 0.25),
-            top_p=generation_config.get("top_p", 0.65),
-            # frequency_penalty=generation_config.get("frequency_penalty", 1.2), # only works on Groq
-        )
+        # Inject tool usage instructions into the system prompt
+        tool_instructions = """
+You have access to these tools:
+- wiki(query: string, sentences: int)
+- calc(expression: string)
+- ls(path: string)
+- cat(file_path: string)
+- head(file_path: string, lines: int)
+- tail(file_path: string, lines: int)
+- grep(pattern: string, path: string)
+- write_file(file_path: string, content: string)
+- append_file(file_path: string, content: string)
+- delete_file(file_path: string)
+- move(src: string, dst: string)
+- copy(src: string, dst: string)
 
-        full_response = ""
-        # Stream and print chunks as they arrive
-        for chunk in response:
-            content = chunk.choices[0].delta.content
-            if content:
-                sys.stdout.write(self.format_response_as_markdown(content))
-                sys.stdout.flush()
-                full_response += content
-        # Final newline after streaming
-        sys.stdout.write("\n")
-        return full_response
+When you want to use a tool, reply with only JSON:
+{"tool":"<name>","args":{...}}
+and nothing else.
+"""
+        messages[0]["content"] += "\n" + tool_instructions
+
+        # Call model and spinner
+        set_stop_loading(False)
+        spinner = threading.Thread(target=loading_animation, args=(self.loading_style,), daemon=True)
+        spinner.start()
+        # Retry mechanism for API call
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                response = self.initializer.client.chat.completions.create(
+                    model=self.model,
+                    messages=messages,
+                    max_tokens=generation_config.get("max_output_tokens", 2048),
+                    temperature=generation_config.get("temperature", 0.25),
+                    top_p=generation_config.get("top_p", 0.65),
+                )
+                break
+            except openai.error.OpenAIError as e:
+                logging.warning(f"API request failed ({attempt+1}/{max_retries}): {e}")
+                if attempt < max_retries - 1:
+                    time.sleep(2 ** attempt)
+                    continue
+                else:
+                    set_stop_loading(True)
+                    spinner.join()
+                    return f"Error calling AI API after {max_retries} attempts: {e}"
+        set_stop_loading(True)
+        spinner.join()
+        output = response.choices[0].message.content.strip()
+
+        # Detect and run tool if model returned JSON
+        try:
+            # strip markdown fences or any wrapping and extract JSON object
+            match = re.search(r"\{.*\}", output, re.DOTALL)
+            payload = match.group() if match else output
+            call = json.loads(payload)
+            name = call.get("tool")
+            args = call.get("args", {})
+            if name and hasattr(tools, name):
+                result = getattr(tools, name)(**args)
+                # Provide tool output back to model for final answer
+                messages.append({"role": "assistant", "content": output})
+                messages.append({"role": "function", "name": name, "content": result})
+                # Retry mechanism for follow-up API call
+                max_retries = 3
+                for attempt in range(max_retries):
+                    try:
+                        follow = self.initializer.client.chat.completions.create(
+                            model=self.model,
+                            messages=messages,
+                            max_tokens=generation_config.get("max_output_tokens", 2048),
+                            temperature=generation_config.get("temperature", 0.25),
+                            top_p=generation_config.get("top_p", 0.65),
+                        )
+                        break
+                    except openai.error.OpenAIError as e:
+                        logging.warning(f"Follow-up API request failed ({attempt+1}/{max_retries}): {e}")
+                        if attempt < max_retries - 1:
+                            time.sleep(2 ** attempt)
+                            continue
+                        else:
+                            return f"Error calling AI API after tool result: {e}"
+                final = follow.choices[0].message.content
+                print(final)
+                return final
+        except (json.JSONDecodeError, AttributeError):
+            pass
+        # Otherwise, just return model output
+        print(output)
+        return output
 
     def format_response_as_markdown(self, response_text):
         """

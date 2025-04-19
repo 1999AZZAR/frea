@@ -12,11 +12,14 @@ def save_log(log_file_name, chat_history):
         log_file_name (str): The name of the file to save the log to.
         chat_history (list): The chat history to save.
     """
-    log_file_name = f"{ChatConfig.LOG_FOLDER}/{log_file_name}.json"
-    with open(log_file_name, "w") as file:
+    # Ensure export directory exists
+    export_dir = Path(ChatConfig.EXPORT_FOLDER)
+    export_dir.mkdir(parents=True, exist_ok=True)
+    filepath = export_dir / f"{log_file_name}.json"
+    with open(filepath, "w") as file:
         json.dump(chat_history, file, indent=4)
     print(
-        f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}Conversation history saved to {log_file_name}{Color.ENDC}\n"
+        f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}Conversation history saved to {filepath}{Color.ENDC}\n"
     )
 
 
@@ -54,14 +57,17 @@ def save_markdown(log_file_name, chat_history):
         log_file_name (str): The name of the file to save the log to.
         chat_history (list): The chat history to save.
     """
-    log_file_name = f"{ChatConfig.LOG_FOLDER}/{log_file_name}.md"
+    # Ensure export directory exists
+    export_dir = Path(ChatConfig.EXPORT_FOLDER)
+    export_dir.mkdir(parents=True, exist_ok=True)
+    filepath = export_dir / f"{log_file_name}.md"
     markdown_content = format_markdown(chat_history)
 
-    with open(log_file_name, "w") as file:
+    with open(filepath, "w") as file:
         file.write(markdown_content)
 
     print(
-        f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}Conversation history saved to {log_file_name}{Color.ENDC}\n"
+        f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯ {Color.ENDC}{Color.PASTELPINK}Conversation history saved to {filepath}{Color.ENDC}\n"
     )
 
 

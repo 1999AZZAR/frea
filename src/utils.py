@@ -3,6 +3,7 @@ import subprocess
 import time
 from color import Color
 import sys
+import itertools
 
 
 def cursor_hide():
@@ -64,49 +65,16 @@ def set_stop_loading(value):
     stop_loading = value
 
 
-def loading_animation(use="L2"):
-    """loading animation"""
+def loading_animation(*args):
+    """Show loading spinner while waiting for AI response."""
     cursor_hide()
-    while not stop_loading:
-        animations = {
-            "L0": ([" 🙉 ", " 🙈 ", " 🙊 ", " 🙈 "], 0.2),
-            "L1": (
-                [" ∙∙∙∙∙ ", " ●∙∙∙∙ ", " ∙●∙∙∙ ", " ∙∙●∙∙ ", " ∙∙∙●∙ ", " ∙∙∙∙● "],
-                0.1,
-            ),
-            "L2": ([" ⣾ ", " ⣽ ", " ⣻ ", " ⢿ ", " ⡿ ", " ⣟ ", " ⣯ ", " ⣷ "], 0.15),
-            "L3": (
-                [" 🌑 ", " 🌒 ", " 🌓 ", " 🌔 ", " 🌕 ", " 🌖 ", " 🌗 ", " 🌘 "],
-                0.22,
-            ),
-            "L4": ([" ◐ ", " ◓ ", " ◑ ", " ◒ "], 0.1),
-            "L5": ([" ▖ ", " ▘ ", " ▝ ", " ▗ "], 0.2),
-            "L6": ([" ⠁ ", " ⠂ ", " ⠄ ", " ⡀ ", " ⢀ ", " ⠠ ", " ⠐ ", " ⠈ "], 0.15),
-            "L7": ([" ⣀ ", " ⣤ ", " ⣶ ", " ⣾ ", " ⣿ ", " ⣷ ", " ⣯ ", " ⣟ "], 0.2),
-            "L8": (
-                [
-                    " 🕛 ",
-                    " 🕐 ",
-                    " 🕑 ",
-                    " 🕒 ",
-                    " 🕓 ",
-                    " 🕔 ",
-                    " 🕕 ",
-                    " 🕖 ",
-                    " 🕗 ",
-                    " 🕘 ",
-                    " 🕙 ",
-                    " 🕚 ",
-                ],
-                0.15,
-            ),
-            "L9": ([" 🔸 ", " 🔹 ", " 🔷 ", " 🔶 "], 0.2),
-            "L10": ([" .    ", " ..   ", " ...  ", " .... "], 0.15),
-        }
-        if use in animations:
-            frames, delay = animations[use]
-            for frame in frames:
-                print(f"{Color.LIGHTPURPLE}\r{frame}Processing{Color.ENDC}", end="")
-                time.sleep(delay)
-    cursor_show()
-    print("\r" + " " * 20 + "\r", end="")
+    spinner = itertools.cycle(['|', '/', '-', '\\'])
+    try:
+        while not stop_loading:
+            sys.stdout.write(f'\r{Color.LIGHTPURPLE}{next(spinner)} Thinking...{Color.ENDC}')
+            sys.stdout.flush()
+            time.sleep(0.1)
+    finally:
+        cursor_show()
+        sys.stdout.write('\r' + ' ' * 50 + '\r')
+        sys.stdout.flush()
