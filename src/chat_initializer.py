@@ -2,6 +2,8 @@ import os
 import openai
 from chat_config import ChatConfig
 import wikipediaapi
+from functools import lru_cache
+import re
 
 # Import potential exceptions from openai library for more specific handling
 from openai import APIConnectionError, AuthenticationError, RateLimitError
@@ -146,22 +148,25 @@ class ChatInitializer:
             # Returning an empty list signifies failure to retrieve models
             return []
 
-    def query_wikipedia(self, query):
+    @lru_cache(maxsize=32)
+    def query_wikipedia(self, query, sentences=3):
         """
         Queries Wikipedia for additional information.
 
         Args:
             query (str): The query to search for on Wikipedia.
+            sentences (int): Number of sentences to return in the summary.
 
         Returns:
-            str: A summary of the Wikipedia page, or None if the page does not exist.
+            str: A concise summary limited to `sentences`, or None if page not found.
         """
         wiki_wiki = wikipediaapi.Wikipedia(language="en", user_agent=self.USER_AGENT)
         page = wiki_wiki.page(query)
-        if page.exists():
-            summary_paragraphs = page.summary.split("\n")
-            # Limit summary length
-            summary = "\n".join(summary_paragraphs[:3])  # Get first 3 paragraphs max
-            link = page.fullurl
-            return f"{summary}\nFor more information, visit: {link}"
-        return None
+        if not page.exists():
+            return None
+        summary = page.summary or ""
+        # Split into sentences and limit
+        sentences_list = re.split(r'(?<=[\.!?]) +', summary)
+        selected = sentences_list[:sentences]
+        result = " ".join(selected).strip()
+        return f"{result}\n\nRead more: {page.fullurl}"

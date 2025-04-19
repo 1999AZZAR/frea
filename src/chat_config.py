@@ -268,6 +268,8 @@ class ChatConfig:
     {Color.BRIGHTGREEN}run  {Color.ENDC} - Run a subprocess command.
     {Color.BRIGHTGREEN}'/'  {Color.ENDC} - same as run.
             Executes a shell command in the terminal (e.g., run ls or /ls).
+    {Color.BRIGHTGREEN}send{Color.ENDC}  - Send a file to the AI for review.
+            Usage: send <file_path> or /send <file_path>.
     {Color.BRIGHTGREEN}-wiki{Color.ENDC} - Get additional info from Wikipedia to enhance the model's knowledge base.
             The system will search for:
             1. Up to three phrases enclosed in double quotes (e.g., "Python" "machine learning" "data science" -wiki).

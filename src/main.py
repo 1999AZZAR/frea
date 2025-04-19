@@ -20,6 +20,7 @@ import openai
 import configparser
 from printer import save_log, print_log
 import atexit
+import os  # Added to handle file commands
 
 # Configure logging with RotatingFileHandler
 log_handler = RotatingFileHandler(
@@ -96,6 +97,35 @@ class AIChat:
                     print(
                         f"\n{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯❯ {Color.ENDC}{Color.LIGHTRED}Please enter your command/prompt{Color.ENDC}"
                     )
+                    user_input = ""
+                    multiline_mode = False
+                    continue
+
+                # Handle send file commands (e.g., send <file> or /send <file>)
+                if user_input.strip().lower().startswith("send ") or user_input.strip().startswith("/send "):
+                    parts = user_input.strip().split(maxsplit=1)
+                    filename = parts[1] if len(parts) > 1 else None
+                    if not filename:
+                        print(f"{Color.BRIGHTRED}Usage: send <file_path>{Color.ENDC}")
+                        user_input = ""
+                        multiline_mode = False
+                        continue
+                    filepath = os.path.expanduser(filename)
+                    if not os.path.exists(filepath):
+                        print(f"{Color.BRIGHTRED}File not found: {filename}{Color.ENDC}")
+                        user_input = ""
+                        multiline_mode = False
+                        continue
+                    try:
+                        with open(filepath, "r", encoding="utf-8") as f:
+                            content = f.read()
+                    except Exception as e:
+                        print(f"{Color.BRIGHTRED}Error reading file: {e}{Color.ENDC}")
+                        user_input = ""
+                        multiline_mode = False
+                        continue
+                    prompt = f"Please review the following file: {filename}\n\n{content}"
+                    self.process_user_input(chat, prompt)
                     user_input = ""
                     multiline_mode = False
                     continue
@@ -222,9 +252,6 @@ class AIChat:
     def _handle_change_ai_service(self):
         """
         Changes the AI service (Gemini or Groq) and updates the config file.
-
-        Returns:
-            bool: True if the service was changed successfully, False otherwise.
         """
         print(
             f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯❯ {Color.ENDC}{Color.WHITE}Current AI service: {Color.ENDC}{Color.PASTELPINK}{self.ai_service}{Color.ENDC}\n"
@@ -232,34 +259,60 @@ class AIChat:
         change = input(
             f"{Color.BRIGHTYELLOW}Do you want to change the AI service? (yes/no): {Color.ENDC}"
         ).lower()
-        if change == "yes":
-            new_service = input(f"Enter the new AI service (gemini/groq): ").lower()
-            if new_service not in ["gemini", "groq"]:
-                print(
-                    f"{Color.BRIGHTRED}Invalid AI service. Must be 'gemini' or 'groq'.{Color.ENDC}"
-                )
-                return False
+        if change != "yes":
+            return False
 
-            # Update the AI service
-            self.ai_service = new_service
+        # Provider selection by number
+        providers = ["gemini", "groq"]
+        print(f"\n{Color.BRIGHTYELLOW}Select AI provider:{Color.ENDC}")
+        for idx, prov in enumerate(providers, 1):
+            print(f"  {idx}. {prov}")
+        choice = input(f"{Color.BRIGHTYELLOW}Enter provider number: {Color.ENDC}")
+        try:
+            idx = int(choice) - 1
+            if idx < 0 or idx >= len(providers): raise ValueError()
+            new_service = providers[idx]
+        except ValueError:
+            print(f"{Color.BRIGHTRED}Invalid choice. Aborting provider change.{Color.ENDC}")
+            return False
 
-            # Load the current config
-            config = ChatConfig.initialize_config()
-            config["DEFAULT"]["AIService"] = new_service
+        # Update config with new service
+        config = ChatConfig.initialize_config()
+        config["DEFAULT"]["AIService"] = new_service
+        ChatConfig.save_config(config)
 
-            # Save the updated config
-            ChatConfig.save_config(config)
+        # Reinitialize initializer for new service
+        self.initializer = ChatInitializer()
 
-            # Reinitialize the chat with the new service
-            self.initializer = ChatInitializer()
-            self.model = self.initializer.model
-            print(
-                f"{Color.PASTELPINK}Switched to {self.ai_service} service. Reinitializing chat...{Color.ENDC}"
-            )
-            time.sleep(1)
-            ChatConfig.clear_screen()
-            return True
-        return False
+        # Model selection for chosen provider
+        models = self.initializer.get_models() or []
+        if models:
+            print(f"\n{Color.BRIGHTGREEN}Available models for {new_service}:{Color.ENDC}")
+            for i, m in enumerate(models, 1):
+                print(f"  {i}. {m}")
+            choice = input(f"{Color.BRIGHTYELLOW}Enter model number: {Color.ENDC}")
+            try:
+                m_idx = int(choice) - 1
+                if m_idx < 0 or m_idx >= len(models): raise ValueError()
+                chosen_model = models[m_idx]
+            except ValueError:
+                print(f"{Color.BRIGHTRED}Invalid choice. Using default model.{Color.ENDC}")
+                chosen_model = ChatConfig.DEFAULT_GEMINI_MODEL if new_service == "gemini" else ChatConfig.DEFAULT_GROQ_MODEL
+        else:
+            print(f"{Color.BRIGHTYELLOW}No models retrieved. Using default model.{Color.ENDC}")
+            chosen_model = ChatConfig.DEFAULT_GEMINI_MODEL if new_service == "gemini" else ChatConfig.DEFAULT_GROQ_MODEL
+
+        # Save chosen model
+        config["DEFAULT"]["AIModel"] = chosen_model
+        ChatConfig.save_config(config)
+
+        # Update instance settings
+        self.ai_service = new_service
+        self.model = chosen_model
+        print(f"{Color.PASTELPINK}Switched to provider '{new_service}' and model '{chosen_model}'. Reinitializing chat...{Color.ENDC}")
+        time.sleep(1)
+        ChatConfig.clear_screen()
+        return True
 
     def change_model(self):
         """
@@ -400,21 +453,17 @@ class AIChat:
                     # Append Wikipedia information to the user input
                     user_input += f"\n\nHere's some additional information from Wikipedia:\n{wiki_info}"
 
-        # Send the updated user input to the AI
-        response_text = self.send_message_to_ai(chat, user_input)
-        sanitized_response = remove_emojis(response_text)
+        # Stop loading spinner before streaming answer
+        set_stop_loading(True)
+        loading_thread.join()
 
+        print()  # blank line before frea prompt
+        print(f"{Color.LIGHTPURPLE}╭─ 𝑓rea\n╰─❯❯ {Color.ENDC}", end="", flush=True)
+        response_text = self.send_message_to_ai(chat, user_input)
+        print()  # blank line after AI response
         # Append user input and AI response to chat history
         self.chat_history.append({"role": "user", "content": user_prompt})
         self.chat_history.append({"role": "assistant", "content": response_text})
-
-        set_stop_loading(True)
-        loading_thread.join()
-        sanitized_response = sanitized_response.replace("*", "")
-        sanitized_response = re.sub(r"(?i)frea", "𝑓rea", sanitized_response)
-        print(
-            f"{Color.BRIGHTYELLOW}\n╭─ 𝑓rea \n╰─❯❯ {Color.ENDC}{self.format_response_as_markdown(sanitized_response)}\n"
-        )
 
     def truncate_chat_history(self, chat_history, max_tokens=2048):
         """
@@ -478,9 +527,15 @@ class AIChat:
         )
 
         full_response = ""
+        # Stream and print chunks as they arrive
         for chunk in response:
-            if chunk.choices[0].delta.content:
-                full_response += chunk.choices[0].delta.content
+            content = chunk.choices[0].delta.content
+            if content:
+                sys.stdout.write(self.format_response_as_markdown(content))
+                sys.stdout.flush()
+                full_response += content
+        # Final newline after streaming
+        sys.stdout.write("\n")
         return full_response
 
     def format_response_as_markdown(self, response_text):
