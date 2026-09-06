@@ -239,41 +239,50 @@ class OpenCodeTUI:
             cm = make_card_mouse(card.id)
 
             if card.kind == "user":
-                tokens.append((bg + f"fg:{self.theme.accent} bold", "\n▌ You   ", cm))
-                tokens.append((bg + f"fg:{self.theme.text}", f"{card.body}\n", cm))
+                lines = card.body.splitlines() if card.body else [""]
+                tokens.append(("", "\n", cm))
+                for line in lines:
+                    tokens.append((bg + f"fg:{self.theme.accent}", "▌ ", cm))
+                    tokens.append((bg + f"fg:{self.theme.text}", f"{line}\n", cm))
 
             elif card.kind == "assistant":
                 total_lines = len(card.body.splitlines()) if card.body else 0
-                model_tag = f" ({card.model})" if card.model else ""
-
-                tokens.append(
-                    (bg + f"fg:{self.theme.primary} bold", "\n▌ Assistant", cm)
-                )
+                model_tag = f"({card.model}) " if card.model else ""
 
                 if card.status:
-                    tokens.append((bg + f"fg:{self.theme.info}", f"{model_tag} ", cm))
+                    tokens.append((bg + f"fg:{self.theme.primary}", "\n▌ ", cm))
+                    if model_tag:
+                        tokens.append((bg + f"fg:{self.theme.info}", model_tag, cm))
                     tokens.append(
                         (bg + f"fg:{self.theme.warning}", f"[{card.status}]\n", cm)
                     )
                 elif card.collapsed and total_lines > 2:
                     hidden = total_lines - 2
-                    pill = f"   [▶ Expand (+{hidden} lines) · Ctrl+O / click]"
+                    tokens.append((bg + f"fg:{self.theme.primary}", "\n▌ ", cm))
+                    if model_tag:
+                        tokens.append((bg + f"fg:{self.theme.info}", model_tag, cm))
+                    pill = f"[▶ Expand (+{hidden} lines) · Ctrl+O / click]"
                     tokens.append(
                         (
                             bg + f"fg:{self.theme.text_muted}",
-                            f"{model_tag}{pill}\n",
+                            f"{pill}\n",
+                            cm,
+                        )
+                    )
+                elif total_lines > 2:
+                    tokens.append((bg + f"fg:{self.theme.primary}", "\n▌ ", cm))
+                    if model_tag:
+                        tokens.append((bg + f"fg:{self.theme.info}", model_tag, cm))
+                    pill = "[▼ Collapse · Ctrl+O / click]"
+                    tokens.append(
+                        (
+                            bg + f"fg:{self.theme.text_muted}",
+                            f"{pill}\n",
                             cm,
                         )
                     )
                 else:
-                    pill = "   [▼ Collapse · Ctrl+O / click]" if total_lines > 2 else ""
-                    tokens.append(
-                        (
-                            bg + f"fg:{self.theme.text_muted}",
-                            f"{model_tag}{pill}\n",
-                            cm,
-                        )
-                    )
+                    tokens.append(("", "\n", cm))
 
                 if card.collapsed and total_lines > 2:
                     lines = card.body.splitlines()

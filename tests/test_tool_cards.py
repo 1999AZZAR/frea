@@ -75,7 +75,6 @@ def test_render_response_card():
     # Normal expanded response
     short_resp = "Line 1\nLine 2\nLine 3"
     card = render_response_card(short_resp, collapsed=False, model="openrouter/auto")
-    assert "▌[/] [#fab283 bold]Assistant" in card
     assert "(openrouter/auto)" in card
     assert "▼ Collapse · Ctrl+O / /collapse" in card
     assert "▌[/] Line 1" in card
@@ -87,7 +86,7 @@ def test_render_response_card():
     collapsed_card = render_response_card(
         long_resp, collapsed=True, peek_lines=2, model="openrouter/auto"
     )
-    assert "Assistant" in collapsed_card
+    assert "(openrouter/auto)" in collapsed_card
     assert "▶ Expand (+8 lines) · Ctrl+O / /expand" in collapsed_card
     assert "▌[/] Line 0" in collapsed_card
     assert "▌[/] Line 1" in collapsed_card

@@ -132,7 +132,6 @@ def test_repl_handle_input_renders_response_card():
 
     should_exit, output = repl.handle_input("hello")
     assert should_exit is False
-    assert "Assistant" in output
     assert "▼ Collapse · Ctrl+O / /collapse" in output
     assert "Line A" in output
     assert state.last_response == "Line A\nLine B\nLine C\nLine D\nLine E\nLine F"
@@ -205,7 +204,9 @@ def test_opencode_tui_mouse_and_hover():
 
     # Find token with mouse handler on the card
     card_tokens_with_handler = [
-        tok for tok in tokens if callable(tok[2]) and "Assistant" in tok[1]
+        tok
+        for tok in tokens
+        if callable(tok[2]) and any(p in tok[1] for p in ("Line", "Collapse", "Expand"))
     ]
     assert len(card_tokens_with_handler) > 0
     handler = card_tokens_with_handler[0][2]

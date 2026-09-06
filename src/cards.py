@@ -225,9 +225,8 @@ def render_response_card(
         control_pill = (
             f"[{theme.text_muted}][▶ Expand (+{hidden} lines) · Ctrl+O / /expand][/]"
         )
-        header = (
-            f"\n{rail} [{theme.primary} bold]Assistant[/]{model_tag}   {control_pill}"
-        )
+        tag = f"{model_tag}   " if model_tag else ""
+        header = f"\n{rail} {tag}{control_pill}"
         peek_body = "\n".join(f"{rail} {line}" for line in lines[:peek_lines])
         footer = (
             f"{rail} [{theme.text_muted}]… {hidden} more line(s) · ctrl+o or /expand[/]"
@@ -235,8 +234,7 @@ def render_response_card(
         return f"{header}\n{peek_body}\n{footer}\n"
     else:
         control_pill = f"[{theme.text_muted}][▼ Collapse · Ctrl+O / /collapse][/]"
-        header = (
-            f"\n{rail} [{theme.primary} bold]Assistant[/]{model_tag}   {control_pill}"
-        )
+        tag = f"{model_tag}   " if model_tag else ""
+        header = f"\n{rail} {tag}{control_pill}"
         body = "\n".join(f"{rail} {line}" for line in lines)
         return f"{header}\n{body}\n"
