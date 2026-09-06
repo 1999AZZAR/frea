@@ -1,9 +1,9 @@
 # Implementation Plan: Modernize Frea Agent Harness
 
 ## Phase 1: CLI Entry Point & Execution Dispatch
-- [ ] Task: Write tests for CLI argument parser and mode dispatcher
-    - [ ] Create tests for `-p` / `--run` headless flag handling
-    - [ ] Create tests for `--model`, `--yes` flags and default interactive mode
+- [x] Task: Write tests for CLI argument parser and mode dispatcher [472c704]
+    - [x] Create tests for `-p` / `--run` headless flag handling
+    - [x] Create tests for `--model`, `--yes` flags and default interactive mode
 - [ ] Task: Implement modular CLI runner and signal handlers
     - [ ] Implement argument parsing with `argparse`
     - [ ] Implement POSIX signal handlers (`SIGINT`, `SIGTERM`) with terminal cursor safety
