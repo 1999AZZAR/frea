@@ -8,5 +8,5 @@
   *Link: [./tracks/opencode_tui_20260906/index.md](./tracks/opencode_tui_20260906/index.md)*
 - [x] **Track: Minimal Requirements & `~/.config/frea/` User Configuration**
   *Link: [./tracks/minimal_reqs_and_user_config_20260906/index.md](./tracks/minimal_reqs_and_user_config_20260906/index.md)*
-- [ ] **Track: Bake Persona from `/home/azzar/agent_persona` & Migrate `src/config` to `~/.config/frea`**
+- [~] **Track: Bake Persona from `/home/azzar/agent_persona` & Migrate `src/config` to `~/.config/frea`**
   *Link: [./tracks/bake_persona_and_user_config_20260906/index.md](./tracks/bake_persona_and_user_config_20260906/index.md)*
