@@ -5,10 +5,10 @@
 - [x] Task: Implement `src/persona.py` loading `/home/azzar/agent_persona` with embedded backup dad2d6d
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) dad2d6d
 
-### Phase 2: Agent System Prompt Integration
-- [ ] Task: Write tests for persona injection into `AgentLoop`, `AIChat`, and `ChatInitializer` in `tests/test_agent_persona.py`
-- [ ] Task: Wire assembled persona into `src/agent.py`, `src/main.py`, and `src/chat_initializer.py`
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+### Phase 2: Agent System Prompt Integration [checkpoint: ab9a313]
+- [x] Task: Write tests for persona injection into `AgentLoop`, `AIChat`, and `ChatInitializer` in `tests/test_agent_persona.py` 3690da0
+- [x] Task: Wire assembled persona into `src/agent.py`, `src/main.py`, and `src/chat_initializer.py` ab9a313
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) ab9a313
 
 ### Phase 3: Purge `src/config/` & Migrate Legacy Paths to `~/.config/frea`
 - [ ] Task: Update `src/chat_config.py` and `src/config.py` to root all logs, exports, and config paths in `~/.config/frea`
