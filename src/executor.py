@@ -1,6 +1,7 @@
 """Tool execution dispatcher, schema registry, and safety guardrails for Frea."""
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 from src.tools import (
     ToolResult,
@@ -59,6 +60,7 @@ class ToolRegistry:
 
     def __init__(self, tools: Optional[Dict[str, ToolDefinition]] = None):
         self._tools: Dict[str, ToolDefinition] = tools or {}
+        self._mcp_clients: List[Any] = []
 
     def register(self, definition: ToolDefinition) -> None:
         self._tools[definition.name] = definition
@@ -66,8 +68,45 @@ class ToolRegistry:
     def get(self, name: str) -> Optional[ToolDefinition]:
         return self._tools.get(name)
 
+    def register_mcp_client(self, client: Any) -> None:
+        """Register tools exposed by an MCP client instance."""
+        self._mcp_clients.append(client)
+        server_name = getattr(client.config, "name", "mcp")
+        try:
+            tools_list = client.list_tools()
+            for t in tools_list:
+                t_name = t.get("name")
+                if not t_name:
+                    continue
+                full_name = f"{server_name}_{t_name}"
+                desc = t.get("description", f"MCP tool from {server_name}")
+                params = t.get("inputSchema") or {"type": "object", "properties": {}}
+
+                def make_caller(cl, tool_inner):
+                    return lambda **kwargs: cl.call_tool(tool_inner, kwargs)
+
+                self.register(
+                    ToolDefinition(
+                        name=full_name,
+                        description=desc,
+                        parameters=params,
+                        func=make_caller(client, t_name),
+                        requires_confirmation=False,
+                    )
+                )
+        except Exception:
+            pass
+
+    def stop_all_mcp(self) -> None:
+        """Stop all connected MCP clients."""
+        for client in self._mcp_clients:
+            try:
+                client.stop()
+            except Exception:
+                pass
+
     def to_openai_tools(self) -> List[Dict[str, Any]]:
-        """Return list of OpenAI function definitions for primary tools."""
+        """Return list of OpenAI function definitions for primary tools, skills, and MCP."""
         primary_tool_names = [
             "read_file",
             "write_file",
@@ -79,16 +118,41 @@ class ToolRegistry:
             "command_status",
             "stop_command",
             "update_plan",
+            "skill",
         ]
         schemas = []
+        seen = set()
         for name in primary_tool_names:
             defn = self._tools.get(name)
-            if defn:
+            if defn and defn.name not in seen:
                 schemas.append(defn.to_openai_schema())
+                seen.add(defn.name)
+
+        # Include registered MCP tools
+        for name, defn in self._tools.items():
+            if name not in seen and not any(
+                name.startswith(p)
+                for p in [
+                    "bash_run",
+                    "file_read",
+                    "file_write",
+                    "file_patch",
+                    "grep_search",
+                    "find_files",
+                ]
+            ):
+                schemas.append(defn.to_openai_schema())
+                seen.add(name)
+
         return schemas
 
     @classmethod
-    def with_defaults(cls) -> "ToolRegistry":
+    def with_defaults(
+        cls,
+        include_skills: bool = True,
+        include_mcp: bool = True,
+        search_paths: Optional[List[Path]] = None,
+    ) -> "ToolRegistry":
         """Scaffold standard Kamui & OpenCode tool definitions."""
         registry = cls()
 
@@ -435,6 +499,42 @@ class ToolRegistry:
                 requires_confirmation=False,
             )
         )
+
+        if include_skills:
+            try:
+                from src.skills import discover_skills, load_skill
+
+                discovered = discover_skills(search_paths=search_paths)
+                registry.register(
+                    ToolDefinition(
+                        name="skill",
+                        description="Load a specialized skill when the task matches one of the available skills in the system context. Injects skill instructions and files into conversation.",
+                        parameters={
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string",
+                                    "description": "Name of the skill to load from available skills.",
+                                }
+                            },
+                            "required": ["name"],
+                        },
+                        func=lambda name: load_skill(name, skills=discovered),
+                        requires_confirmation=False,
+                    )
+                )
+            except Exception:
+                pass
+
+        if include_mcp:
+            try:
+                from src.mcp import load_user_mcp_servers
+
+                mcp_servers = load_user_mcp_servers()
+                for client in mcp_servers.values():
+                    registry.register_mcp_client(client)
+            except Exception:
+                pass
 
         return registry
 

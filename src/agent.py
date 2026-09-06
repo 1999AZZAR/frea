@@ -65,7 +65,17 @@ class AgentLoop:
         self.provider = provider
         self.executor = executor
         self.max_steps = max_steps
-        self.system_prompt = system_prompt or get_default_system_prompt()
+        base_prompt = system_prompt or get_default_system_prompt()
+        try:
+            from src.skills import discover_skills, render_skills_prompt
+
+            skills = discover_skills()
+            skills_prompt = render_skills_prompt(skills)
+            if skills_prompt and "<skills>" not in base_prompt:
+                base_prompt = f"{base_prompt}\n\n{skills_prompt}"
+        except Exception:
+            pass
+        self.system_prompt = base_prompt
 
     def run(self, user_prompt: str) -> AgentRunResult:
         messages: List[Dict[str, Any]] = [
