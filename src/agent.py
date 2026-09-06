@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 from src.executor import ToolExecutor
 
 
@@ -61,10 +61,14 @@ class AgentLoop:
         executor: ToolExecutor,
         max_steps: int = 15,
         system_prompt: Optional[str] = None,
+        on_tool_call: Optional[Callable[[str, Dict[str, Any]], None]] = None,
+        on_tool_result: Optional[Callable[[str, Dict[str, Any], str], None]] = None,
     ):
         self.provider = provider
         self.executor = executor
         self.max_steps = max_steps
+        self.on_tool_call = on_tool_call
+        self.on_tool_result = on_tool_result
         base_prompt = system_prompt or get_default_system_prompt()
         try:
             from src.skills import discover_skills, render_skills_prompt
@@ -127,10 +131,22 @@ class AgentLoop:
             # Execute each requested tool call
             for tc in response.tool_calls:
                 tool_calls_count += 1
+                if self.on_tool_call:
+                    try:
+                        self.on_tool_call(tc.name, tc.arguments)
+                    except Exception:
+                        pass
+
                 result = self.executor.execute(tc.name, tc.arguments)
                 tool_output = (
                     result.output if result.success else f"Error: {result.error}"
                 )
+
+                if self.on_tool_result:
+                    try:
+                        self.on_tool_result(tc.name, tc.arguments, tool_output)
+                    except Exception:
+                        pass
 
                 messages.append(
                     {

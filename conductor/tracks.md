@@ -16,3 +16,5 @@
   *Link: [./tracks/remake_internal_tools_20260906/index.md](./tracks/remake_internal_tools_20260906/index.md)*
 - [x] **Track: Skills and MCP Support based on OpenCode Architecture**
   *Link: [./tracks/skills_and_mcp_support_20260906/index.md](./tracks/skills_and_mcp_support_20260906/index.md)*
+- [x] **Track: OpenCode 1:1 TUI Overhaul and Wiring**
+  *Link: [./tracks/opencode_1to1_tui_20260906/index.md](./tracks/opencode_1to1_tui_20260906/index.md)*

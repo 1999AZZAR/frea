@@ -1,8 +1,8 @@
-"""Interactive Terminal User Interface (TUI) REPL for Frea styled after OpenCode."""
+"""Interactive Terminal User Interface (TUI) REPL for Frea styled 1:1 after OpenCode."""
 
 import os
 import sys
-from typing import Iterable, Optional, TextIO, Tuple
+from typing import Any, Dict, Iterable, Optional, TextIO, Tuple
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import CompleteEvent, Completer, Completion
 from prompt_toolkit.document import Document
@@ -51,6 +51,50 @@ class OpenCodeREPL:
         self.agent_loop = agent_loop or agent
         self.session = session or session_state or SessionState()
         self.theme = theme
+        self._active_out_stream: Optional[TextIO] = None
+
+        # Wire live tool execution streaming into agent loop
+        if self.agent_loop:
+            if not getattr(self.agent_loop, "on_tool_call", None):
+                self.agent_loop.on_tool_call = self._on_tool_call
+            if not getattr(self.agent_loop, "on_tool_result", None):
+                self.agent_loop.on_tool_result = self._on_tool_result
+
+    def _on_tool_call(self, name: str, args: Dict[str, Any]) -> None:
+        from src.cards import render_tool_call
+
+        banner = render_tool_call(name, args, theme=self.theme)
+        if self._active_out_stream and self._active_out_stream != sys.stdout:
+            self._active_out_stream.write(f"{banner}\n")
+            self._active_out_stream.flush()
+        else:
+            console.print(banner)
+
+    def _on_tool_result(self, name: str, args: Dict[str, Any], result: str) -> None:
+        from src.cards import render_tool_result
+
+        banner = render_tool_result(name, args, result, theme=self.theme)
+        if self._active_out_stream and self._active_out_stream != sys.stdout:
+            self._active_out_stream.write(f"{banner}\n")
+            self._active_out_stream.flush()
+        else:
+            console.print(banner)
+
+    def get_stats(self) -> Tuple[int, int]:
+        """Compute active tools count and connected MCP servers count."""
+        tools_count = 11
+        mcp_count = 0
+        if (
+            self.agent_loop
+            and hasattr(self.agent_loop, "executor")
+            and hasattr(self.agent_loop.executor, "registry")
+        ):
+            reg = self.agent_loop.executor.registry
+            if hasattr(reg, "_tools"):
+                tools_count = len(reg._tools)
+            if hasattr(reg, "_mcp_clients"):
+                mcp_count = len(reg._mcp_clients)
+        return tools_count, mcp_count
 
     def get_prompt_tokens(self) -> list[tuple[str, str]]:
         """Return styled prompt tokens for prompt_toolkit."""
@@ -86,11 +130,17 @@ class OpenCodeREPL:
         """Run interactive loop until exit requested or EOF reached."""
         in_stream = input_stream or sys.stdin
         out_stream = output_stream or sys.stdout
+        self._active_out_stream = out_stream
+        tools_cnt, mcp_cnt = self.get_stats()
 
         # Stream fallback for non-tty/unit testing
         if input_stream is not None or not sys.stdin.isatty():
             header = render_header(
-                self.session.current_model, os.getcwd(), theme=self.theme
+                self.session.current_model,
+                os.getcwd(),
+                tools_count=tools_cnt,
+                mcp_count=mcp_cnt,
+                theme=self.theme,
             )
             out_stream.write(f"{header}\n")
             out_stream.flush()
@@ -119,7 +169,11 @@ class OpenCodeREPL:
 
         # Full OpenCode interactive mode
         header_text = render_header(
-            self.session.current_model, os.getcwd(), theme=self.theme
+            self.session.current_model,
+            os.getcwd(),
+            tools_count=tools_cnt,
+            mcp_count=mcp_cnt,
+            theme=self.theme,
         )
         console.print(header_text)
 
@@ -139,7 +193,9 @@ class OpenCodeREPL:
             try:
                 statusline = render_statusline(
                     os.getcwd(),
-                    self.session.current_model,
+                    model=self.session.current_model,
+                    tools_count=tools_cnt,
+                    mcp_count=mcp_cnt,
                     theme=self.theme,
                 )
                 user_input = prompt_session.prompt(

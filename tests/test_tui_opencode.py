@@ -30,3 +30,19 @@ def test_opencode_repl_prompt_symbol():
     prompt = repl.get_prompt_tokens()
     # Prompt should have OpenCode '❯ ' symbol
     assert any("❯" in token[1] for token in prompt)
+
+
+def test_opencode_repl_attaches_tool_callbacks():
+    from unittest.mock import MagicMock
+    from src.agent import AgentLoop
+
+    agent_mock = MagicMock(spec=AgentLoop)
+    agent_mock.on_tool_call = None
+    agent_mock.on_tool_result = None
+
+    repl = OpenCodeREPL(agent_loop=agent_mock)
+    assert agent_mock.on_tool_call is not None
+    assert agent_mock.on_tool_result is not None
+    tools_cnt, mcp_cnt = repl.get_stats()
+    assert tools_cnt >= 0
+    assert mcp_cnt >= 0

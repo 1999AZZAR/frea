@@ -25,7 +25,7 @@ class SessionState:
 
 HELP_TEXT = """Available commands:
   /help               - Display this help message
-  /status             - View session status and active model
+  /status             - View session status, MCP servers, and active model
   /model [name]       - View or switch current model
   /clear              - Clear terminal screen
   /compact            - Compress conversation history
@@ -47,13 +47,49 @@ def handle_slash_command(user_input: str, session: SessionState) -> CommandResul
         return CommandResult(handled=True, output=HELP_TEXT)
     elif cmd == "/status":
         turns = len(session.history) // 2
-        status_info = (
-            f"Model: {session.current_model}\n"
-            f"Provider: {session.current_provider}\n"
-            f"History: {len(session.history)} messages ({turns} turns)\n"
-            f"Tools: 6 active tools (bash_run, file_read, file_write, file_patch, grep_search, find_files)"
-        )
-        return CommandResult(handled=True, output=status_info)
+        mcp_servers = []
+        try:
+            from src.mcp import load_user_mcp_servers
+
+            servers = load_user_mcp_servers()
+            for name, client in servers.items():
+                status = "Connected" if client.is_connected() else "Disconnected"
+                mcp_servers.append((name, status))
+        except Exception:
+            pass
+
+        skills_list = []
+        try:
+            from src.skills import discover_skills
+
+            skills = discover_skills()
+            for s in skills:
+                skills_list.append(s.name)
+        except Exception:
+            pass
+
+        status_lines = [
+            f"Model: {session.current_model}",
+            f"Provider: {session.current_provider}",
+            f"History: {len(session.history)} messages ({turns} turns)",
+            "Tools: 11 active tools (read_file, write_file, patch_file, list_directory, grep, glob, run_command, command_status, stop_command, update_plan, skill)",
+        ]
+
+        if mcp_servers:
+            status_lines.append(f"MCP Servers ({len(mcp_servers)}):")
+            for name, status in mcp_servers:
+                status_lines.append(f"  • {name} [{status}]")
+        else:
+            status_lines.append("MCP: No servers connected")
+
+        if skills_list:
+            status_lines.append(f"Skills ({len(skills_list)} available):")
+            for s_name in skills_list[:6]:
+                status_lines.append(f"  • {s_name}")
+            if len(skills_list) > 6:
+                status_lines.append(f"  ... ({len(skills_list) - 6} more)")
+
+        return CommandResult(handled=True, output="\n".join(status_lines))
     elif cmd in ("/exit", "/quit"):
         return CommandResult(
             handled=True, exit_requested=True, output="Exiting Frea session."
@@ -69,7 +105,6 @@ def handle_slash_command(user_input: str, session: SessionState) -> CommandResul
         )
     elif cmd == "/compact":
         initial_len = len(session.history)
-
         session.history = compact_history(session.history, max_messages=10)
         return CommandResult(
             handled=True,

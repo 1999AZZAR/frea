@@ -35,3 +35,21 @@ def test_render_statusline():
     assert "project" in status
     assert "openrouter/auto" in status
     assert "6" in status
+    assert "/status" in status
+
+
+def test_tint_color():
+    from src.ui import tint
+
+    # Tinting black (#000000) with white (#ffffff) at 0.5 should be gray (#808080)
+    t = tint("#000000", "#ffffff", 0.5)
+    assert t == "#808080"
+
+
+def test_render_logo_rich_text():
+    from src.ui import render_logo
+    from rich.text import Text
+
+    text = render_logo(raw=False)
+    assert isinstance(text, Text)
+    assert len(text.plain) > 0

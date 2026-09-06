@@ -8,17 +8,31 @@ from src.cards import (
 
 def test_render_tool_call_inline():
     assert "$ ls -la" in render_tool_call("bash_run", {"command": "ls -la"})
+    assert "$ ls -la" in render_tool_call("run_command", {"command": "ls -la"})
     assert "→ Read src/main.py" in render_tool_call(
         "file_read", {"path": "src/main.py"}
+    )
+    assert "→ Read src/main.py" in render_tool_call(
+        "read_file", {"path": "src/main.py"}
     )
     assert "← Write src/main.py" in render_tool_call(
         "file_write", {"path": "src/main.py"}
     )
+    assert "← Write src/main.py" in render_tool_call(
+        "write_file", {"path": "src/main.py"}
+    )
     assert "← Patched src/main.py" in render_tool_call(
         "file_patch", {"path": "src/main.py"}
     )
+    assert "← Patched src/main.py" in render_tool_call(
+        "patch_file", {"path": "src/main.py"}
+    )
     assert '✱ Grep "foo"' in render_tool_call("grep_search", {"pattern": "foo"})
+    assert '✱ Grep "foo"' in render_tool_call("grep", {"query": "foo"})
     assert '✱ Glob "*.py"' in render_tool_call("find_files", {"pattern": "*.py"})
+    assert '✱ Glob "*.py"' in render_tool_call("glob", {"pattern": "*.py"})
+    assert "→ Skill caveman" in render_tool_call("skill", {"name": "caveman"})
+    assert "⚙ Update Plan" in render_tool_call("update_plan", {"plan": []})
 
 
 def test_render_tool_result_bash_collapse():
