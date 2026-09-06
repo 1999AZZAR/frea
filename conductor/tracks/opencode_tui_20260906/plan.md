@@ -20,7 +20,8 @@
 - [x] Task: Implement OpenCode bottom statusline (`directory`, `model`, `tools`), `prompt_toolkit` interactive prompt (`❯ `), and command palette 048c057
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) 048c057
 
-### Phase 5: End-to-End Integration & Final Polish
+### Phase 5: End-to-End Integration & Final Polish [checkpoint: 8866c4d]
 - [x] Task: Write full integration tests covering interactive REPL turns, batch mode (`-p`), and OpenCode permission alerts 8866c4d
 - [x] Task: Verify 100% test pass rate across system python and `.venv`, verify pre-commit hooks 8866c4d
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) 8866c4d
+
