@@ -5,13 +5,13 @@
 - [x] Task: Purge LangChain from `requirements.txt` and `.venv`, add `rich` and `prompt_toolkit` to requirements 5e0fcf7
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) 5e0fcf7
 
-### Phase 2: OpenCode Theme, Block Logo & Header
+### Phase 2: OpenCode Theme, Block Logo & Header [checkpoint: 44a6b7a]
 - [x] Task: Write tests for OpenCode block logo rendering, model banner, and theme palette in `tests/test_theme.py` 831bcf1
 - [x] Task: Implement OpenCode dual-tone block logo and session banner in `src/ui.py` 44a6b7a
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) 44a6b7a
 
 ### Phase 3: OpenCode Tool Cards & Syntax Diffs
-- [ ] Task: Write tests for OpenCode tool card formatting (`$`, `→`, `←`, `✱`) and unified diff renderer in `tests/test_tool_cards.py`
+- [~] Task: Write tests for OpenCode tool card formatting (`$`, `→`, `←`, `✱`) and unified diff renderer in `tests/test_tool_cards.py`
 - [ ] Task: Implement tool card renderers with inline/block states, output collapse, and colored diff badges
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
