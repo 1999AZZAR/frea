@@ -41,9 +41,9 @@
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [dfcf48f]
 
 ## Phase 5: End-to-End Integration & Regression Testing
-- [ ] Task: Write end-to-end integration tests
-    - [ ] Test headless run flow executing a multi-step tool sequence
-    - [ ] Test interactive session initialization and graceful exit
+- [x] Task: Write end-to-end integration tests [c818a8d]
+    - [x] Test headless run flow executing a multi-step tool sequence
+    - [x] Test interactive session initialization and graceful exit
 - [ ] Task: Execute full test suite and quality audit
     - [ ] Verify test suite passes with code coverage >80%
     - [ ] Run pre-commit hooks across codebase
