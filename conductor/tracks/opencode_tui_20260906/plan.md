@@ -7,7 +7,7 @@
 
 ### Phase 2: OpenCode Theme, Block Logo & Header
 - [x] Task: Write tests for OpenCode block logo rendering, model banner, and theme palette in `tests/test_theme.py` 831bcf1
-- [~] Task: Implement OpenCode dual-tone block logo and session banner in `src/ui.py`
+- [x] Task: Implement OpenCode dual-tone block logo and session banner in `src/ui.py` 44a6b7a
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ### Phase 3: OpenCode Tool Cards & Syntax Diffs
