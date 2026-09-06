@@ -2,7 +2,7 @@
 
 ### Phase 1: Streamline Requirements & Dependency Hygiene
 - [x] Task: Write tests verifying minimal requirements and lazy import safety in `tests/test_clean_requirements.py` cd4a788
-- [~] Task: Remake `requirements.txt`, create `requirements-dev.txt`, purge unused packages from `.venv`, make `agent_tools.py` lazy-load wikipediaapi
+- [x] Task: Remake `requirements.txt`, create `requirements-dev.txt`, purge unused packages from `.venv`, make `agent_tools.py` lazy-load wikipediaapi d1a18e2
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ### Phase 2: User Configuration Engine (`~/.config/frea/`)
