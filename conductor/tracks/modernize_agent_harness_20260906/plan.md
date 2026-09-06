@@ -10,10 +10,10 @@
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [d223ee4]
 
 ## Phase 2: Core Tool Execution Engine & Safety Guardrails
-- [ ] Task: Write tests for tool execution suite
-    - [ ] Create unit tests for `bash_run` with timeouts and directory sandboxing
-    - [ ] Create unit tests for `file_read`, `file_write`, and contiguous `file_patch`
-    - [ ] Create unit tests for `grep_search` and `find_files`
+- [x] Task: Write tests for tool execution suite [b9fe7e7]
+    - [x] Create unit tests for `bash_run` with timeouts and directory sandboxing
+    - [x] Create unit tests for `file_read`, `file_write`, and contiguous `file_patch`
+    - [x] Create unit tests for `grep_search` and `find_files`
 - [ ] Task: Implement tool execution engine with interactive guardrails
     - [ ] Implement safe subprocess execution with captured stdout/stderr
     - [ ] Implement file inspection and atomic modification tools
