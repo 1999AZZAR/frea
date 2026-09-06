@@ -1,8 +1,8 @@
 # Implementation Plan: Minimal Requirements & `~/.config/frea/` User Configuration
 
 ### Phase 1: Streamline Requirements & Dependency Hygiene
-- [ ] Task: Write tests verifying minimal requirements and lazy import safety in `tests/test_clean_requirements.py`
-- [ ] Task: Remake `requirements.txt`, create `requirements-dev.txt`, purge unused packages from `.venv`, make `agent_tools.py` lazy-load wikipediaapi
+- [x] Task: Write tests verifying minimal requirements and lazy import safety in `tests/test_clean_requirements.py` cd4a788
+- [~] Task: Remake `requirements.txt`, create `requirements-dev.txt`, purge unused packages from `.venv`, make `agent_tools.py` lazy-load wikipediaapi
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ### Phase 2: User Configuration Engine (`~/.config/frea/`)
