@@ -10,8 +10,8 @@
 - [x] Task: Wire assembled persona into `src/agent.py`, `src/main.py`, and `src/chat_initializer.py` ab9a313
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) ab9a313
 
-### Phase 3: Purge `src/config/` & Migrate Legacy Paths to `~/.config/frea`
-- [ ] Task: Update `src/chat_config.py` and `src/config.py` to root all logs, exports, and config paths in `~/.config/frea`
-- [ ] Task: Remove `/home/azzar/project/TUI_Agent/frea/src/config/` directory and update `.gitignore`
-- [ ] Task: Run full test suite, verify clean pre-commit hooks, and verify live scaffolding
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+### Phase 3: Purge `src/config/` & Migrate Legacy Paths to `~/.config/frea` [checkpoint: fe795e5]
+- [x] Task: Update `src/chat_config.py` and `src/config.py` to root all logs, exports, and config paths in `~/.config/frea` fe795e5
+- [x] Task: Remove `/home/azzar/project/TUI_Agent/frea/src/config/` directory and update `.gitignore` fe795e5
+- [x] Task: Run full test suite, verify clean pre-commit hooks, and verify live scaffolding fe795e5
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) fe795e5
