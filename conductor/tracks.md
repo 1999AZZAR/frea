@@ -14,5 +14,5 @@
   *Link: [./tracks/free_models_and_purge_genai_20260906/index.md](./tracks/free_models_and_purge_genai_20260906/index.md)*
 - [x] **Track: Remake Internal Tooling Suite from Scratch (Kamui & OpenCode Parity)**
   *Link: [./tracks/remake_internal_tools_20260906/index.md](./tracks/remake_internal_tools_20260906/index.md)*
-- [~] **Track: Skills and MCP Support based on OpenCode Architecture**
+- [x] **Track: Skills and MCP Support based on OpenCode Architecture**
   *Link: [./tracks/skills_and_mcp_support_20260906/index.md](./tracks/skills_and_mcp_support_20260906/index.md)*

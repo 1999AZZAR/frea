@@ -20,13 +20,20 @@
 - **Groq**: Ultra-low latency inference via OpenAI-compatible endpoint
 - **Model Switching**: Dynamic provider switching via config or runtime slash command (`/model`)
 
-## Agent Harness Architecture
-- **Agent Loop**: Native ReAct tool executor supporting multi-turn reasoning and tool invocation
-- **Tool Suite**:
-  - Subprocess / Shell execution (`bash`) with timeout and output capture
-  - Filesystem manipulation (read, write, targeted patch/diff)
-  - Code search (`grep` / `ripgrep`, glob / `fd`)
-  - Git status and diff inspection
+## Agent Harness & Tooling Architecture
+- **Agent Loop**: Native ReAct tool executor supporting multi-turn reasoning and tool invocation with dynamic OpenAPI tool schema projection
+- **Core Tool Suite (Kamui & OpenCode Parity)**:
+  - File Operations: `read_file` (with line slicing/bounds), `write_file` (with dir creation), `patch_file` (surgical exact replacement)
+  - Search & Discovery: `list_directory` (ignoring VCS/venv), `grep` (pattern search with line numbers), `glob` (wildcard matching)
+  - Process & Jobs: `run_command` (foreground and detached background execution), `command_status`, `stop_command`
+  - Plan Tracking: `update_plan` (multi-step structured task checklist)
+- **Skills System (OpenCode Parity)**:
+  - Dynamic discovery from `.agents/skills`, `~/.config/frea/skills`, `~/.agents/skills`
+  - Automatic prompt injection (`<skills>`) and `skill` loader tool
+- **Model Context Protocol (MCP)**:
+  - Stdio transport client implementing JSON-RPC 2.0 (`initialize`, `tools/list`, `tools/call`)
+  - Config-driven server integration (`mcpServers` in `config.json` or `mcp.json`)
+  - Automatic tool namespacing (`{server}_{tool}`) into `ToolRegistry`
 - **Context Management**: Token-aware message history, prompt compaction, and rotating session logs
 
 ## Configuration & Persistence
