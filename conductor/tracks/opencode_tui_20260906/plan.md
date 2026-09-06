@@ -6,8 +6,8 @@
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) 5e0fcf7
 
 ### Phase 2: OpenCode Theme, Block Logo & Header
-- [~] Task: Write tests for OpenCode block logo rendering, model banner, and theme palette in `tests/test_theme.py`
-- [ ] Task: Implement OpenCode dual-tone block logo and session banner in `src/ui.py`
+- [x] Task: Write tests for OpenCode block logo rendering, model banner, and theme palette in `tests/test_theme.py` 831bcf1
+- [~] Task: Implement OpenCode dual-tone block logo and session banner in `src/ui.py`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ### Phase 3: OpenCode Tool Cards & Syntax Diffs
