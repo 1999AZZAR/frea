@@ -97,7 +97,23 @@ class AgentLoop:
                 if hasattr(self.executor, "get_tool_schemas")
                 else None
             )
-            response = self.provider.generate(messages, tools=tools)
+            try:
+                response = self.provider.generate(messages, tools=tools)
+            except Exception as exc:
+                # Surface provider errors (auth, rate-limit, etc.) as a final answer
+                from src.providers import FreaProviderError
+
+                err_msg = (
+                    str(exc)
+                    if isinstance(exc, FreaProviderError)
+                    else f"Provider error: {exc}"
+                )
+                return AgentRunResult(
+                    final_answer=err_msg,
+                    steps_taken=steps_taken,
+                    tool_calls_count=tool_calls_count,
+                    success=False,
+                )
 
             # If no tools called, we have our final answer
             if not response.tool_calls:

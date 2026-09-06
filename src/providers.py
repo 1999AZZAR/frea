@@ -48,6 +48,10 @@ def compact_history(
     return compacted
 
 
+class FreaProviderError(Exception):
+    """Raised when a provider call fails with a user-actionable message."""
+
+
 class OpenAIProvider(BaseModelProvider):
     """OpenAI API provider for tool calling and completions."""
 
@@ -74,6 +78,8 @@ class OpenAIProvider(BaseModelProvider):
         messages: List[Dict[str, Any]],
         tools: Optional[List[Dict[str, Any]]] = None,
     ) -> ModelResponse:
+        import openai
+
         kwargs: Dict[str, Any] = {
             "model": self.model,
             "messages": messages,
@@ -81,9 +87,32 @@ class OpenAIProvider(BaseModelProvider):
         if tools:
             kwargs["tools"] = tools
 
-        response = self.client.chat.completions.create(**kwargs)
-        choice = response.choices[0].message
+        try:
+            response = self.client.chat.completions.create(**kwargs)
+        except openai.AuthenticationError as exc:
+            body = getattr(exc, "body", {}) or {}
+            code = (body.get("error") or {}).get("code", "")
+            if code == "PAID_MODEL_AUTH_REQUIRED":
+                raise FreaProviderError(
+                    f"Model '{self.model}' requires authentication.\n"
+                    "Use a free model instead:\n"
+                    "  /model kimi-k2.5-free          (OpenCode Zen, no key)\n"
+                    "  /model kilocode/kilo-auto/balanced  (KiloCode, no key)\n"
+                    "  /model openrouter/auto          (OpenRouter, set OPENROUTER_API_KEY)"
+                ) from exc
+            raise FreaProviderError(
+                f"Authentication failed for '{self.model}': {exc}"
+            ) from exc
+        except openai.RateLimitError as exc:
+            raise FreaProviderError(
+                f"Rate limit hit for '{self.model}'. Try /model to switch providers."
+            ) from exc
+        except openai.APIConnectionError as exc:
+            raise FreaProviderError(
+                f"Cannot reach API for '{self.model}': {exc}"
+            ) from exc
 
+        choice = response.choices[0].message
         tool_calls: List[ToolCall] = []
         if choice.tool_calls:
             for tc in choice.tool_calls:
@@ -99,7 +128,7 @@ class OpenAIProvider(BaseModelProvider):
 
 
 class OpenRouterProvider(OpenAIProvider):
-    """OpenRouter provider supporting auto model routing and fallback."""
+    """OpenRouter provider — smart routing with automatic free fallback."""
 
     def __init__(
         self,
@@ -119,8 +148,9 @@ class OpenRouterProvider(OpenAIProvider):
             model=model,
             base_url="https://openrouter.ai/api/v1",
             default_headers={
-                "HTTP-Referer": "https://github.com/1999AZZAR/frea",
-                "X-Title": "Frea",
+                # Match opencode headers exactly (models.dev convention)
+                "HTTP-Referer": "https://opencode.ai/",
+                "X-Title": "opencode",
             },
         )
 
@@ -131,20 +161,30 @@ class OpenRouterProvider(OpenAIProvider):
     ) -> ModelResponse:
         try:
             return super().generate(messages, tools=tools)
-        except Exception as exc:
-            if self.fallback_model and self.model != self.fallback_model:
-                original_model = self.model
-                self.model = self.fallback_model
-                try:
-                    return super().generate(messages, tools=tools)
-                except Exception:
-                    self.model = original_model
+        except FreaProviderError:
+            raise
+        except Exception:
+            pass
+
+        # Try openrouter/free tier
+        if self.model != self.fallback_model:
+            original_model = self.model
+            self.model = self.fallback_model
             try:
-                free_provider = OpencodeProvider()
-                return free_provider.generate(messages, tools=tools)
+                return super().generate(messages, tools=tools)
             except Exception:
                 pass
-            raise exc
+            finally:
+                self.model = original_model
+
+        # Fall through to KiloCode free gateway
+        try:
+            return KiloCodeProvider().generate(messages, tools=tools)
+        except Exception:
+            pass
+
+        # Last resort: OpenCode Zen free
+        return OpencodeProvider().generate(messages, tools=tools)
 
 
 class GroqProvider(OpenAIProvider):
@@ -164,18 +204,30 @@ class GroqProvider(OpenAIProvider):
 
 
 class OpencodeProvider(OpenAIProvider):
-    """OpenCode gateway provider with free out-of-the-box models."""
+    """
+    OpenCode Zen gateway — free models (cost.input=0) work with apiKey='public'.
+    Paid models require OPENCODE_API_KEY.
+    Base URL confirmed from models.dev: https://opencode.ai/zen/v1
+    """
+
+    # Free models available without auth (cost.input == 0 on models.dev)
+    FREE_MODELS = [
+        "ring-2.6-1t-free",
+        "mimo-v2-pro-free",
+        "deepseek-v4-flash",
+    ]
+    DEFAULT_FREE_MODEL = "deepseek-v4-flash"
 
     def __init__(
         self,
         api_key: Optional[str] = None,
-        model: str = "kimi-k2.5-free",
+        model: Optional[str] = None,
     ):
         key = api_key or os.environ.get("OPENCODE_API_KEY") or "public"
         super().__init__(
             api_key=key,
-            model=model,
-            base_url="https://api.opencode.ai/v1",
+            model=model or self.DEFAULT_FREE_MODEL,
+            base_url="https://opencode.ai/zen/v1",
             default_headers={
                 "HTTP-Referer": "https://opencode.ai/",
                 "X-Title": "opencode",
@@ -184,17 +236,23 @@ class OpencodeProvider(OpenAIProvider):
 
 
 class KiloCodeProvider(OpenAIProvider):
-    """KiloCode gateway provider supporting smart free routing."""
+    """
+    KiloCode gateway — free tier works with apiKey='public'.
+    Base URL confirmed from kilo.ts plugin: https://api.kilo.ai/api/gateway
+    Requires KILO_API_KEY for paid models.
+    """
+
+    DEFAULT_FREE_MODEL = "kilocode/kilo-auto/balanced"
 
     def __init__(
         self,
         api_key: Optional[str] = None,
-        model: str = "kilocode/kilo-auto/balanced",
+        model: Optional[str] = None,
     ):
-        key = api_key or os.environ.get("KILOCODE_API_KEY") or "public"
+        key = api_key or os.environ.get("KILO_API_KEY") or "public"
         super().__init__(
             api_key=key,
-            model=model,
+            model=model or self.DEFAULT_FREE_MODEL,
             base_url="https://api.kilo.ai/api/gateway",
             default_headers={
                 "HTTP-Referer": "https://opencode.ai/",
@@ -224,31 +282,66 @@ def get_provider(
     api_key: Optional[str] = None,
     model: Optional[str] = None,
 ) -> BaseModelProvider:
-    """Factory resolver for AI providers with free model support."""
+    """
+    Factory resolver for AI providers with free model support.
+
+    Provider auto-detection precedence (from model string):
+      openrouter/…  → OpenRouter
+      kilocode/…    → KiloCode
+      kilo/…        → KiloCode
+      gemini-…      → Gemini
+      gpt-…         → OpenAI
+      llama-… / groq → Groq
+      *-free / kimi / ring / mimo / deepseek-v4 → OpencodeProvider (Zen)
+      anything else → OpenRouter (paid model, need OPENROUTER_API_KEY)
+    """
     name = provider_name.lower().strip()
-    if name in ("opencode", "opencode/free"):
-        return OpencodeProvider(api_key=api_key, model=model or "kimi-k2.5-free")
-    elif name in ("kilo", "kilocode"):
-        return KiloCodeProvider(
-            api_key=api_key, model=model or "kilocode/kilo-auto/balanced"
-        )
-    elif "openrouter" in name or name == "default":
+    effective_model = model or provider_name
+
+    # Explicit provider name matches — use model param only (provider uses its own default if None)
+    if name in ("opencode", "opencode-zen", "zen"):
+        return OpencodeProvider(api_key=api_key, model=model)
+    if name in ("kilo", "kilocode", "kilo-code"):
+        return KiloCodeProvider(api_key=api_key, model=model)
+    if "openrouter" in name or name == "default":
         return OpenRouterProvider(
             api_key=api_key,
             model=model or "openrouter/auto",
             fallback_model="openrouter/free",
         )
-    elif name in ("openai", "gpt"):
+    if name in ("openai", "gpt"):
         return OpenAIProvider(api_key=api_key, model=model or "gpt-4o")
-    elif name in ("groq", "llama"):
+    if name in ("groq", "llama", "mixtral"):
         return GroqProvider(api_key=api_key, model=model or "llama-3.3-70b-versatile")
-    elif name in ("gemini", "google"):
+    if name in ("gemini", "google"):
         return GeminiProvider(api_key=api_key, model=model or "gemini-2.5-flash")
-    elif "kimi" in name or "free" in name:
-        return OpencodeProvider(api_key=api_key, model=model or provider_name)
-    else:
-        return OpenRouterProvider(
-            api_key=api_key,
-            model=model or provider_name,
-            fallback_model="openrouter/free",
-        )
+
+    # Model-string inference (when full model ID passed as provider_name)
+    m = effective_model.lower()
+    if m.startswith("openrouter/"):
+        return OpenRouterProvider(api_key=api_key, model=effective_model)
+    if m.startswith(("kilocode/", "kilo/")):
+        return KiloCodeProvider(api_key=api_key, model=effective_model)
+    if m.startswith(("gemini-", "gemini/")):
+        return GeminiProvider(api_key=api_key, model=effective_model)
+    if m.startswith(("gpt-", "o1-", "o3-", "o4-")):
+        return OpenAIProvider(api_key=api_key, model=effective_model)
+    if m.startswith("llama-") or m.startswith("mixtral-") or "groq" in m:
+        return GroqProvider(api_key=api_key, model=effective_model)
+    if (
+        m.endswith("-free")
+        or "kimi" in m
+        or "mimo" in m
+        or m.startswith("ring-")
+        or m.startswith("deepseek-v4")
+        or m.startswith("minimax")
+        or m.startswith("glm-")
+    ):
+        return OpencodeProvider(api_key=api_key, model=effective_model)
+
+    # Unknown: route through OpenRouter (handles most model IDs)
+    return OpenRouterProvider(
+        api_key=api_key,
+        model=effective_model,
+        fallback_model="openrouter/free",
+    )

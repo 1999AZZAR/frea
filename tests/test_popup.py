@@ -2,9 +2,6 @@
 
 from unittest.mock import MagicMock, patch
 from src.popup import (
-    AlertPopup,
-    ConfirmPopup,
-    InputPopup,
     SelectOption,
     SelectPopup,
     model_select_popup,
@@ -103,5 +100,5 @@ def test_model_select_popup_has_presets():
         assert len(options) >= 8
         labels = [o.label for o in options]
         assert "openrouter/auto" in labels
-        assert "kimi-k2.5-free" in labels
+        assert "deepseek-v4-flash" in labels
         assert "gpt-4o" in labels

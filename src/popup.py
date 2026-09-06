@@ -17,21 +17,18 @@ from dataclasses import dataclass
 from typing import Any, Callable, Generic, Iterable, List, Optional, TypeVar
 
 from prompt_toolkit import Application
-from prompt_toolkit.filters import Condition
 from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.key_binding import KeyBindings, merge_key_bindings
 from prompt_toolkit.layout import (
-    ConditionalContainer,
     Float,
     FloatContainer,
     HSplit,
     Layout,
-    VSplit,
     Window,
 )
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.styles import Style
-from prompt_toolkit.widgets import Box, Frame, Label, TextArea
+from prompt_toolkit.widgets import Box, Frame, TextArea
 
 T = TypeVar("T")
 
@@ -159,7 +156,9 @@ class SelectPopup(Generic[T]):
             style = (
                 "class:select-item.focused"
                 if is_focused
-                else ("class:select-item.current" if is_current else "class:select-item")
+                else (
+                    "class:select-item.current" if is_current else "class:select-item"
+                )
             )
             prefix = "● " if is_current and not is_focused else "  "
             label = opt.label
@@ -188,9 +187,7 @@ class SelectPopup(Generic[T]):
             focus_on_click=True,
         )
 
-        list_control = FormattedTextControl(
-            text=self._build_list_text, focusable=False
-        )
+        list_control = FormattedTextControl(text=self._build_list_text, focusable=False)
 
         kb_global = KeyBindings()
         kb_search = KeyBindings()
@@ -531,17 +528,86 @@ def model_select_popup(
     Returns selected model string or None if cancelled.
     """
     presets: List[SelectOption[str]] = [
-        SelectOption("openrouter/auto", "openrouter/auto", "Smart routing — picks best free model", "OpenRouter"),
-        SelectOption("openrouter/free", "openrouter/free", "Free tier fallback", "OpenRouter"),
-        SelectOption("kimi-k2.5-free", "kimi-k2.5-free", "Kimi K2.5 via opencode gateway", "Free / OpenCode"),
-        SelectOption("kilocode/kilo-auto/balanced", "kilocode/kilo-auto/balanced", "KiloCode balanced routing", "Free / KiloCode"),
-        SelectOption("kilocode/kilo-auto/quality", "kilocode/kilo-auto/quality", "KiloCode quality routing", "Free / KiloCode"),
-        SelectOption("gemini-2.5-flash", "gemini-2.5-flash", "Google Gemini 2.5 Flash (needs GEMINI_API_KEY)", "Gemini"),
-        SelectOption("gemini-2.5-pro", "gemini-2.5-pro", "Google Gemini 2.5 Pro (needs GEMINI_API_KEY)", "Gemini"),
-        SelectOption("gpt-4o", "gpt-4o", "OpenAI GPT-4o (needs OPENAI_API_KEY)", "OpenAI"),
-        SelectOption("gpt-4o-mini", "gpt-4o-mini", "OpenAI GPT-4o mini (needs OPENAI_API_KEY)", "OpenAI"),
-        SelectOption("llama-3.3-70b-versatile", "llama-3.3-70b-versatile", "Llama 3.3 70B via Groq (needs GROQ_API_KEY)", "Groq"),
-        SelectOption("llama-3.1-8b-instant", "llama-3.1-8b-instant", "Llama 3.1 8B Instant via Groq (needs GROQ_API_KEY)", "Groq"),
+        # Free / no key required
+        SelectOption(
+            "deepseek-v4-flash",
+            "deepseek-v4-flash",
+            "Free · OpenCode Zen gateway",
+            "Free (no key)",
+        ),
+        SelectOption(
+            "ring-2.6-1t-free",
+            "ring-2.6-1t-free",
+            "Free · OpenCode Zen gateway",
+            "Free (no key)",
+        ),
+        SelectOption(
+            "mimo-v2-pro-free",
+            "mimo-v2-pro-free",
+            "Free · OpenCode Zen gateway",
+            "Free (no key)",
+        ),
+        SelectOption(
+            "kilocode/kilo-auto/balanced",
+            "kilocode/kilo-auto/balanced",
+            "Free · KiloCode gateway (balanced)",
+            "Free (no key)",
+        ),
+        SelectOption(
+            "kilocode/kilo-auto/quality",
+            "kilocode/kilo-auto/quality",
+            "Free · KiloCode gateway (quality)",
+            "Free (no key)",
+        ),
+        # OpenRouter (needs OPENROUTER_API_KEY)
+        SelectOption(
+            "openrouter/auto",
+            "openrouter/auto",
+            "Smart routing — needs OPENROUTER_API_KEY",
+            "OpenRouter",
+        ),
+        SelectOption(
+            "openrouter/free",
+            "openrouter/free",
+            "Free tier fallback — needs OPENROUTER_API_KEY",
+            "OpenRouter",
+        ),
+        # Gemini (needs GEMINI_API_KEY)
+        SelectOption(
+            "gemini-2.5-flash",
+            "gemini-2.5-flash",
+            "Google Gemini 2.5 Flash — needs GEMINI_API_KEY",
+            "Gemini",
+        ),
+        SelectOption(
+            "gemini-2.5-pro",
+            "gemini-2.5-pro",
+            "Google Gemini 2.5 Pro — needs GEMINI_API_KEY",
+            "Gemini",
+        ),
+        # OpenAI (needs OPENAI_API_KEY)
+        SelectOption(
+            "gpt-4o", "gpt-4o", "OpenAI GPT-4o — needs OPENAI_API_KEY", "OpenAI"
+        ),
+        SelectOption(
+            "gpt-4o-mini",
+            "gpt-4o-mini",
+            "OpenAI GPT-4o mini — needs OPENAI_API_KEY",
+            "OpenAI",
+        ),
+        # Groq (needs GROQ_API_KEY)
+        SelectOption(
+            "llama-3.3-70b-versatile",
+            "llama-3.3-70b-versatile",
+            "Llama 3.3 70B via Groq — needs GROQ_API_KEY",
+            "Groq",
+        ),
+        SelectOption(
+            "llama-3.1-8b-instant",
+            "llama-3.1-8b-instant",
+            "Llama 3.1 8B Instant via Groq — needs GROQ_API_KEY",
+            "Groq",
+        ),
     ]
     if extra_options:
         presets.extend(extra_options)

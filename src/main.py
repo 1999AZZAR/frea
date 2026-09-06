@@ -23,7 +23,7 @@ from src.tui import InteractiveREPL
 
 def headless_run(config: CLIConfig) -> int:
     frea_cfg = load_frea_config(config.config_path)
-    model_name = config.model or frea_cfg.get("model") or "openrouter/auto"
+    model_name = config.model or frea_cfg.get("model") or "deepseek-v4-flash"
     provider_name = frea_cfg.get("provider", "openrouter")
     auto_approve = config.yes or frea_cfg.get("auto_approve", False)
 
@@ -46,7 +46,7 @@ def headless_run(config: CLIConfig) -> int:
 
 def interactive_run(config: CLIConfig) -> int:
     frea_cfg = load_frea_config(config.config_path)
-    model_name = config.model or frea_cfg.get("model") or "openrouter/auto"
+    model_name = config.model or frea_cfg.get("model") or "deepseek-v4-flash"
     provider_name = frea_cfg.get("provider", "openrouter")
     auto_approve = config.yes or frea_cfg.get("auto_approve", False)
 
