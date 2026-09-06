@@ -23,7 +23,7 @@ cleanup() {
 trap cleanup INT
 
 # Execute the Python script
-python src/main.py
+python src/main.py "$@"
 
 # Call cleanup function after Python script exits
 cleanup

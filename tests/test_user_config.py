@@ -36,3 +36,22 @@ def test_save_and_load_frea_config(tmp_path):
 
     reloaded = load_frea_config(cfg_path)
     assert reloaded["model"] == "anthropic/claude-3.7-sonnet"
+
+
+def test_cli_config_integration(tmp_path):
+    import json
+    from src.cli import parse_args
+
+    cfg_file = tmp_path / "custom.json"
+    cfg_file.write_text(
+        json.dumps({"model": "anthropic/claude-3-haiku", "auto_approve": True})
+    )
+
+    cli_cfg = parse_args(["-c", str(cfg_file)])
+    frea_cfg = load_frea_config(cli_cfg.config_path)
+    assert frea_cfg["model"] == "anthropic/claude-3-haiku"
+    assert frea_cfg["auto_approve"] is True
+
+    cli_cfg_override = parse_args(["-c", str(cfg_file), "-m", "groq/llama-3.3-70b"])
+    effective_model = cli_cfg_override.model or frea_cfg.get("model")
+    assert effective_model == "groq/llama-3.3-70b"

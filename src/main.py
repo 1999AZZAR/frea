@@ -1,4 +1,14 @@
+# ruff: noqa: E402
 import sys
+from pathlib import Path
+
+_SRC_DIR = Path(__file__).resolve().parent
+_REPO_ROOT = _SRC_DIR.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+if str(_SRC_DIR) not in sys.path:
+    sys.path.insert(1, str(_SRC_DIR))
+
 import threading
 import logging
 import time
@@ -790,6 +800,7 @@ def main() -> int:
     try:
         from src.runner import run_cli
         from src.cli import CLIConfig
+        from src.config import load_frea_config
         from src.agent import AgentLoop
         from src.executor import ToolExecutor
         from src.providers import get_provider
@@ -800,17 +811,21 @@ def main() -> int:
         return 0
 
     def headless_run(config: CLIConfig) -> int:
-        model_name = config.model or "openrouter/auto"
+        frea_cfg = load_frea_config(config.config_path)
+        model_name = config.model or frea_cfg.get("model") or "openrouter/auto"
+        provider_name = frea_cfg.get("provider", "openrouter")
+        auto_approve = config.yes or frea_cfg.get("auto_approve", False)
+
         provider_key = (
             "openrouter"
             if "openrouter" in model_name.lower()
-            else (model_name.split("/")[0] if "/" in model_name else "openrouter")
+            else (model_name.split("/")[0] if "/" in model_name else provider_name)
         )
         try:
             provider = get_provider(provider_key, model=model_name)
         except Exception:
             provider = get_provider("openrouter", model=model_name)
-        executor = ToolExecutor(auto_approve=config.yes)
+        executor = ToolExecutor(auto_approve=auto_approve)
         agent = AgentLoop(provider=provider, executor=executor)
         result = agent.run(config.prompt)
         print(result.final_answer)
@@ -819,11 +834,15 @@ def main() -> int:
     def interactive_run(config: CLIConfig) -> int:
         from src.commands import SessionState
 
-        model_name = config.model or "openrouter/auto"
+        frea_cfg = load_frea_config(config.config_path)
+        model_name = config.model or frea_cfg.get("model") or "openrouter/auto"
+        provider_name = frea_cfg.get("provider", "openrouter")
+        auto_approve = config.yes or frea_cfg.get("auto_approve", False)
+
         provider_key = (
             "openrouter"
             if "openrouter" in model_name.lower()
-            else (model_name.split("/")[0] if "/" in model_name else "openrouter")
+            else (model_name.split("/")[0] if "/" in model_name else provider_name)
         )
         try:
             provider = get_provider(provider_key, model=model_name)
@@ -831,7 +850,7 @@ def main() -> int:
             chat_app = AIChat()
             chat_app.generate_chat()
             return 0
-        executor = ToolExecutor(auto_approve=config.yes)
+        executor = ToolExecutor(auto_approve=auto_approve)
         agent = AgentLoop(provider=provider, executor=executor)
         session = SessionState(current_model=model_name, current_provider=provider_key)
         repl = InteractiveREPL(agent_loop=agent, session=session)

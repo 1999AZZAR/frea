@@ -8,7 +8,7 @@ from typing import Optional, Sequence
 @dataclass
 class CLIConfig:
     prompt: Optional[str] = None
-    model: str = "openrouter/auto"
+    model: Optional[str] = None
     yes: bool = False
     config_path: Optional[str] = None
 
@@ -35,8 +35,8 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> CLIConfig:
         "-m",
         "--model",
         dest="model",
-        help="Target AI model identifier (default: openrouter/auto)",
-        default="openrouter/auto",
+        help="Target AI model identifier (default: from ~/.config/frea/config.json or openrouter/auto)",
+        default=None,
     )
     parser.add_argument(
         "-y",
@@ -50,7 +50,7 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> CLIConfig:
         "-c",
         "--config",
         dest="config_path",
-        help="Path to custom config.ini file",
+        help="Path to custom config.json file",
         default=None,
     )
 
