@@ -82,6 +82,10 @@ class OpenCodeTUI:
         self._user_scrolled_line: Optional[int] = None
         self._total_lines: int = 0
         self.app: Optional[Any] = None
+        self.input_window: Optional[Any] = None
+        self._dialog_floats: List[Any] = []
+        self._dialog_kb: Optional[Any] = None
+        self._is_dialog_active: bool = False
 
         from prompt_toolkit.buffer import Buffer
 
@@ -90,6 +94,53 @@ class OpenCodeTUI:
             multiline=False,
             accept_handler=self._on_input_accept,
         )
+
+    async def show_dialog(self, popup: Any) -> Any:
+        """Display a modal dialog overlay directly within OpenCodeTUI's FloatContainer.
+
+        Runs on the existing application event loop without tearing down raw mode
+        or alternate screen buffer, ensuring instant recovery when dismissed.
+        """
+        if not self.app:
+            return popup.get_result()
+
+        import asyncio
+        from prompt_toolkit.layout import Float
+
+        loop = asyncio.get_running_loop()
+        fut: asyncio.Future[Any] = loop.create_future()
+
+        def _close() -> None:
+            if not fut.done():
+                fut.set_result(popup.get_result())
+
+        widget, focused_el, kb = popup.build_dialog(_close)
+
+        float_el = Float(content=widget, xcursor=False, ycursor=False)
+        self._dialog_floats.append(float_el)
+        self._dialog_kb = kb
+        self._is_dialog_active = True
+
+        if focused_el is not None:
+            try:
+                self.app.layout.focus(focused_el)
+            except Exception:
+                pass
+        self.app.invalidate()
+
+        try:
+            return await fut
+        finally:
+            self._dialog_floats.clear()
+            self._dialog_kb = None
+            self._is_dialog_active = False
+            if self.input_window is not None:
+                try:
+                    self.app.layout.focus(self.input_window)
+                except Exception:
+                    pass
+            if self.app:
+                self.app.invalidate()
 
     def _next_card_id(self) -> int:
         cid = self._next_id
@@ -197,6 +248,8 @@ class OpenCodeTUI:
         tokens: List[Tuple[str, str, Any]] = []
 
         def _bg_mouse(e: MouseEvent) -> None:
+            if self._is_dialog_active:
+                return
             if e.event_type == MouseEventType.SCROLL_UP:
                 self.scroll_up(3)
             elif e.event_type == MouseEventType.SCROLL_DOWN:
@@ -225,6 +278,8 @@ class OpenCodeTUI:
 
             def make_card_mouse(cid: int):
                 def _card_mouse(e: MouseEvent) -> None:
+                    if self._is_dialog_active:
+                        return
                     if e.event_type == MouseEventType.MOUSE_DOWN:
                         self.toggle_card(cid)
                     elif e.event_type == MouseEventType.MOUSE_MOVE:
@@ -395,18 +450,24 @@ class OpenCodeTUI:
         if cmd in ("/exit", "/quit"):
             from src.popup import ConfirmPopup
 
-            confirmed = await ConfirmPopup(
-                title="Exit Frea", message="End this session?"
-            ).run_async()
+            popup = ConfirmPopup(title="Exit Frea", message="End this session?")
+            confirmed = await self.show_dialog(popup)
             if confirmed and self.app:
                 self.app.exit()
             return
 
         if cmd == "/model":
             if not arg:
-                from src.popup import model_select_popup_async
+                from src.popup import SelectPopup, fetch_gateway_models
 
-                chosen = await model_select_popup_async(self.session.current_model)
+                options = fetch_gateway_models()
+                popup = SelectPopup(
+                    title="Switch Model",
+                    options=options,
+                    current=self.session.current_model,
+                    placeholder="Search models…",
+                )
+                chosen = await self.show_dialog(popup)
                 if chosen:
                     try:
                         self.repl._switch_model(chosen)
@@ -428,9 +489,10 @@ class OpenCodeTUI:
             return
 
         if cmd == "/mcp":
-            from src.popup import mcp_popup_async
+            from src.popup import McpPopup
 
-            changed = await mcp_popup_async()
+            popup = McpPopup()
+            changed = await self.show_dialog(popup)
             if changed and self.agent_loop and hasattr(self.agent_loop, "executor"):
                 self.agent_loop.executor.reload_mcp_servers()
                 tools_cnt, mcp_cnt = self.repl.get_stats()
@@ -573,36 +635,46 @@ class OpenCodeTUI:
 
     def run(self) -> int:
         from prompt_toolkit.application import Application
-        from prompt_toolkit.key_binding import KeyBindings
-        from prompt_toolkit.layout import HSplit, Layout, VSplit, Window
+        from prompt_toolkit.filters import Condition
+        from prompt_toolkit.key_binding import DynamicKeyBindings, KeyBindings, merge_key_bindings
+        from prompt_toolkit.layout import FloatContainer, HSplit, Layout, VSplit, Window
         from prompt_toolkit.layout.containers import WindowAlign
         from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
 
+        @Condition
+        def _not_dialog() -> bool:
+            return not self._is_dialog_active
+
+        def _get_dialog_kb() -> Optional[KeyBindings]:
+            return self._dialog_kb
+
         kb = KeyBindings()
 
-        @kb.add("c-o")
+        @kb.add("c-o", filter=_not_dialog)
         def _toggle_fold(event: Any) -> None:
             self.toggle_last_foldable()
 
-        @kb.add("c-c")
+        @kb.add("c-c", filter=_not_dialog)
         def _cancel(event: Any) -> None:
             if self.input_buffer.text:
                 self.input_buffer.reset()
             else:
                 event.app.exit()
 
-        @kb.add("c-d")
+        @kb.add("c-d", filter=_not_dialog)
         def _eof(event: Any) -> None:
             if not self.input_buffer.text:
                 event.app.exit()
 
-        @kb.add("pageup")
+        @kb.add("pageup", filter=_not_dialog)
         def _pageup(event: Any) -> None:
             self.scroll_up(10)
 
-        @kb.add("pagedown")
+        @kb.add("pagedown", filter=_not_dialog)
         def _pagedown(event: Any) -> None:
             self.scroll_down(10)
+
+        app_kb = merge_key_bindings([DynamicKeyBindings(_get_dialog_kb), kb])
 
         tools_cnt, mcp_cnt = self.repl.get_stats()
 
@@ -618,7 +690,7 @@ class OpenCodeTUI:
             always_hide_cursor=True,
         )
 
-        input_window = Window(BufferControl(buffer=self.input_buffer), height=1)
+        self.input_window = Window(BufferControl(buffer=self.input_buffer), height=1)
 
         prompt_window = VSplit(
             [
@@ -627,7 +699,7 @@ class OpenCodeTUI:
                     width=2,
                     dont_extend_width=True,
                 ),
-                input_window,
+                self.input_window,
             ]
         )
 
@@ -674,15 +746,23 @@ class OpenCodeTUI:
             ]
         )
 
+        float_container = FloatContainer(
+            content=root,
+            floats=self._dialog_floats,
+        )
+
+        from src.popup import POPUP_STYLE_DICT
+
         pt_style = Style.from_dict(
             {
                 "prompt": f"{self.theme.primary} bold",
+                **POPUP_STYLE_DICT,
             }
         )
 
         self.app = Application(
-            layout=Layout(root, focused_element=input_window),
-            key_bindings=kb,
+            layout=Layout(float_container, focused_element=self.input_window),
+            key_bindings=app_kb,
             style=pt_style,
             mouse_support=True,
             full_screen=True,

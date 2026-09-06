@@ -273,9 +273,7 @@ async def test_opencode_tui_slash_command_model_popup():
     repl = OpenCodeREPL(session_state=state)
     tui = OpenCodeTUI(repl)
 
-    with patch(
-        "src.popup.model_select_popup_async", return_value="kilo-auto/free"
-    ):
+    with patch.object(tui, "show_dialog", return_value="kilo-auto/free"):
         await tui._handle_slash_command("/model")
         assert state.current_model == "kilo-auto/free"
         assert len(tui.cards) == 1
@@ -291,9 +289,42 @@ async def test_opencode_tui_slash_command_exit():
     mock_app = MagicMock()
     tui.app = mock_app
 
-    with patch("src.popup.ConfirmPopup.run_async", return_value=True):
+    with patch.object(tui, "show_dialog", return_value=True):
         await tui._handle_slash_command("/exit")
         mock_app.exit.assert_called_once()
+
+
+async def test_opencode_tui_show_dialog():
+    from unittest.mock import MagicMock
+    from prompt_toolkit.widgets import Frame
+    from prompt_toolkit.layout import Window
+    from prompt_toolkit.layout.controls import FormattedTextControl
+    from prompt_toolkit.key_binding import KeyBindings
+
+    state = SessionState(current_model="openrouter/auto")
+    repl = OpenCodeREPL(session_state=state)
+    tui = OpenCodeTUI(repl)
+    mock_app = MagicMock()
+    tui.app = mock_app
+    dummy_input = Window(FormattedTextControl("input"))
+    tui.input_window = dummy_input
+
+    class DummyPopup:
+        def build_dialog(self, on_close):
+            on_close()
+            win = Window(FormattedTextControl("dialog"))
+            return Frame(win), win, KeyBindings()
+
+        def get_result(self):
+            return "selected_value"
+
+    res = await tui.show_dialog(DummyPopup())
+    assert res == "selected_value"
+    assert len(tui._dialog_floats) == 0
+    assert tui._dialog_kb is None
+    assert tui._is_dialog_active is False
+    mock_app.layout.focus.assert_called_with(dummy_input)
+    mock_app.invalidate.assert_called()
 
 
 def test_opencode_tui_input_accept_dispatches_slash_command():

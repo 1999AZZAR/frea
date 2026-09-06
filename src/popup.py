@@ -67,39 +67,39 @@ def _run_app_safely(app: Application[Any]) -> None:
 # Shared style — matches Frea's OpenCode-derived color palette
 # ---------------------------------------------------------------------------
 
-POPUP_STYLE = Style.from_dict(
-    {
-        # Dim backdrop via bg color on outermost container
-        "popup-backdrop": "bg:#0a0a0a",
-        # Dialog frame / panel
-        "frame.border": "#504945",
-        "frame.label": "#d4be98 bold",
-        # List items
-        "select-item": "#d4be98",
-        "select-item.focused": "bg:#d4be98 #1d2021 bold",
-        "select-item.current": "#d8a657 bold",
-        "select-category": "#a89984 bold",
-        # Search input
-        "search-label": "#a89984",
-        "search-input": "#d4be98",
-        "search-cursor": "#d8a657",
-        # Footer hints
-        "hint-key": "#a89984",
-        "hint-label": "#504945",
-        # Confirm dialog buttons
-        "btn": "#a89984",
-        "btn.focused": "bg:#d4be98 #1d2021 bold",
-        "btn.yes": "#89b482",
-        "btn.no": "#ea6962",
-        # Alert
-        "alert-text": "#d4be98",
-        # MCP server manager
-        "status-enabled": "#89b482 bold",
-        "status-disabled": "#7c6f64",
-        "server-name": "#d4be98 bold",
-        "server-desc": "#a89984",
-    }
-)
+POPUP_STYLE_DICT = {
+    # Dim backdrop via bg color on outermost container
+    "popup-backdrop": "bg:#0a0a0a",
+    # Dialog frame / panel
+    "frame.border": "#504945 bg:#141414",
+    "frame.label": "#d4be98 bold bg:#141414",
+    # List items
+    "select-item": "#d4be98 bg:#141414",
+    "select-item.focused": "bg:#d4be98 #1d2021 bold",
+    "select-item.current": "#d8a657 bold bg:#141414",
+    "select-category": "#a89984 bold bg:#141414",
+    # Search input
+    "search-label": "#a89984 bg:#141414",
+    "search-input": "#d4be98 bg:#141414",
+    "search-cursor": "#d8a657",
+    # Footer hints
+    "hint-key": "#a89984 bg:#141414",
+    "hint-label": "#504945 bg:#141414",
+    # Confirm dialog buttons
+    "btn": "#a89984 bg:#141414",
+    "btn.focused": "bg:#d4be98 #1d2021 bold",
+    "btn.yes": "#89b482 bg:#141414",
+    "btn.no": "#ea6962 bg:#141414",
+    # Alert
+    "alert-text": "#d4be98 bg:#141414",
+    # MCP server manager
+    "status-enabled": "#89b482 bold bg:#141414",
+    "status-disabled": "#7c6f64 bg:#141414",
+    "server-name": "#d4be98 bold bg:#141414",
+    "server-desc": "#a89984 bg:#141414",
+}
+
+POPUP_STYLE = Style.from_dict(POPUP_STYLE_DICT)
 
 
 # ---------------------------------------------------------------------------
@@ -213,7 +213,9 @@ class SelectPopup(Generic[T]):
     # Public entry point
     # ------------------------------------------------------------------
 
-    def _build_app(self) -> Application[None]:
+    def build_dialog(
+        self, on_close: Callable[[], None]
+    ) -> tuple[Any, Any, KeyBindings]:
         search_area = TextArea(
             text="",
             multiline=False,
@@ -232,12 +234,14 @@ class SelectPopup(Generic[T]):
         def _up(event: Any) -> None:
             self._move(-1)
             list_control.text = self._build_list_text  # type: ignore[assignment]
+            event.app.invalidate()
 
         @kb_search.add("down")
         @kb_search.add("c-n")
         def _down(event: Any) -> None:
             self._move(1)
             list_control.text = self._build_list_text  # type: ignore[assignment]
+            event.app.invalidate()
 
         @kb_search.add("enter")
         def _enter(event: Any) -> None:
@@ -247,14 +251,14 @@ class SelectPopup(Generic[T]):
                 self._cancelled = False
                 if self._on_select:
                     self._on_select(chosen.value)
-            event.app.exit()
+            on_close()
 
         @kb_global.add("escape")
         @kb_global.add("c-c")
         @kb_global.add("c-q")
         def _cancel(event: Any) -> None:
             self._cancelled = True
-            event.app.exit()
+            on_close()
 
         # Wire search input → filter
         def _on_text_changed(_: Any) -> None:
@@ -309,38 +313,44 @@ class SelectPopup(Generic[T]):
             ),
             style="class:frame.border",
         )
+        return dialog_body, search_area, merge_key_bindings([kb_global, kb_search])
 
-        # Float the dialog in the center of the screen
+    def get_result(self) -> Optional[T]:
+        return None if self._cancelled else self._result
+
+    def _build_app(self) -> Application[None]:
+        app_holder: List[Application[Any]] = []
+
+        def _close() -> None:
+            if app_holder:
+                app_holder[0].exit()
+
+        widget, focused, kb = self.build_dialog(_close)
         root_container = FloatContainer(
             content=Window(style="class:popup-backdrop"),
-            floats=[
-                Float(
-                    content=dialog_body,
-                    xcursor=False,
-                    ycursor=False,
-                )
-            ],
+            floats=[Float(content=widget, xcursor=False, ycursor=False)],
         )
-
-        return Application(
-            layout=Layout(root_container, focused_element=search_area),
-            key_bindings=merge_key_bindings([kb_global, kb_search]),
+        app: Application[None] = Application(
+            layout=Layout(root_container, focused_element=focused),
+            key_bindings=kb,
             style=POPUP_STYLE,
             mouse_support=True,
             full_screen=True,
         )
+        app_holder.append(app)
+        return app
 
     def run(self) -> Optional[T]:
         """Block until user selects or cancels. Returns value or None."""
         app = self._build_app()
         _run_app_safely(app)
-        return None if self._cancelled else self._result
+        return self.get_result()
 
     async def run_async(self) -> Optional[T]:
         """Async entry point for prompt_toolkit event loop. Returns value or None."""
         app = self._build_app()
         await app.run_async()
-        return None if self._cancelled else self._result
+        return self.get_result()
 
 
 # ---------------------------------------------------------------------------
@@ -360,7 +370,9 @@ class ConfirmPopup:
         self._choice: bool = False
         self._focus_yes = True  # Tab toggles focus
 
-    def _build_app(self) -> Application[None]:
+    def build_dialog(
+        self, on_close: Callable[[], None]
+    ) -> tuple[Any, Any, KeyBindings]:
         kb = KeyBindings()
 
         @kb.add("left")
@@ -369,24 +381,25 @@ class ConfirmPopup:
         @kb.add("s-tab")
         def _toggle(event: Any) -> None:
             self._focus_yes = not self._focus_yes
+            event.app.invalidate()
 
         @kb.add("enter")
         @kb.add("y")
         def _yes_or_enter(event: Any) -> None:
             if event.key_sequence[0].key == "y" or self._focus_yes:
                 self._choice = True
-            event.app.exit()
+            on_close()
 
         @kb.add("n")
         def _no(event: Any) -> None:
             self._choice = False
-            event.app.exit()
+            on_close()
 
         @kb.add("escape")
         @kb.add("c-c")
         def _cancel(event: Any) -> None:
             self._choice = False
-            event.app.exit()
+            on_close()
 
         def _buttons_text() -> List[tuple[str, str]]:
             yes_style = "class:btn.focused" if self._focus_yes else "class:btn.yes"
@@ -397,6 +410,11 @@ class ConfirmPopup:
                 (no_style, "  No  "),
             ]
 
+        buttons_win = Window(
+            content=FormattedTextControl(text=_buttons_text, focusable=True),
+            height=1,
+        )
+
         body = HSplit(
             [
                 Window(
@@ -405,10 +423,7 @@ class ConfirmPopup:
                     ),
                     height=2,
                 ),
-                Window(
-                    content=FormattedTextControl(text=_buttons_text, focusable=True),
-                    height=1,
-                ),
+                buttons_win,
                 Window(
                     content=FormattedTextControl(
                         text=lambda: [
@@ -424,26 +439,41 @@ class ConfirmPopup:
         )
 
         dialog = Frame(body=body, title=self.title, style="class:frame.border")
+        return dialog, buttons_win, kb
+
+    def get_result(self) -> bool:
+        return self._choice
+
+    def _build_app(self) -> Application[None]:
+        app_holder: List[Application[Any]] = []
+
+        def _close() -> None:
+            if app_holder:
+                app_holder[0].exit()
+
+        widget, focused, kb = self.build_dialog(_close)
         root = FloatContainer(
             content=Window(style="class:popup-backdrop"),
-            floats=[Float(content=dialog, xcursor=False, ycursor=False)],
+            floats=[Float(content=widget, xcursor=False, ycursor=False)],
         )
-        return Application(
-            layout=Layout(root),
+        app: Application[None] = Application(
+            layout=Layout(root, focused_element=focused),
             key_bindings=kb,
             style=POPUP_STYLE,
             full_screen=True,
         )
+        app_holder.append(app)
+        return app
 
     def run(self) -> bool:
         app = self._build_app()
         _run_app_safely(app)
-        return self._choice
+        return self.get_result()
 
     async def run_async(self) -> bool:
         app = self._build_app()
         await app.run_async()
-        return self._choice
+        return self.get_result()
 
 
 # ---------------------------------------------------------------------------
@@ -458,7 +488,9 @@ class AlertPopup:
         self.title = title
         self.message = message
 
-    def _build_app(self) -> Application[None]:
+    def build_dialog(
+        self, on_close: Callable[[], None]
+    ) -> tuple[Any, Any, KeyBindings]:
         kb = KeyBindings()
 
         @kb.add("enter")
@@ -466,7 +498,7 @@ class AlertPopup:
         @kb.add("c-c")
         @kb.add("space")
         def _close(event: Any) -> None:
-            event.app.exit()
+            on_close()
 
         lines = self.message.splitlines()
         content_lines = [
@@ -483,22 +515,38 @@ class AlertPopup:
                 text=lambda: [
                     ("class:hint-key", "  Enter/Esc"),
                     ("class:hint-label", " dismiss"),
-                ]
+                ],
+                focusable=True,
             ),
             height=1,
         )
         body = HSplit([*content_lines, Window(height=1), hint])
         dialog = Frame(body=body, title=self.title, style="class:frame.border")
+        return dialog, hint, kb
+
+    def get_result(self) -> None:
+        return None
+
+    def _build_app(self) -> Application[None]:
+        app_holder: List[Application[Any]] = []
+
+        def _close() -> None:
+            if app_holder:
+                app_holder[0].exit()
+
+        widget, focused, kb = self.build_dialog(_close)
         root = FloatContainer(
             content=Window(style="class:popup-backdrop"),
-            floats=[Float(content=dialog, xcursor=False, ycursor=False)],
+            floats=[Float(content=widget, xcursor=False, ycursor=False)],
         )
-        return Application(
-            layout=Layout(root),
+        app: Application[None] = Application(
+            layout=Layout(root, focused_element=focused),
             key_bindings=kb,
             style=POPUP_STYLE,
             full_screen=True,
         )
+        app_holder.append(app)
+        return app
 
     def run(self) -> None:
         app = self._build_app()
@@ -525,7 +573,9 @@ class InputPopup:
         self.placeholder = placeholder
         self._result: Optional[str] = None
 
-    def _build_app(self) -> Application[None]:
+    def build_dialog(
+        self, on_close: Callable[[], None]
+    ) -> tuple[Any, Any, KeyBindings]:
         text_area = TextArea(
             multiline=False,
             style="class:search-input",
@@ -536,13 +586,13 @@ class InputPopup:
         @kb.add("enter")
         def _submit(event: Any) -> None:
             self._result = text_area.text.strip() or None
-            event.app.exit()
+            on_close()
 
         @kb.add("escape")
         @kb.add("c-c")
         def _cancel(event: Any) -> None:
             self._result = None
-            event.app.exit()
+            on_close()
 
         hint = Window(
             content=FormattedTextControl(
@@ -560,26 +610,41 @@ class InputPopup:
             title=self.title,
             style="class:frame.border",
         )
+        return body, text_area, kb
+
+    def get_result(self) -> Optional[str]:
+        return self._result
+
+    def _build_app(self) -> Application[None]:
+        app_holder: List[Application[Any]] = []
+
+        def _close() -> None:
+            if app_holder:
+                app_holder[0].exit()
+
+        widget, focused, kb = self.build_dialog(_close)
         root = FloatContainer(
             content=Window(style="class:popup-backdrop"),
-            floats=[Float(content=body, xcursor=False, ycursor=False)],
+            floats=[Float(content=widget, xcursor=False, ycursor=False)],
         )
-        return Application(
-            layout=Layout(root, focused_element=text_area),
+        app: Application[None] = Application(
+            layout=Layout(root, focused_element=focused),
             key_bindings=kb,
             style=POPUP_STYLE,
             full_screen=True,
         )
+        app_holder.append(app)
+        return app
 
     def run(self) -> Optional[str]:
         app = self._build_app()
         _run_app_safely(app)
-        return self._result
+        return self.get_result()
 
     async def run_async(self) -> Optional[str]:
         app = self._build_app()
         await app.run_async()
-        return self._result
+        return self.get_result()
 
 
 # ---------------------------------------------------------------------------
@@ -668,7 +733,9 @@ class McpPopup:
 
         return tokens
 
-    def _build_app(self) -> Application[None]:
+    def build_dialog(
+        self, on_close: Callable[[], None]
+    ) -> tuple[Any, Any, KeyBindings]:
         list_control = FormattedTextControl(
             text=self._build_text,
             focusable=True,
@@ -682,6 +749,7 @@ class McpPopup:
         def _up(event: Any) -> None:
             self._move(-1)
             list_control.text = self._build_text  # type: ignore[assignment]
+            event.app.invalidate()
 
         @kb.add("down")
         @kb.add("j")
@@ -689,18 +757,20 @@ class McpPopup:
         def _down(event: Any) -> None:
             self._move(1)
             list_control.text = self._build_text  # type: ignore[assignment]
+            event.app.invalidate()
 
         @kb.add("space")
         @kb.add("enter")
         def _toggle(event: Any) -> None:
             self._toggle_current()
             list_control.text = self._build_text  # type: ignore[assignment]
+            event.app.invalidate()
 
         @kb.add("escape")
         @kb.add("q")
         @kb.add("c-c")
         def _close(event: Any) -> None:
-            event.app.exit()
+            on_close()
 
         title_bar = Window(
             content=FormattedTextControl(
@@ -732,30 +802,45 @@ class McpPopup:
             body=HSplit([title_bar, sep, list_win, hint_win]),
             style="class:frame.border",
         )
+        return dialog, list_win, kb
+
+    def get_result(self) -> bool:
+        return self._has_changed
+
+    def _build_app(self) -> Application[None]:
+        app_holder: List[Application[Any]] = []
+
+        def _close() -> None:
+            if app_holder:
+                app_holder[0].exit()
+
+        widget, focused, kb = self.build_dialog(_close)
         root = FloatContainer(
             content=Window(style="class:popup-backdrop"),
-            floats=[Float(content=dialog, xcursor=False, ycursor=False)],
+            floats=[Float(content=widget, xcursor=False, ycursor=False)],
         )
 
-        return Application(
-            layout=Layout(root, focused_element=list_win),
+        app: Application[None] = Application(
+            layout=Layout(root, focused_element=focused),
             key_bindings=kb,
             style=POPUP_STYLE,
             mouse_support=True,
             full_screen=True,
         )
+        app_holder.append(app)
+        return app
 
     def run(self) -> bool:
         """Run interactive MCP manager. Returns True if any toggles occurred."""
         app = self._build_app()
         _run_app_safely(app)
-        return self._has_changed
+        return self.get_result()
 
     async def run_async(self) -> bool:
         """Async interactive MCP manager. Returns True if any toggles occurred."""
         app = self._build_app()
         await app.run_async()
-        return self._has_changed
+        return self.get_result()
 
 
 def mcp_popup() -> bool:
