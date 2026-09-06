@@ -12,9 +12,19 @@ def test_requirements_only_necessary_packages():
         if line.strip() and not line.startswith("#")
     ]
 
-    # Exactly 4 production packages needed
+    # Exactly 3 production packages needed: openai, rich, prompt_toolkit
     pkg_names = [line.split(">=")[0].split("==")[0].strip() for line in lines]
-    forbidden = {"emoji", "fpdf", "fpdf2", "wikipedia-api", "wikipedia", "langchain"}
+    forbidden = {
+        "emoji",
+        "fpdf",
+        "fpdf2",
+        "wikipedia-api",
+        "wikipedia",
+        "langchain",
+        "google-generativeai",
+        "google.generativeai",
+        "google-genai",
+    }
     for pkg in pkg_names:
         assert (
             pkg not in forbidden
@@ -22,14 +32,13 @@ def test_requirements_only_necessary_packages():
 
     allowed = {
         "openai",
-        "google-generativeai",
-        "google.generativeai",
         "rich",
         "prompt_toolkit",
         "prompt-toolkit",
     }
     for pkg in pkg_names:
         assert pkg in allowed, f"Unexpected package in minimal requirements.txt: {pkg}"
+    assert len(pkg_names) == 3
 
 
 def test_dev_requirements_present():
@@ -50,3 +59,10 @@ def test_agent_tools_import_without_wikipediaapi():
             "No Wikipedia module" in tools.wiki("Python")
             or "error" in tools.wiki("Python").lower()
         )
+
+
+def test_chat_config_without_google_generativeai():
+    with patch.dict(sys.modules, {"google.generativeai": None, "google": None}):
+        import src.chat_config as chat_cfg
+
+        assert hasattr(chat_cfg, "ChatConfig")
