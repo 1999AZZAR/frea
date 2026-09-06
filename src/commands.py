@@ -57,6 +57,7 @@ def handle_slash_command(user_input: str, session: SessionState) -> CommandResul
             for name, client in servers.items():
                 status = "Connected" if client.is_connected() else "Disconnected"
                 mcp_servers.append((name, status))
+                client.stop()
         except Exception:
             pass
 
@@ -124,8 +125,11 @@ def handle_slash_command(user_input: str, session: SessionState) -> CommandResul
                         lines.append("    No tools advertised")
                 except Exception as err:
                     lines.append(f"    Error listing tools: {err}")
+                finally:
+                    client.stop()
 
             return CommandResult(handled=True, output="\n".join(lines))
+
         except Exception as exc:
             return CommandResult(
                 handled=True, output=f"Failed to inspect MCP servers: {exc}"

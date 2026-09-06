@@ -79,6 +79,10 @@ class MCPClient:
             self.stop()
             return False
 
+    def is_connected(self) -> bool:
+        """Check if MCP server subprocess is active and alive."""
+        return bool(self.process and self.process.poll() is None)
+
     def _send_request(self, payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         with self._lock:
             if not self.process or not self.process.stdin or not self.process.stdout:
@@ -182,17 +186,38 @@ class MCPClient:
 
 def load_mcp_servers(config: Dict[str, Any]) -> Dict[str, MCPClient]:
     """Parse configuration and spin up active MCP clients."""
-    servers_dict = config.get("mcpServers") or config.get("mcp_servers") or {}
+    servers_dict = (
+        config.get("mcp") or config.get("mcpServers") or config.get("mcp_servers") or {}
+    )
     active_clients: Dict[str, MCPClient] = {}
 
     for server_name, spec in servers_dict.items():
         if not isinstance(spec, dict):
             continue
-        command = spec.get("command")
-        if not command:
+
+        # Respect enabled flag (default: True)
+        if spec.get("enabled") is False:
             continue
-        args = spec.get("args", [])
-        env = spec.get("env")
+
+        # Stdio / local subprocess servers only
+        server_type = spec.get("type", "local")
+        if server_type not in ("local", "stdio"):
+            continue
+
+        raw_cmd = spec.get("command")
+        if not raw_cmd:
+            continue
+
+        if isinstance(raw_cmd, list):
+            if not raw_cmd:
+                continue
+            command = raw_cmd[0]
+            args = raw_cmd[1:] + spec.get("args", [])
+        else:
+            command = raw_cmd
+            args = spec.get("args", [])
+
+        env = spec.get("environment") or spec.get("env")
 
         cfg = MCPServerConfig(
             name=server_name,
@@ -208,7 +233,7 @@ def load_mcp_servers(config: Dict[str, Any]) -> Dict[str, MCPClient]:
 
 
 def load_user_mcp_servers() -> Dict[str, MCPClient]:
-    """Scan ~/.config/frea/config.json and ~/.config/frea/mcp.json for servers."""
+    """Scan ~/.config/frea/config.json, ~/.config/frea/mcp.json, and fallback to ~/.config/opencode/opencode.json."""
     xdg = os.environ.get("XDG_CONFIG_HOME")
     config_dir = Path(xdg) / "frea" if xdg else Path.home() / ".config" / "frea"
 
@@ -226,5 +251,20 @@ def load_user_mcp_servers() -> Dict[str, MCPClient]:
             mcp_config.update(json.loads(mcp_file.read_text(encoding="utf-8")))
         except Exception:
             pass
+
+    # Fallback to opencode.json if neither defines mcp
+    if not (
+        mcp_config.get("mcp")
+        or mcp_config.get("mcpServers")
+        or mcp_config.get("mcp_servers")
+    ):
+        opencode_config = Path.home() / ".config" / "opencode" / "opencode.json"
+        if opencode_config.exists():
+            try:
+                opencode_data = json.loads(opencode_config.read_text(encoding="utf-8"))
+                if "mcp" in opencode_data:
+                    mcp_config["mcp"] = opencode_data["mcp"]
+            except Exception:
+                pass
 
     return load_mcp_servers(mcp_config)
