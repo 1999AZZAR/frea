@@ -78,7 +78,12 @@ class AgentLoop:
 
         while steps_taken < self.max_steps:
             steps_taken += 1
-            response = self.provider.generate(messages)
+            tools = (
+                self.executor.get_tool_schemas()
+                if hasattr(self.executor, "get_tool_schemas")
+                else None
+            )
+            response = self.provider.generate(messages, tools=tools)
 
             # If no tools called, we have our final answer
             if not response.tool_calls:
