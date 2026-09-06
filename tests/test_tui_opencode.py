@@ -46,3 +46,35 @@ def test_opencode_repl_attaches_tool_callbacks():
     tools_cnt, mcp_cnt = repl.get_stats()
     assert tools_cnt >= 0
     assert mcp_cnt >= 0
+
+
+def test_frea_ascii_logo_spelling():
+    from src.ui import LOGO_LEFT, LOGO_RIGHT, clean_glyph_line
+
+    l1 = clean_glyph_line(LOGO_LEFT[1]) + clean_glyph_line(LOGO_RIGHT[1])
+    l2 = clean_glyph_line(LOGO_LEFT[2]) + clean_glyph_line(LOGO_RIGHT[2])
+    l3 = clean_glyph_line(LOGO_LEFT[3]) + clean_glyph_line(LOGO_RIGHT[3])
+
+    # Line 1: F R E A tops
+    assert l1 == "█▀▀▀ █▀▀█ █▀▀▀ █▀▀█"
+    # Line 2: F R E A middles (R has diagonal leg █▄▄▀, E has middle bar █▀▀)
+    assert l2 == "█▀▀  █▄▄▀ █▀▀  █▀▀█"
+    # Line 3: F R E A bottoms (E has bottom bar ▀▀▀▀, R and A have split legs ▀  ▀)
+    assert l3 == "▀    ▀  ▀ ▀▀▀▀ ▀  ▀"
+
+
+def test_repl_status_tracking():
+    from unittest.mock import MagicMock
+    from src.agent import AgentLoop
+
+    agent_mock = MagicMock(spec=AgentLoop)
+    repl = OpenCodeREPL(agent_loop=agent_mock)
+
+    mock_status = MagicMock()
+    repl._current_status = mock_status
+
+    repl._on_tool_call("read_file", {"path": "test.txt"})
+    mock_status.update.assert_called_with("[bold #5c9cf5]Running[/] [dim]read_file…[/]")
+
+    repl._on_tool_result("read_file", {"path": "test.txt"}, "content")
+    assert "Processing response…" in mock_status.update.call_args[0][0]

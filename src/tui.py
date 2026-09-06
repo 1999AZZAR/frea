@@ -54,6 +54,7 @@ class OpenCodeREPL:
         self.session = session or session_state or SessionState()
         self.theme = theme
         self._active_out_stream: Optional[TextIO] = None
+        self._current_status: Optional[Any] = None
 
         # Register model switcher so /model propagates to live provider
         self.session.on_model_switch = self._switch_model
@@ -85,6 +86,11 @@ class OpenCodeREPL:
     def _on_tool_call(self, name: str, args: Dict[str, Any]) -> None:
         from src.cards import render_tool_call
 
+        if self._current_status:
+            self._current_status.update(
+                f"[bold {self.theme.secondary}]Running[/] [dim]{name}…[/]"
+            )
+
         banner = render_tool_call(name, args, theme=self.theme)
         if self._active_out_stream and self._active_out_stream != sys.stdout:
             self._active_out_stream.write(f"{banner}\n")
@@ -94,6 +100,11 @@ class OpenCodeREPL:
 
     def _on_tool_result(self, name: str, args: Dict[str, Any], result: str) -> None:
         from src.cards import render_tool_result
+
+        if self._current_status:
+            self._current_status.update(
+                f"[bold {self.theme.primary}]Processing response…[/] [dim]({self.session.current_model})[/]"
+            )
 
         banner = render_tool_result(name, args, result, theme=self.theme)
         if self._active_out_stream and self._active_out_stream != sys.stdout:
@@ -184,7 +195,23 @@ class OpenCodeREPL:
         if not self.agent_loop:
             return False, "Agent loop is not initialized."
 
-        agent_result = self.agent_loop.run(text)
+        # Active loading / thinking / processing indicator for interactive REPL
+        if sys.stdin.isatty() and (
+            not self._active_out_stream or self._active_out_stream == sys.stdout
+        ):
+            with console.status(
+                f"[bold {self.theme.primary}]Thinking…[/] [dim]({self.session.current_model})[/]",
+                spinner="dots",
+                spinner_style=f"bold {self.theme.primary}",
+            ) as status:
+                self._current_status = status
+                try:
+                    agent_result = self.agent_loop.run(text)
+                finally:
+                    self._current_status = None
+        else:
+            agent_result = self.agent_loop.run(text)
+
         self.session.record_turn(text, agent_result.final_answer)
         return False, agent_result.final_answer
 
