@@ -30,7 +30,7 @@
     - [x] Implement prompt builder and context compaction
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [53c459c]
 
-## Phase 4: Interactive TUI & Slash Commands
+## Phase 4: Interactive TUI & Slash Commands [checkpoint: dfcf48f]
 - [x] Task: Write tests for interactive command parser and session manager [0fa3ba8]
     - [x] Create unit tests for slash commands (`/help`, `/model`, `/clear`, `/exit`)
     - [x] Create unit tests for rotating log management and session history
@@ -38,7 +38,7 @@
     - [x] Implement readline-powered REPL with multi-line input support
     - [x] Implement slash command handlers and model switcher
     - [x] Integrate ANSI progress spinners and formatted output
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [dfcf48f]
 
 ## Phase 5: End-to-End Integration & Regression Testing
 - [ ] Task: Write end-to-end integration tests
