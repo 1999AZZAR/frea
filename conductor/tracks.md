@@ -12,3 +12,5 @@
   *Link: [./tracks/bake_persona_and_user_config_20260906/index.md](./tracks/bake_persona_and_user_config_20260906/index.md)*
 - [x] **Track: Add OpenCode & KiloCode Free Models & Purge Gemini/GenAI Dependency**
   *Link: [./tracks/free_models_and_purge_genai_20260906/index.md](./tracks/free_models_and_purge_genai_20260906/index.md)*
+- [~] **Track: Remake Internal Tooling Suite from Scratch (Kamui & OpenCode Parity)**
+  *Link: [./tracks/remake_internal_tools_20260906/index.md](./tracks/remake_internal_tools_20260906/index.md)*
