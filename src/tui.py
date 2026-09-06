@@ -21,7 +21,7 @@ class SlashCommandCompleter(Completer):
         ("/mcp", "Inspect MCP servers and registered tools"),
         ("/skills", "List discovered agent skills"),
         ("/model", "Switch or view current model"),
-        ("/compact", "Fold response into compact peek"),
+        ("/compact", "Summarize older messages to free up context"),
         ("/collapse", "Fold response into compact peek"),
         ("/expand", "Expand folded response into full view"),
         ("/clear", "Clear terminal screen"),
@@ -246,7 +246,7 @@ class OpenCodeREPL:
                 )
                 run_in_terminal(lambda: console.print(card))
             else:
-                mode = "Compact" if self.session.response_collapsed else "Expanded"
+                mode = "Collapsed" if self.session.response_collapsed else "Expanded"
                 run_in_terminal(
                     lambda: console.print(
                         f"[{self.theme.text_muted}]{mode} mode enabled. No previous response to display.[/]"

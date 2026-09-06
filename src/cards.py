@@ -200,17 +200,16 @@ def render_permission_prompt(
 def render_response_card(
     response: str,
     collapsed: bool = False,
-    peek_lines: int = 4,
+    peek_lines: int = 2,
     model: str = "",
     theme: Theme = THEME,
 ) -> str:
-    """Render Assistant response matching Kamui's card design with fold & hover controls.
+    """Render Assistant response matching Kamui's card design.
 
     Features:
-      - Left colored vertical border rail
-      - Header pill with model and fold control action ([▼ Compact] / [▶ Expand])
-      - Peek preview when collapsed (top lines + '… N more lines · /expand or Ctrl+O')
-      - On-hover hints ([Click or Ctrl+O to fold/expand])
+      - Left thick rail ('▌ ') matching Kamui's THICK_BORDER
+      - Header pill with model and fold control action ([▼ Collapse] / [▶ Expand])
+      - Peek preview when collapsed (COLLAPSED_PEEK = 2 lines + '… N more line(s) · ctrl+o or /expand')
     """
     clean_resp = response.rstrip()
     if not clean_resp:
@@ -219,21 +218,25 @@ def render_response_card(
     lines = clean_resp.splitlines()
     total_lines = len(lines)
     model_tag = f" [dim]({model})[/]" if model else ""
+    rail = f"[{theme.primary}]▌[/]"
 
     if collapsed and total_lines > peek_lines:
         hidden = total_lines - peek_lines
         control_pill = (
             f"[{theme.text_muted}][▶ Expand (+{hidden} lines) · Ctrl+O / /expand][/]"
         )
-        header = f"[{theme.primary} bold]▌ Assistant[/]{model_tag}   {control_pill}"
-
-        peek_body = "\n".join(
-            f"[{theme.text_muted}]│[/] {line}" for line in lines[:peek_lines]
+        header = (
+            f"\n{rail} [{theme.primary} bold]Assistant[/]{model_tag}   {control_pill}"
         )
-        footer = f"[{theme.text_muted}]│ … {hidden} more lines folded · Ctrl+O or /expand to view[/]"
-        return f"\n{header}\n{peek_body}\n{footer}\n"
+        peek_body = "\n".join(f"{rail} {line}" for line in lines[:peek_lines])
+        footer = (
+            f"{rail} [{theme.text_muted}]… {hidden} more line(s) · ctrl+o or /expand[/]"
+        )
+        return f"{header}\n{peek_body}\n{footer}\n"
     else:
-        control_pill = f"[{theme.text_muted}][▼ Compact · Ctrl+O / /compact][/]"
-        header = f"[{theme.primary} bold]▌ Assistant[/]{model_tag}   {control_pill}"
-        body = "\n".join(f"[{theme.text_muted}]│[/] {line}" for line in lines)
-        return f"\n{header}\n{body}\n"
+        control_pill = f"[{theme.text_muted}][▼ Collapse · Ctrl+O / /collapse][/]"
+        header = (
+            f"\n{rail} [{theme.primary} bold]Assistant[/]{model_tag}   {control_pill}"
+        )
+        body = "\n".join(f"{rail} {line}" for line in lines)
+        return f"{header}\n{body}\n"

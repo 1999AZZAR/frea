@@ -84,10 +84,10 @@ def test_handle_slash_command_skills():
 def test_handle_slash_command_expand_compact_collapse():
     session = SessionState(current_model="openrouter/auto")
     # Empty last response
-    res_comp_empty = handle_slash_command("/compact", session)
-    assert res_comp_empty.handled is True
+    res_collapse_empty = handle_slash_command("/collapse", session)
+    assert res_collapse_empty.handled is True
     assert session.response_collapsed is True
-    assert "Compact mode enabled" in res_comp_empty.output
+    assert "Collapsed mode enabled" in res_collapse_empty.output
 
     res_exp_empty = handle_slash_command("/expand", session)
     assert res_exp_empty.handled is True
@@ -97,19 +97,21 @@ def test_handle_slash_command_expand_compact_collapse():
     # With last response
     session.last_response = "\n".join([f"Output line {i}" for i in range(10)])
 
-    res_compact = handle_slash_command("/compact", session)
-    assert res_compact.handled is True
-    assert session.response_collapsed is True
-    assert "▶ Expand" in res_compact.output
-    assert "more lines folded" in res_compact.output
-
-    res_expand = handle_slash_command("/expand", session)
-    assert res_expand.handled is True
-    assert session.response_collapsed is False
-    assert "▼ Compact" in res_expand.output
-    assert "Output line 9" in res_expand.output
-
     res_collapse = handle_slash_command("/collapse", session)
     assert res_collapse.handled is True
     assert session.response_collapsed is True
     assert "▶ Expand" in res_collapse.output
+    assert "more line(s)" in res_collapse.output
+
+    res_expand = handle_slash_command("/expand", session)
+    assert res_expand.handled is True
+    assert session.response_collapsed is False
+    assert "▼ Collapse" in res_expand.output
+    assert "Output line 9" in res_expand.output
+
+    # /compact compresses conversation history
+    for i in range(15):
+        session.record_turn(f"user {i}", f"assistant {i}")
+    res_compact = handle_slash_command("/compact", session)
+    assert res_compact.handled is True
+    assert "Compacted history from" in res_compact.output

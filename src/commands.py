@@ -37,7 +37,8 @@ HELP_TEXT = """Available commands:
   /skills               - List discovered agent skills
   /model <name>         - View or switch current model
   /expand               - Expand folded response (full view)
-  /compact or /collapse - Fold response into compact peek
+  /collapse             - Fold response into compact peek
+  /compact              - Summarize older messages to free up context
   /clear                - Clear terminal screen
   /exit or /quit        - Exit interactive session
 """
@@ -185,7 +186,7 @@ def handle_slash_command(user_input: str, session: SessionState) -> CommandResul
             handled=True,
             output="Expanded mode enabled. No previous response to display.",
         )
-    elif cmd in ("/compact", "/collapse"):
+    elif cmd == "/collapse":
         session.response_collapsed = True
         if session.last_response:
             from src.cards import render_response_card
@@ -200,7 +201,7 @@ def handle_slash_command(user_input: str, session: SessionState) -> CommandResul
             )
         return CommandResult(
             handled=True,
-            output="Compact mode enabled. No previous response to display.",
+            output="Collapsed mode enabled. No previous response to display.",
         )
     elif cmd == "/model":
         if arg:

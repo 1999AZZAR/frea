@@ -132,12 +132,12 @@ def test_repl_handle_input_renders_response_card():
 
     should_exit, output = repl.handle_input("hello")
     assert should_exit is False
-    assert "▌ Assistant" in output
-    assert "▼ Compact · Ctrl+O / /compact" in output
+    assert "Assistant" in output
+    assert "▼ Collapse · Ctrl+O / /collapse" in output
     assert "Line A" in output
     assert state.last_response == "Line A\nLine B\nLine C\nLine D\nLine E\nLine F"
 
     state.response_collapsed = True
     should_exit, output_collapsed = repl.handle_input("hello again")
-    assert "▶ Expand (+2 lines) · Ctrl+O / /expand" in output_collapsed
-    assert "2 more lines folded" in output_collapsed
+    assert "▶ Expand (+4 lines) · Ctrl+O / /expand" in output_collapsed
+    assert "… 4 more line(s) · ctrl+o or /expand" in output_collapsed
