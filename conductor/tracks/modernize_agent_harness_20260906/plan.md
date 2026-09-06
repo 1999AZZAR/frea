@@ -24,10 +24,10 @@
 - [x] Task: Write tests for agent loop and model adapters [e85f2c7]
     - [x] Create unit tests for ReAct state transitions and tool call parsing
     - [x] Create mock tests for Gemini, OpenAI, and Groq provider adapters
-- [ ] Task: Implement agent reasoning loop and provider clients
-    - [ ] Implement unified provider abstraction layer
-    - [ ] Implement ReAct execution engine supporting iterative tool calling
-    - [ ] Implement prompt builder and context compaction
+- [x] Task: Implement agent reasoning loop and provider clients [53c459c]
+    - [x] Implement unified provider abstraction layer
+    - [x] Implement ReAct execution engine supporting iterative tool calling
+    - [x] Implement prompt builder and context compaction
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 4: Interactive TUI & Slash Commands
