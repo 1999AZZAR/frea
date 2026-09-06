@@ -21,9 +21,9 @@
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [9cb072b]
 
 ## Phase 3: Agentic ReAct Engine & Model Provider Interface
-- [ ] Task: Write tests for agent loop and model adapters
-    - [ ] Create unit tests for ReAct state transitions and tool call parsing
-    - [ ] Create mock tests for Gemini, OpenAI, and Groq provider adapters
+- [x] Task: Write tests for agent loop and model adapters [e85f2c7]
+    - [x] Create unit tests for ReAct state transitions and tool call parsing
+    - [x] Create mock tests for Gemini, OpenAI, and Groq provider adapters
 - [ ] Task: Implement agent reasoning loop and provider clients
     - [ ] Implement unified provider abstraction layer
     - [ ] Implement ReAct execution engine supporting iterative tool calling
