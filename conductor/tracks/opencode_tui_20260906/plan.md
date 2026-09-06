@@ -1,12 +1,12 @@
 # Implementation Plan: OpenCode TUI Overhaul, Dependency Cleanup & `.venv` Integration
 
-### Phase 1: Environment & Dependency Hygiene
+### Phase 1: Environment & Dependency Hygiene [checkpoint: 5e0fcf7]
 - [x] Task: Write tests verifying absence of LangChain imports and verifying environment requirements in `tests/test_dependencies.py` b7b2b82
 - [x] Task: Purge LangChain from `requirements.txt` and `.venv`, add `rich` and `prompt_toolkit` to requirements 5e0fcf7
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) 5e0fcf7
 
 ### Phase 2: OpenCode Theme, Block Logo & Header
-- [ ] Task: Write tests for OpenCode block logo rendering, model banner, and theme palette in `tests/test_theme.py`
+- [~] Task: Write tests for OpenCode block logo rendering, model banner, and theme palette in `tests/test_theme.py`
 - [ ] Task: Implement OpenCode dual-tone block logo and session banner in `src/ui.py`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
