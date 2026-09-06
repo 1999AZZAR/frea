@@ -134,6 +134,36 @@ class OpenCodeREPL:
             return False, ""
 
         if text.startswith("/"):
+            parts = text.split(maxsplit=1)
+            cmd = parts[0].lower()
+            arg = parts[1].strip() if len(parts) > 1 else ""
+
+            # /model with no arg → interactive popup picker
+            if cmd == "/model" and not arg and sys.stdin.isatty():
+                from src.popup import model_select_popup
+
+                chosen = model_select_popup(self.session.current_model)
+                if chosen:
+                    try:
+                        self._switch_model(chosen)
+                        self.session.current_model = chosen
+                        return False, f"Switched model → {chosen}"
+                    except Exception as exc:
+                        return False, f"Failed to switch model: {exc}"
+                return False, ""
+
+            # /exit / /quit with tty → confirm popup
+            if cmd in ("/exit", "/quit") and sys.stdin.isatty():
+                from src.popup import ConfirmPopup
+
+                confirmed = ConfirmPopup(
+                    title="Exit Frea",
+                    message="End this session?",
+                ).run()
+                if confirmed:
+                    return True, "Exiting Frea session."
+                return False, ""
+
             res = handle_slash_command(text, self.session)
             return res.exit_requested, res.output or ""
 
