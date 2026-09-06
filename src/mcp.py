@@ -268,3 +268,100 @@ def load_user_mcp_servers() -> Dict[str, MCPClient]:
                 pass
 
     return load_mcp_servers(mcp_config)
+
+
+def get_all_mcp_servers_config() -> Dict[str, Dict[str, Any]]:
+    """Retrieve full dictionary of configured MCP servers with enabled state."""
+    xdg = os.environ.get("XDG_CONFIG_HOME")
+    config_dir = Path(xdg) / "frea" if xdg else Path.home() / ".config" / "frea"
+
+    mcp_config: Dict[str, Any] = {}
+    mcp_file = config_dir / "mcp.json"
+    if mcp_file.exists():
+        try:
+            mcp_config.update(json.loads(mcp_file.read_text(encoding="utf-8")))
+        except Exception:
+            pass
+
+    if not mcp_config:
+        config_file = config_dir / "config.json"
+        if config_file.exists():
+            try:
+                mcp_config.update(json.loads(config_file.read_text(encoding="utf-8")))
+            except Exception:
+                pass
+
+    if not (
+        mcp_config.get("mcp")
+        or mcp_config.get("mcpServers")
+        or mcp_config.get("mcp_servers")
+    ):
+        opencode_config = Path.home() / ".config" / "opencode" / "opencode.json"
+        if opencode_config.exists():
+            try:
+                opencode_data = json.loads(opencode_config.read_text(encoding="utf-8"))
+                if "mcp" in opencode_data:
+                    mcp_config["mcp"] = opencode_data["mcp"]
+            except Exception:
+                pass
+
+    servers: Dict[str, Any] = (
+        mcp_config.get("mcp")
+        or mcp_config.get("mcpServers")
+        or mcp_config.get("mcp_servers")
+        or {}
+    )
+    result = {}
+    for name, spec in servers.items():
+        if isinstance(spec, dict):
+            s = dict(spec)
+            s["enabled"] = s.get("enabled", True) is not False
+            result[name] = s
+    return result
+
+
+def toggle_mcp_server(server_name: str) -> bool:
+    """Toggle enabled status for specified MCP server and persist to ~/.config/frea/mcp.json.
+
+    Returns the new enabled status.
+    """
+    xdg = os.environ.get("XDG_CONFIG_HOME")
+    config_dir = Path(xdg) / "frea" if xdg else Path.home() / ".config" / "frea"
+    config_dir.mkdir(parents=True, exist_ok=True)
+
+    mcp_file = config_dir / "mcp.json"
+    mcp_data: Dict[str, Any] = {}
+    if mcp_file.exists():
+        try:
+            mcp_data = json.loads(mcp_file.read_text(encoding="utf-8"))
+        except Exception:
+            mcp_data = {}
+
+    if not mcp_data.get("mcp"):
+        # Copy from all discovered config
+        all_specs = get_all_mcp_servers_config()
+        mcp_data["mcp"] = all_specs
+
+    servers = mcp_data.setdefault("mcp", {})
+    spec = servers.setdefault(server_name, {"type": "local", "enabled": True})
+    current_enabled = spec.get("enabled", True) is not False
+    new_enabled = not current_enabled
+    spec["enabled"] = new_enabled
+
+    try:
+        mcp_file.write_text(json.dumps(mcp_data, indent=2), encoding="utf-8")
+    except Exception:
+        pass
+
+    # Also sync ~/.config/frea/config.json if it has mcp section
+    config_file = config_dir / "config.json"
+    if config_file.exists():
+        try:
+            cfg = json.loads(config_file.read_text(encoding="utf-8"))
+            if "mcp" in cfg and server_name in cfg["mcp"]:
+                cfg["mcp"][server_name]["enabled"] = new_enabled
+                config_file.write_text(json.dumps(cfg, indent=2), encoding="utf-8")
+        except Exception:
+            pass
+
+    return new_enabled

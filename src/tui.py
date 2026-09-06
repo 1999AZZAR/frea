@@ -152,6 +152,20 @@ class OpenCodeREPL:
                         return False, f"Failed to switch model: {exc}"
                 return False, ""
 
+            # /mcp with tty → interactive MCP manager popup
+            if cmd == "/mcp" and sys.stdin.isatty():
+                from src.popup import mcp_popup
+
+                changed = mcp_popup()
+                if changed and self.agent_loop and hasattr(self.agent_loop, "executor"):
+                    self.agent_loop.executor.reload_mcp_servers()
+                    tools_cnt, mcp_cnt = self.get_stats()
+                    return (
+                        False,
+                        f"Reloaded MCP servers: {mcp_cnt} connected, {tools_cnt} total tools active.",
+                    )
+                return False, ""
+
             # /exit / /quit with tty → confirm popup
             if cmd in ("/exit", "/quit") and sys.stdin.isatty():
                 from src.popup import ConfirmPopup

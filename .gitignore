@@ -82,6 +82,7 @@ exports/
 *.sqlite
 *.sqlite3
 *.db
+*.db-*
 
 # --- IDEs & Developer Tooling ---
 .vscode/

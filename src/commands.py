@@ -14,9 +14,10 @@ class CommandResult:
 
 @dataclass
 class SessionState:
-    current_model: str = "deepseek-v4-flash"
-    current_provider: str = "openrouter"
+    current_model: str = "kilo-auto/free"
+    current_provider: str = "kilo"
     history: List[Dict[str, Any]] = field(default_factory=list)
+
     on_model_switch: Optional[Callable[[str], None]] = field(
         default=None, repr=False, compare=False
     )

@@ -91,14 +91,22 @@ class OpenAIProvider(BaseModelProvider):
             response = self.client.chat.completions.create(**kwargs)
         except openai.AuthenticationError as exc:
             body = getattr(exc, "body", {}) or {}
-            code = (body.get("error") or {}).get("code", "")
-            if code == "PAID_MODEL_AUTH_REQUIRED":
+            err_dict = body.get("error", {}) if isinstance(body, dict) else {}
+            code = err_dict.get("code", "") if isinstance(err_dict, dict) else ""
+            msg = str(exc)
+            if (
+                code == "PAID_MODEL_AUTH_REQUIRED"
+                or "Missing API key" in msg
+                or "401" in msg
+                or "AuthError" in msg
+                or "sign in" in msg.lower()
+            ):
                 raise FreaProviderError(
-                    f"Model '{self.model}' requires authentication.\n"
-                    "Use a free model instead:\n"
-                    "  /model kimi-k2.5-free          (OpenCode Zen, no key)\n"
-                    "  /model kilocode/kilo-auto/balanced  (KiloCode, no key)\n"
-                    "  /model openrouter/auto          (OpenRouter, set OPENROUTER_API_KEY)"
+                    f"Model '{self.model}' requires an API key.\n"
+                    "Switch to a free model with /model:\n"
+                    "  • kilo-auto/free              (KiloCode Gateway, free)\n"
+                    "  • nemotron-3.5-lightning-free (OpenCode Zen, free)\n"
+                    "  • mimo-v2.5-free              (OpenCode Zen, free)"
                 ) from exc
             raise FreaProviderError(
                 f"Authentication failed for '{self.model}': {exc}"
@@ -113,6 +121,15 @@ class OpenAIProvider(BaseModelProvider):
             ) from exc
 
         choice = response.choices[0].message
+        content = choice.content
+        if not content:
+            extra = getattr(choice, "model_extra", {}) or {}
+            content = (
+                extra.get("reasoning_content")
+                or getattr(choice, "reasoning", None)
+                or ""
+            )
+
         tool_calls: List[ToolCall] = []
         if choice.tool_calls:
             for tc in choice.tool_calls:
@@ -124,7 +141,7 @@ class OpenAIProvider(BaseModelProvider):
                     ToolCall(id=tc.id, name=tc.function.name, arguments=args)
                 )
 
-        return ModelResponse(content=choice.content, tool_calls=tool_calls)
+        return ModelResponse(content=content, tool_calls=tool_calls)
 
 
 class OpenRouterProvider(OpenAIProvider):
@@ -204,19 +221,20 @@ class GroqProvider(OpenAIProvider):
 
 
 class OpencodeProvider(OpenAIProvider):
-    """
-    OpenCode Zen gateway — free models (cost.input=0) work with apiKey='public'.
+    """OpenCode Zen gateway — free models (cost.input=0) work with apiKey='public'.
+
     Paid models require OPENCODE_API_KEY.
     Base URL confirmed from models.dev: https://opencode.ai/zen/v1
     """
 
     # Free models available without auth (cost.input == 0 on models.dev)
     FREE_MODELS = [
+        "nemotron-3.5-lightning-free",
+        "mimo-v2.5-free",
+        "deepseek-v4-flash-free",
         "ring-2.6-1t-free",
-        "mimo-v2-pro-free",
-        "deepseek-v4-flash",
     ]
-    DEFAULT_FREE_MODEL = "deepseek-v4-flash"
+    DEFAULT_FREE_MODEL = "nemotron-3.5-lightning-free"
 
     def __init__(
         self,
@@ -229,6 +247,7 @@ class OpencodeProvider(OpenAIProvider):
             model=model or self.DEFAULT_FREE_MODEL,
             base_url="https://opencode.ai/zen/v1",
             default_headers={
+                "User-Agent": "opencode/1.0.0",
                 "HTTP-Referer": "https://opencode.ai/",
                 "X-Title": "opencode",
             },
@@ -236,13 +255,13 @@ class OpencodeProvider(OpenAIProvider):
 
 
 class KiloCodeProvider(OpenAIProvider):
-    """
-    KiloCode gateway — free tier works with apiKey='public'.
+    """KiloCode gateway — free tier works with apiKey='public'.
+
     Base URL confirmed from kilo.ts plugin: https://api.kilo.ai/api/gateway
     Requires KILO_API_KEY for paid models.
     """
 
-    DEFAULT_FREE_MODEL = "kilocode/kilo-auto/balanced"
+    DEFAULT_FREE_MODEL = "kilo-auto/free"
 
     def __init__(
         self,
@@ -255,6 +274,7 @@ class KiloCodeProvider(OpenAIProvider):
             model=model or self.DEFAULT_FREE_MODEL,
             base_url="https://api.kilo.ai/api/gateway",
             default_headers={
+                "User-Agent": "opencode/1.0.0",
                 "HTTP-Referer": "https://opencode.ai/",
                 "X-Title": "opencode",
             },
@@ -320,7 +340,7 @@ def get_provider(
     m = effective_model.lower()
     if m.startswith("openrouter/"):
         return OpenRouterProvider(api_key=api_key, model=effective_model)
-    if m.startswith(("kilocode/", "kilo/")):
+    if m.startswith(("kilocode/", "kilo/", "kilo-", "kilocode-")):
         return KiloCodeProvider(api_key=api_key, model=effective_model)
     if m.startswith(("gemini-", "gemini/")):
         return GeminiProvider(api_key=api_key, model=effective_model)
@@ -330,8 +350,10 @@ def get_provider(
         return GroqProvider(api_key=api_key, model=effective_model)
     if (
         m.endswith("-free")
+        or ":free" in m
         or "kimi" in m
         or "mimo" in m
+        or "nemotron" in m
         or m.startswith("ring-")
         or m.startswith("deepseek-v4")
         or m.startswith("minimax")

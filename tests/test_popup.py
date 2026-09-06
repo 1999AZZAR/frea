@@ -100,5 +100,57 @@ def test_model_select_popup_has_presets():
         assert len(options) >= 8
         labels = [o.label for o in options]
         assert "openrouter/auto" in labels
-        assert "deepseek-v4-flash" in labels
+        assert "kilo-auto/free" in labels
         assert "gpt-4o" in labels
+
+
+def test_fetch_gateway_models():
+    from src.popup import fetch_gateway_models
+
+    models = fetch_gateway_models()
+    assert len(models) >= 5
+    categories = {m.category for m in models}
+    assert "Free (no key)" in categories
+    free_models = [m.value for m in models if m.category == "Free (no key)"]
+    assert "kilo-auto/free" in free_models
+
+
+def test_mcp_popup_rendering_and_navigation():
+    from src.popup import McpPopup
+
+    with patch("src.mcp.get_all_mcp_servers_config") as mock_cfg:
+        mock_cfg.return_value = {
+            "server-a": {"enabled": True, "command": ["node", "a.js"]},
+            "server-b": {"enabled": False, "command": ["node", "b.js"]},
+        }
+        popup = McpPopup(title="Test MCP")
+        assert len(popup._servers) == 2
+        tokens = popup._build_text()
+        text = "".join(t for _, t in tokens)
+        assert "server-a" in text
+        assert "server-b" in text
+        assert "✓ Enabled" in text
+        assert "○ Disabled" in text
+
+        # Test movement
+        popup._move(1)
+        assert popup._cursor == 1
+        popup._move(-1)
+        assert popup._cursor == 0
+
+
+def test_mcp_popup_toggle():
+    from src.popup import McpPopup
+
+    with patch("src.mcp.get_all_mcp_servers_config") as mock_cfg, patch(
+        "src.mcp.toggle_mcp_server"
+    ) as mock_toggle:
+        mock_cfg.return_value = {
+            "server-a": {"enabled": True, "command": ["node", "a.js"]},
+        }
+        mock_toggle.return_value = False
+        popup = McpPopup(title="Test MCP")
+        popup._toggle_current()
+        assert popup._servers[0]["enabled"] is False
+        assert popup._has_changed is True
+        mock_toggle.assert_called_once_with("server-a")

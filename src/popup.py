@@ -14,7 +14,11 @@ returns the user's choice, and restores the parent terminal state cleanly.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Callable, Generic, Iterable, List, Optional, TypeVar
+import json
+from pathlib import Path
+import time
+from typing import Any, Callable, Dict, Generic, Iterable, List, Optional, TypeVar
+import urllib.request
 
 from prompt_toolkit import Application
 from prompt_toolkit.formatted_text import HTML
@@ -62,6 +66,11 @@ POPUP_STYLE = Style.from_dict(
         "btn.no": "#ea6962",
         # Alert
         "alert-text": "#d4be98",
+        # MCP server manager
+        "status-enabled": "#89b482 bold",
+        "status-disabled": "#7c6f64",
+        "server-name": "#d4be98 bold",
+        "server-desc": "#a89984",
     }
 )
 
@@ -519,47 +528,294 @@ class InputPopup:
 # ---------------------------------------------------------------------------
 
 
-def model_select_popup(
-    current_model: str,
-    extra_options: Optional[Iterable[SelectOption[str]]] = None,
-) -> Optional[str]:
+# ---------------------------------------------------------------------------
+# MCP Server Manager Popup (OpenCode-styled toggle dialog)
+# ---------------------------------------------------------------------------
+
+
+class McpPopup:
+    """OpenCode-styled interactive MCP server manager.
+
+    Displays all configured MCP servers with status indicators:
+      ✓ Enabled  hela-mitosis     (local node)
+      ○ Disabled hela-cytosol     (local node)
+    Keys:
+      ↑ / ↓ / k / j: move selection
+      Space / Enter: toggle Enabled/Disabled state in-place
+      Esc / q / Ctrl+C: close dialog
+    Returns True if any server was toggled, False otherwise.
     """
-    Open the model-switcher popup pre-populated with free/common presets.
-    Returns selected model string or None if cancelled.
+
+    def __init__(self, title: str = "MCP Servers") -> None:
+        from src.mcp import get_all_mcp_servers_config
+
+        self.title = title
+        raw_specs = get_all_mcp_servers_config()
+        self._servers: List[Dict[str, Any]] = [
+            {"name": name, "enabled": spec.get("enabled", True), "spec": spec}
+            for name, spec in sorted(raw_specs.items())
+        ]
+        self._cursor = 0
+        self._has_changed = False
+
+    def _move(self, delta: int) -> None:
+        if not self._servers:
+            return
+        self._cursor = (self._cursor + delta) % len(self._servers)
+
+    def _toggle_current(self) -> None:
+        if not self._servers:
+            return
+        from src.mcp import toggle_mcp_server
+
+        server = self._servers[self._cursor]
+        new_state = toggle_mcp_server(server["name"])
+        server["enabled"] = new_state
+        self._has_changed = True
+
+    def _build_text(self) -> List[tuple[str, str]]:
+        if not self._servers:
+            return [
+                (
+                    "class:hint-label",
+                    "  No MCP servers configured in ~/.config/frea/mcp.json\n",
+                )
+            ]
+
+        tokens: List[tuple[str, str]] = []
+        for i, server in enumerate(self._servers):
+            is_focused = i == self._cursor
+            enabled = server["enabled"]
+
+            status_style = (
+                "class:status-enabled" if enabled else "class:status-disabled"
+            )
+            status_text = "  ✓ Enabled " if enabled else "  ○ Disabled"
+
+            name_style = (
+                "class:select-item.focused" if is_focused else "class:server-name"
+            )
+            name_text = f"  {server['name']:<18}"
+
+            raw_cmd = server["spec"].get("command", "")
+            if isinstance(raw_cmd, list):
+                cmd_summary = Path(raw_cmd[-1]).stem if raw_cmd else "local"
+            else:
+                cmd_summary = Path(str(raw_cmd)).stem or "local"
+
+            tokens.append((status_style, status_text))
+            tokens.append((name_style, name_text))
+            tokens.append(("class:hint-label", f" ({cmd_summary})\n"))
+
+        return tokens
+
+    def run(self) -> bool:
+        """Run interactive MCP manager. Returns True if any toggles occurred."""
+        list_control = FormattedTextControl(
+            text=self._build_text,
+            focusable=True,
+        )
+
+        kb = KeyBindings()
+
+        @kb.add("up")
+        @kb.add("k")
+        @kb.add("c-p")
+        def _up(event: Any) -> None:
+            self._move(-1)
+            list_control.text = self._build_text  # type: ignore[assignment]
+
+        @kb.add("down")
+        @kb.add("j")
+        @kb.add("c-n")
+        def _down(event: Any) -> None:
+            self._move(1)
+            list_control.text = self._build_text  # type: ignore[assignment]
+
+        @kb.add("space")
+        @kb.add("enter")
+        def _toggle(event: Any) -> None:
+            self._toggle_current()
+            list_control.text = self._build_text  # type: ignore[assignment]
+
+        @kb.add("escape")
+        @kb.add("q")
+        @kb.add("c-c")
+        def _close(event: Any) -> None:
+            event.app.exit()
+
+        title_bar = Window(
+            content=FormattedTextControl(
+                text=lambda: [("class:frame.label", f"  {self.title}  ")]
+            ),
+            height=1,
+            style="class:frame.label",
+        )
+        sep = Window(height=1, char="─", style="class:frame.border")
+        list_win = Window(
+            content=list_control,
+            height=max(6, min(len(self._servers) + 2, 16)),
+        )
+        hint_win = Window(
+            content=FormattedTextControl(
+                text=lambda: [
+                    ("class:hint-key", "  ↑↓/j/k"),
+                    ("class:hint-label", " navigate  "),
+                    ("class:hint-key", "Space/Enter"),
+                    ("class:hint-label", " toggle  "),
+                    ("class:hint-key", "Esc/q"),
+                    ("class:hint-label", " done  "),
+                ]
+            ),
+            height=1,
+        )
+
+        dialog = Frame(
+            body=HSplit([title_bar, sep, list_win, hint_win]),
+            style="class:frame.border",
+        )
+        root = FloatContainer(
+            content=Window(style="class:popup-backdrop"),
+            floats=[Float(content=dialog, xcursor=False, ycursor=False)],
+        )
+
+        app: Application[None] = Application(
+            layout=Layout(root, focused_element=list_win),
+            key_bindings=kb,
+            style=POPUP_STYLE,
+            mouse_support=True,
+            full_screen=True,
+        )
+        app.run()
+        return self._has_changed
+
+
+def mcp_popup() -> bool:
+    """Open the MCP server toggle dialog. Returns True if any server was toggled."""
+    return McpPopup().run()
+
+
+# ---------------------------------------------------------------------------
+# Dynamic Model Discovery & Model Selector
+# ---------------------------------------------------------------------------
+
+
+def fetch_gateway_models() -> List[SelectOption[str]]:
+    """Discover available models from OpenCode Zen and KiloCode gateways.
+
+    Uses local cache with 6-hour TTL to ensure zero latency on subsequent calls.
     """
-    presets: List[SelectOption[str]] = [
-        # Free / no key required
+    cache_path = Path.home() / ".config" / "frea" / "models_cache.json"
+    if cache_path.exists():
+        try:
+            mtime = cache_path.stat().st_mtime
+            if (time.time() - mtime) < 6 * 3600:
+                raw_data = json.loads(cache_path.read_text(encoding="utf-8"))
+                if raw_data:
+                    return [
+                        SelectOption(
+                            label=item["label"],
+                            value=item["value"],
+                            description=item.get("description", ""),
+                            category=item.get("category", ""),
+                        )
+                        for item in raw_data
+                    ]
+        except Exception:
+            pass
+
+    options: List[SelectOption[str]] = []
+    seen_ids = set()
+
+    # Curated top free models (tested and reliable)
+    top_free = [
         SelectOption(
-            "deepseek-v4-flash",
-            "deepseek-v4-flash",
-            "Free · OpenCode Zen gateway",
+            "kilo-auto/free",
+            "kilo-auto/free",
+            "Free · KiloCode smart free auto router",
             "Free (no key)",
         ),
         SelectOption(
-            "ring-2.6-1t-free",
-            "ring-2.6-1t-free",
-            "Free · OpenCode Zen gateway",
+            "nemotron-3.5-lightning-free",
+            "nemotron-3.5-lightning-free",
+            "Free · OpenCode Zen fast reasoning",
             "Free (no key)",
         ),
         SelectOption(
-            "mimo-v2-pro-free",
-            "mimo-v2-pro-free",
-            "Free · OpenCode Zen gateway",
+            "mimo-v2.5-free",
+            "mimo-v2.5-free",
+            "Free · OpenCode Zen reasoning model",
             "Free (no key)",
         ),
         SelectOption(
-            "kilocode/kilo-auto/balanced",
-            "kilocode/kilo-auto/balanced",
-            "Free · KiloCode gateway (balanced)",
+            "deepseek-v4-flash-free",
+            "deepseek-v4-flash-free",
+            "Free · OpenCode Zen",
             "Free (no key)",
         ),
         SelectOption(
-            "kilocode/kilo-auto/quality",
-            "kilocode/kilo-auto/quality",
-            "Free · KiloCode gateway (quality)",
+            "stepfun/step-3.7-flash:free",
+            "stepfun/step-3.7-flash:free",
+            "Free · KiloCode Gateway",
             "Free (no key)",
         ),
-        # OpenRouter (needs OPENROUTER_API_KEY)
+    ]
+    for opt in top_free:
+        options.append(opt)
+        seen_ids.add(opt.value)
+
+    # 1. Fetch OpenCode Zen models
+    try:
+        req = urllib.request.Request(
+            "https://opencode.ai/zen/v1/models",
+            headers={
+                "Authorization": "Bearer public",
+                "User-Agent": "opencode/1.0.0",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=2.5) as resp:
+            data = json.loads(resp.read().decode())
+            for m in data.get("data", []):
+                mid = m.get("id")
+                if not mid or mid in seen_ids:
+                    continue
+                seen_ids.add(mid)
+                is_free = mid.endswith("-free")
+                cat = "Free (no key)" if is_free else "OpenCode Zen"
+                desc = "Free · OpenCode Zen" if is_free else "OpenCode Zen gateway"
+                options.append(SelectOption(mid, mid, desc, cat))
+    except Exception:
+        pass
+
+    # 2. Fetch KiloCode Gateway models
+    try:
+        req = urllib.request.Request(
+            "https://api.kilo.ai/api/gateway/models",
+            headers={
+                "Authorization": "Bearer public",
+                "User-Agent": "opencode/1.0.0",
+                "HTTP-Referer": "https://opencode.ai/",
+                "X-Title": "opencode",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=2.5) as resp:
+            data = json.loads(resp.read().decode())
+            for m in data.get("data", []):
+                mid = m.get("id")
+                if not mid or mid in seen_ids:
+                    continue
+                seen_ids.add(mid)
+                is_free = (
+                    ":free" in mid or "/free" in mid or mid.startswith("kilo-auto/free")
+                )
+                cat = "Free (no key)" if is_free else "KiloCode Gateway"
+                desc = "Free · KiloCode gateway" if is_free else "KiloCode gateway"
+                options.append(SelectOption(mid, mid, desc, cat))
+    except Exception:
+        pass
+
+    # 3. Standard external provider presets
+    standard_presets = [
         SelectOption(
             "openrouter/auto",
             "openrouter/auto",
@@ -572,7 +828,6 @@ def model_select_popup(
             "Free tier fallback — needs OPENROUTER_API_KEY",
             "OpenRouter",
         ),
-        # Gemini (needs GEMINI_API_KEY)
         SelectOption(
             "gemini-2.5-flash",
             "gemini-2.5-flash",
@@ -585,7 +840,6 @@ def model_select_popup(
             "Google Gemini 2.5 Pro — needs GEMINI_API_KEY",
             "Gemini",
         ),
-        # OpenAI (needs OPENAI_API_KEY)
         SelectOption(
             "gpt-4o", "gpt-4o", "OpenAI GPT-4o — needs OPENAI_API_KEY", "OpenAI"
         ),
@@ -595,26 +849,52 @@ def model_select_popup(
             "OpenAI GPT-4o mini — needs OPENAI_API_KEY",
             "OpenAI",
         ),
-        # Groq (needs GROQ_API_KEY)
         SelectOption(
             "llama-3.3-70b-versatile",
             "llama-3.3-70b-versatile",
             "Llama 3.3 70B via Groq — needs GROQ_API_KEY",
             "Groq",
         ),
-        SelectOption(
-            "llama-3.1-8b-instant",
-            "llama-3.1-8b-instant",
-            "Llama 3.1 8B Instant via Groq — needs GROQ_API_KEY",
-            "Groq",
-        ),
     ]
+    for opt in standard_presets:
+        if opt.value not in seen_ids:
+            options.append(opt)
+            seen_ids.add(opt.value)
+
+    # Cache results
+    try:
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        cache_data = [
+            {
+                "label": o.label,
+                "value": o.value,
+                "description": o.description,
+                "category": o.category,
+            }
+            for o in options
+        ]
+        cache_path.write_text(json.dumps(cache_data), encoding="utf-8")
+    except Exception:
+        pass
+
+    return options
+
+
+def model_select_popup(
+    current_model: str,
+    extra_options: Optional[Iterable[SelectOption[str]]] = None,
+) -> Optional[str]:
+    """Open the model-switcher popup populated with dynamic gateway models and presets.
+
+    Returns selected model string or None if cancelled.
+    """
+    options = fetch_gateway_models()
     if extra_options:
-        presets.extend(extra_options)
+        options.extend(extra_options)
 
     popup = SelectPopup(
         title="Switch Model",
-        options=presets,
+        options=options,
         current=current_model,
         placeholder="Search models…",
     )

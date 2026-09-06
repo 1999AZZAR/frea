@@ -105,6 +105,21 @@ class ToolRegistry:
             except Exception:
                 pass
 
+    def reload_mcp(self, clients: Dict[str, Any]) -> None:
+        """Stop current MCP clients and re-register newly loaded clients."""
+        self.stop_all_mcp()
+        # Remove tool definitions belonging to old MCP clients
+        old_prefixes = tuple(
+            f"{getattr(c.config, 'name', '')}_" for c in self._mcp_clients
+        )
+        if old_prefixes:
+            for name in list(self._tools.keys()):
+                if name.startswith(old_prefixes):
+                    self._tools.pop(name, None)
+        self._mcp_clients.clear()
+        for client in clients.values():
+            self.register_mcp_client(client)
+
     def to_openai_tools(self) -> List[Dict[str, Any]]:
         """Return list of OpenAI function definitions for primary tools, skills, and MCP."""
         primary_tool_names = [
@@ -591,3 +606,13 @@ class ToolExecutor:
                 success=False,
                 error=f"Tool error in {tool_name}: {exc}",
             )
+
+    def reload_mcp_servers(self) -> None:
+        """Reload user MCP servers according to ~/.config/frea/mcp.json."""
+        try:
+            from src.mcp import load_user_mcp_servers
+
+            new_clients = load_user_mcp_servers()
+            self.registry.reload_mcp(new_clients)
+        except Exception:
+            pass

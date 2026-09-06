@@ -23,19 +23,13 @@ from src.tui import InteractiveREPL
 
 def headless_run(config: CLIConfig) -> int:
     frea_cfg = load_frea_config(config.config_path)
-    model_name = config.model or frea_cfg.get("model") or "deepseek-v4-flash"
-    provider_name = frea_cfg.get("provider", "openrouter")
+    model_name = config.model or frea_cfg.get("model") or "kilo-auto/free"
     auto_approve = config.yes or frea_cfg.get("auto_approve", False)
 
-    provider_key = (
-        "openrouter"
-        if "openrouter" in model_name.lower()
-        else (model_name.split("/")[0] if "/" in model_name else provider_name)
-    )
     try:
-        provider = get_provider(provider_key, model=model_name)
+        provider = get_provider(model_name)
     except Exception:
-        provider = get_provider("openrouter", model=model_name)
+        provider = get_provider("kilo-auto/free")
 
     executor = ToolExecutor(auto_approve=auto_approve)
     agent = AgentLoop(provider=provider, executor=executor)
@@ -46,23 +40,17 @@ def headless_run(config: CLIConfig) -> int:
 
 def interactive_run(config: CLIConfig) -> int:
     frea_cfg = load_frea_config(config.config_path)
-    model_name = config.model or frea_cfg.get("model") or "deepseek-v4-flash"
-    provider_name = frea_cfg.get("provider", "openrouter")
+    model_name = config.model or frea_cfg.get("model") or "kilo-auto/free"
     auto_approve = config.yes or frea_cfg.get("auto_approve", False)
 
-    provider_key = (
-        "openrouter"
-        if "openrouter" in model_name.lower()
-        else (model_name.split("/")[0] if "/" in model_name else provider_name)
-    )
     try:
-        provider = get_provider(provider_key, model=model_name)
+        provider = get_provider(model_name)
     except Exception:
-        provider = get_provider("openrouter", model=model_name)
+        provider = get_provider("kilo-auto/free")
 
     executor = ToolExecutor(auto_approve=auto_approve)
     agent = AgentLoop(provider=provider, executor=executor)
-    session = SessionState(current_model=model_name, current_provider=provider_key)
+    session = SessionState(current_model=model_name)
     repl = InteractiveREPL(agent_loop=agent, session=session)
     return repl.run_repl()
 

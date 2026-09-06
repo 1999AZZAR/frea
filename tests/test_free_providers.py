@@ -33,8 +33,8 @@ def test_opencode_provider_defaults():
     # Confirmed base URL from models.dev: opencode.ai/zen/v1
     assert "opencode.ai/zen/v1" in str(provider.client.base_url)
     assert provider.client.api_key == "public"
-    # Default free model (cost.input=0 confirmed)
-    assert provider.model == "deepseek-v4-flash"
+    # Default free model (verified working on Zen)
+    assert provider.model == "nemotron-3.5-lightning-free"
 
 
 def test_kilocode_provider_defaults():
