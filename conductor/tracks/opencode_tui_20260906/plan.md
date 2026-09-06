@@ -24,4 +24,3 @@
 - [x] Task: Write full integration tests covering interactive REPL turns, batch mode (`-p`), and OpenCode permission alerts 8866c4d
 - [x] Task: Verify 100% test pass rate across system python and `.venv`, verify pre-commit hooks 8866c4d
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) 8866c4d
-
