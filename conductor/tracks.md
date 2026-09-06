@@ -4,5 +4,5 @@
 
 - [x] **Track: Modernize Frea into an OpenCode / Claude-Code style CLI Agent Harness**
   *Link: [./tracks/modernize_agent_harness_20260906/index.md](./tracks/modernize_agent_harness_20260906/index.md)*
-- [~] **Track: OpenCode TUI Overhaul, Dependency Cleanup & `.venv` Integration**
+- [x] **Track: OpenCode TUI Overhaul, Dependency Cleanup & `.venv` Integration**
   *Link: [./tracks/opencode_tui_20260906/index.md](./tracks/opencode_tui_20260906/index.md)*
