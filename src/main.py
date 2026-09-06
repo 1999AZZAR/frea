@@ -3,21 +3,16 @@ import threading
 import logging
 import time
 import re
-import readline  # Import the readline library
 from logging.handlers import RotatingFileHandler
 from color import Color
 from chat_initializer import ChatInitializer
 from chat_config import ChatConfig
 from utils import (
-    remove_emojis,
     run_subprocess,
     loading_animation,
     set_stop_loading,
-    cursor_hide,
-    cursor_show,
 )
 import openai
-import configparser
 from printer import save_log, print_log
 import atexit
 import os  # Added to handle file commands
@@ -104,7 +99,9 @@ class AIChat:
                     continue
 
                 # Handle send file commands (e.g., send <file> or /send <file>)
-                if user_input.strip().lower().startswith("send ") or user_input.strip().startswith("/send "):
+                if user_input.strip().lower().startswith(
+                    "send "
+                ) or user_input.strip().startswith("/send "):
                     parts = user_input.strip().split(maxsplit=1)
                     filename = parts[1] if len(parts) > 1 else None
                     if not filename:
@@ -114,7 +111,9 @@ class AIChat:
                         continue
                     filepath = os.path.expanduser(filename)
                     if not os.path.exists(filepath):
-                        print(f"{Color.BRIGHTRED}File not found: {filename}{Color.ENDC}")
+                        print(
+                            f"{Color.BRIGHTRED}File not found: {filename}{Color.ENDC}"
+                        )
                         user_input = ""
                         multiline_mode = False
                         continue
@@ -126,7 +125,9 @@ class AIChat:
                         user_input = ""
                         multiline_mode = False
                         continue
-                    prompt = f"Please review the following file: {filename}\n\n{content}"
+                    prompt = (
+                        f"Please review the following file: {filename}\n\n{content}"
+                    )
                     self.process_user_input(chat, prompt)
                     user_input = ""
                     multiline_mode = False
@@ -188,9 +189,10 @@ class AIChat:
             return True
         elif lower.startswith("ls"):
             parts = stripped.split(maxsplit=1)
-            path = parts[1] if len(parts) > 1 else '.'
+            path = parts[1] if len(parts) > 1 else "."
             res = tools.ls(path)
-            if res: print(res)
+            if res:
+                print(res)
             return True
         elif lower.startswith("cat "):
             res = tools.cat(stripped.split(maxsplit=1)[1])
@@ -198,36 +200,36 @@ class AIChat:
             return True
         elif lower.startswith("head "):
             parts = stripped.split()
-            path = parts[1] if len(parts) > 1 else ''
+            path = parts[1] if len(parts) > 1 else ""
             n = int(parts[2]) if len(parts) > 2 and parts[2].isdigit() else 10
             res = tools.head(path, n)
             print(res)
             return True
         elif lower.startswith("tail "):
             parts = stripped.split()
-            path = parts[1] if len(parts) > 1 else ''
+            path = parts[1] if len(parts) > 1 else ""
             n = int(parts[2]) if len(parts) > 2 and parts[2].isdigit() else 10
             res = tools.tail(path, n)
             print(res)
             return True
         elif lower.startswith("grep "):
             parts = stripped.split(maxsplit=2)
-            pattern = parts[1] if len(parts) > 1 else ''
-            path = parts[2] if len(parts) > 2 else '.'
+            pattern = parts[1] if len(parts) > 1 else ""
+            path = parts[2] if len(parts) > 2 else "."
             res = tools.grep(pattern, path)
             print(res)
             return True
         elif lower.startswith("write "):
             parts = stripped.split(maxsplit=2)
-            path = parts[1] if len(parts) > 1 else ''
-            content = parts[2] if len(parts) > 2 else ''
+            path = parts[1] if len(parts) > 1 else ""
+            content = parts[2] if len(parts) > 2 else ""
             res = tools.write_file(path, content)
             print(res)
             return True
         elif lower.startswith("append "):
             parts = stripped.split(maxsplit=2)
-            path = parts[1] if len(parts) > 1 else ''
-            content = parts[2] if len(parts) > 2 else ''
+            path = parts[1] if len(parts) > 1 else ""
+            content = parts[2] if len(parts) > 2 else ""
             res = tools.append_file(path, content)
             print(res)
             return True
@@ -237,15 +239,15 @@ class AIChat:
             return True
         elif lower.startswith("move "):
             parts = stripped.split(maxsplit=2)
-            src = parts[1] if len(parts) > 1 else ''
-            dst = parts[2] if len(parts) > 2 else ''
+            src = parts[1] if len(parts) > 1 else ""
+            dst = parts[2] if len(parts) > 2 else ""
             res = tools.move(src, dst)
             print(res)
             return True
         elif lower.startswith("copy "):
             parts = stripped.split(maxsplit=2)
-            src = parts[1] if len(parts) > 1 else ''
-            dst = parts[2] if len(parts) > 2 else ''
+            src = parts[1] if len(parts) > 1 else ""
+            dst = parts[2] if len(parts) > 2 else ""
             res = tools.copy(src, dst)
             print(res)
             return True
@@ -332,11 +334,17 @@ class AIChat:
             print(f"{Color.BRIGHTRED}No file name provided.{Color.ENDC}")
             return
         # Extract code blocks from assistant messages
-        combined = "".join(entry["content"] for entry in self.chat_history if entry.get("role") == "assistant")
+        combined = "".join(
+            entry["content"]
+            for entry in self.chat_history
+            if entry.get("role") == "assistant"
+        )
         pattern = r"```(?:[a-zA-Z0-9_#+-]*\n)?(.*?)```"
         blocks = re.findall(pattern, combined, flags=re.DOTALL)
         if not blocks:
-            print(f"{Color.BRIGHTYELLOW}No code blocks found in the conversation.{Color.ENDC}")
+            print(
+                f"{Color.BRIGHTYELLOW}No code blocks found in the conversation.{Color.ENDC}"
+            )
             return
         code_content = "\n\n".join(block.strip() for block in blocks)
         # Ensure export directory exists
@@ -375,10 +383,13 @@ class AIChat:
         choice = input(f"{Color.BRIGHTYELLOW}Enter provider number: {Color.ENDC}")
         try:
             idx = int(choice) - 1
-            if idx < 0 or idx >= len(providers): raise ValueError()
+            if idx < 0 or idx >= len(providers):
+                raise ValueError()
             new_service = providers[idx]
         except ValueError:
-            print(f"{Color.BRIGHTRED}Invalid choice. Aborting provider change.{Color.ENDC}")
+            print(
+                f"{Color.BRIGHTRED}Invalid choice. Aborting provider change.{Color.ENDC}"
+            )
             return False
 
         # Update config with new service
@@ -392,20 +403,35 @@ class AIChat:
         # Model selection for chosen provider
         models = self.initializer.get_models() or []
         if models:
-            print(f"\n{Color.BRIGHTGREEN}Available models for {new_service}:{Color.ENDC}")
+            print(
+                f"\n{Color.BRIGHTGREEN}Available models for {new_service}:{Color.ENDC}"
+            )
             for i, m in enumerate(models, 1):
                 print(f"  {i}. {m}")
             choice = input(f"{Color.BRIGHTYELLOW}Enter model number: {Color.ENDC}")
             try:
                 m_idx = int(choice) - 1
-                if m_idx < 0 or m_idx >= len(models): raise ValueError()
+                if m_idx < 0 or m_idx >= len(models):
+                    raise ValueError()
                 chosen_model = models[m_idx]
             except ValueError:
-                print(f"{Color.BRIGHTRED}Invalid choice. Using default model.{Color.ENDC}")
-                chosen_model = ChatConfig.DEFAULT_GEMINI_MODEL if new_service == "gemini" else ChatConfig.DEFAULT_GROQ_MODEL
+                print(
+                    f"{Color.BRIGHTRED}Invalid choice. Using default model.{Color.ENDC}"
+                )
+                chosen_model = (
+                    ChatConfig.DEFAULT_GEMINI_MODEL
+                    if new_service == "gemini"
+                    else ChatConfig.DEFAULT_GROQ_MODEL
+                )
         else:
-            print(f"{Color.BRIGHTYELLOW}No models retrieved. Using default model.{Color.ENDC}")
-            chosen_model = ChatConfig.DEFAULT_GEMINI_MODEL if new_service == "gemini" else ChatConfig.DEFAULT_GROQ_MODEL
+            print(
+                f"{Color.BRIGHTYELLOW}No models retrieved. Using default model.{Color.ENDC}"
+            )
+            chosen_model = (
+                ChatConfig.DEFAULT_GEMINI_MODEL
+                if new_service == "gemini"
+                else ChatConfig.DEFAULT_GROQ_MODEL
+            )
 
         # Save chosen model
         config["DEFAULT"]["AIModel"] = chosen_model
@@ -414,7 +440,9 @@ class AIChat:
         # Update instance settings
         self.ai_service = new_service
         self.model = chosen_model
-        print(f"{Color.PASTELPINK}Switched to provider '{new_service}' and model '{chosen_model}'. Reinitializing chat...{Color.ENDC}")
+        print(
+            f"{Color.PASTELPINK}Switched to provider '{new_service}' and model '{chosen_model}'. Reinitializing chat...{Color.ENDC}"
+        )
         time.sleep(1)
         ChatConfig.clear_screen()
         return True
@@ -632,7 +660,9 @@ and nothing else.
 
         # Call model and spinner
         set_stop_loading(False)
-        spinner = threading.Thread(target=loading_animation, args=(self.loading_style,), daemon=True)
+        spinner = threading.Thread(
+            target=loading_animation, args=(self.loading_style,), daemon=True
+        )
         spinner.start()
         # Retry mechanism for API call
         max_retries = 3
@@ -649,7 +679,7 @@ and nothing else.
             except openai.error.OpenAIError as e:
                 logging.warning(f"API request failed ({attempt+1}/{max_retries}): {e}")
                 if attempt < max_retries - 1:
-                    time.sleep(2 ** attempt)
+                    time.sleep(2**attempt)
                     continue
                 else:
                     set_stop_loading(True)
@@ -685,9 +715,11 @@ and nothing else.
                         )
                         break
                     except openai.error.OpenAIError as e:
-                        logging.warning(f"Follow-up API request failed ({attempt+1}/{max_retries}): {e}")
+                        logging.warning(
+                            f"Follow-up API request failed ({attempt+1}/{max_retries}): {e}"
+                        )
                         if attempt < max_retries - 1:
-                            time.sleep(2 ** attempt)
+                            time.sleep(2**attempt)
                             continue
                         else:
                             return f"Error calling AI API after tool result: {e}"
@@ -710,8 +742,7 @@ and nothing else.
         Returns:
             str: The formatted response text.
         """
-        response_text = re.sub(r"(?i)\b(frea)\b", r"**\1**", response_text)
-        return response_text
+        return re.sub(r"(?i)\b(frea)\b", r"**\1**", response_text)
 
     def initialize_chat(self):
         """
@@ -754,6 +785,52 @@ and nothing else.
             print(f"{Color.BRIGHTRED}Error saving chat history: {e}{Color.ENDC}")
 
 
+def main() -> int:
+    """Modernized entrypoint for Frea CLI and interactive TUI harness."""
+    try:
+        from src.runner import run_cli
+        from src.cli import CLIConfig
+        from src.agent import AgentLoop
+        from src.executor import ToolExecutor
+        from src.providers import get_provider
+        from src.tui import InteractiveREPL
+    except ImportError:
+        chat_app = AIChat()
+        chat_app.generate_chat()
+        return 0
+
+    def headless_run(config: CLIConfig) -> int:
+        model_name = config.model or "gemini-2.5-flash"
+        provider_key = model_name.split("/")[0] if "/" in model_name else "gemini"
+        try:
+            provider = get_provider(provider_key, model=model_name)
+        except Exception:
+            provider = get_provider("gemini", model=model_name)
+        executor = ToolExecutor(auto_approve=config.yes)
+        agent = AgentLoop(provider=provider, executor=executor)
+        result = agent.run(config.prompt)
+        print(result.final_answer)
+        return 0 if result.success else 1
+
+    def interactive_run(config: CLIConfig) -> int:
+        model_name = config.model or "gemini-2.5-flash"
+        provider_key = model_name.split("/")[0] if "/" in model_name else "gemini"
+        try:
+            provider = get_provider(provider_key, model=model_name)
+        except Exception:
+            chat_app = AIChat()
+            chat_app.generate_chat()
+            return 0
+        executor = ToolExecutor(auto_approve=config.yes)
+        agent = AgentLoop(provider=provider, executor=executor)
+        repl = InteractiveREPL(agent_loop=agent)
+        return repl.run_repl()
+
+    return run_cli(
+        interactive_handler=interactive_run,
+        headless_handler=headless_run,
+    )
+
+
 if __name__ == "__main__":
-    chat_app = AIChat()
-    chat_app.generate_chat()
+    sys.exit(main())

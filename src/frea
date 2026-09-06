@@ -3,14 +3,15 @@
 # Clear the screen
 clear
 
-# Change to root directory
-cd || exit
+# Change to the directory where the script is located
+SCRIPT_DIR=$(dirname "$0")
+cd "$SCRIPT_DIR" || exit
 
-# Change directory to the code path
-cd ./Downloads/project/frea/src || exit
+# Change to the project root directory
+cd .. || exit
 
 # Activate the virtual environment (if exist)
-source ../.venv/bin/activate || exit
+source .venv/bin/activate || exit
 
 # Function to deactivate virtual environment and return to main directory
 cleanup() {
@@ -22,7 +23,7 @@ cleanup() {
 trap cleanup INT
 
 # Execute the Python script
-python main.py
+python src/main.py
 
 # Call cleanup function after Python script exits
 cleanup

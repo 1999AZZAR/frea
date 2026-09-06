@@ -257,4 +257,3 @@ stateDiagram
 
 > note:
 > You can incorporate Frea into your bash terminal by following [this step](docs/alias.md).
-

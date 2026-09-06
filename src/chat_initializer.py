@@ -7,7 +7,6 @@ import re
 
 # Import potential exceptions from openai library for more specific handling
 from openai import APIConnectionError, AuthenticationError, RateLimitError
-import warnings  # To warn if the configured model isn't available
 
 
 class ChatInitializer:
@@ -166,7 +165,7 @@ class ChatInitializer:
             return None
         summary = page.summary or ""
         # Split into sentences and limit
-        sentences_list = re.split(r'(?<=[\.!?]) +', summary)
+        sentences_list = re.split(r"(?<=[\.!?]) +", summary)
         selected = sentences_list[:sentences]
         result = " ".join(selected).strip()
         return f"{result}\n\nRead more: {page.fullurl}"
