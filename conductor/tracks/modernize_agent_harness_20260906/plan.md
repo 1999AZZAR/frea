@@ -31,9 +31,9 @@
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [53c459c]
 
 ## Phase 4: Interactive TUI & Slash Commands
-- [ ] Task: Write tests for interactive command parser and session manager
-    - [ ] Create unit tests for slash commands (`/help`, `/model`, `/clear`, `/exit`)
-    - [ ] Create unit tests for rotating log management and session history
+- [x] Task: Write tests for interactive command parser and session manager [0fa3ba8]
+    - [x] Create unit tests for slash commands (`/help`, `/model`, `/clear`, `/exit`)
+    - [x] Create unit tests for rotating log management and session history
 - [ ] Task: Implement interactive TUI and command palette
     - [ ] Implement readline-powered REPL with multi-line input support
     - [ ] Implement slash command handlers and model switcher
