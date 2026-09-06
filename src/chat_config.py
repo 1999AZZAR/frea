@@ -1,7 +1,6 @@
 import os
 import sys
 import configparser
-import google.generativeai as genai
 import subprocess
 
 try:
@@ -179,7 +178,7 @@ class ChatConfig:
             gemini_api_key (str): The Gemini API key.
         """
         if gemini_api_key:
-            genai.configure(api_key=gemini_api_key)
+            os.environ["GEMINI_API_KEY"] = gemini_api_key
         else:
             ChatConfig._exit_with_error("Gemini API key is required.")
 
