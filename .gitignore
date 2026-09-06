@@ -1,15 +1,109 @@
-.venv/
-models/
-data/
-.vscode/
-src/*.wav
-src/.env
-src/logs/*.*
-src/config/*.ini
-.aider*
+# ==============================================================================
+# FREA (.gitignore) - Production-Grade Configuration
+# ==============================================================================
+
+# --- Python Bytecode & Distribution ---
 __pycache__/
-src/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# --- Virtual Environments ---
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+.conda/
+
+# --- Testing, Coverage & Linters ---
+.pytest_cache/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+.ruff_cache/
+.mypy_cache/
+.pyre/
+.pytype/
+
+# --- Environment Variables, Secrets & API Keys ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+*.crt
+credentials.json
+client_secrets.json
+
+# --- Frea Application Runtime, Logs & Audio ---
+logs/
+*.log
+src/logs/*
+!src/logs/null
+src/config/*.ini
+config.ini
+src/*.wav
+*.wav
+*.mp3
+*.ogg
+data/
+models/
 src/remnant/
 src/exports/
-src/logs/
 exports/
+*.sqlite
+*.sqlite3
+*.db
+
+# --- IDEs & Developer Tooling ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+.directory
+
+# --- AI Assistants & Agent Scaffolding ---
+.aider*
+.claude/
+.continue/
+
+# --- OS Artifacts ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
