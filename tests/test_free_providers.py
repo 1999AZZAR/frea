@@ -1,4 +1,21 @@
-from unittest.mock import patch
+import sys
+from unittest.mock import MagicMock, patch
+
+try:
+    import openai  # noqa: F401
+except ImportError:
+    mock_openai = MagicMock()
+
+    class MockOpenAIClient:
+        def __init__(self, api_key=None, base_url=None, default_headers=None, **kwargs):
+            self.api_key = api_key
+            self.base_url = base_url
+            self.default_headers = default_headers or {}
+            self.chat = MagicMock()
+
+    mock_openai.OpenAI = MockOpenAIClient
+    sys.modules["openai"] = mock_openai
+
 from src.providers import (
     GeminiProvider,
     KiloCodeProvider,
