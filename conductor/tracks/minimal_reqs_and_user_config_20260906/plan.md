@@ -6,8 +6,8 @@
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) d1a18e2
 
 ### Phase 2: User Configuration Engine (`~/.config/frea/`)
-- [~] Task: Write unit tests for XDG config resolution, scaffolding, and validation in `tests/test_user_config.py`
-- [ ] Task: Implement `src/config.py` managing `~/.config/frea/config.json` and `~/.config/frea/tui.json`
+- [x] Task: Write unit tests for XDG config resolution, scaffolding, and validation in `tests/test_user_config.py` 0f834d1
+- [~] Task: Implement `src/config.py` managing `~/.config/frea/config.json` and `~/.config/frea/tui.json`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ### Phase 3: CLI Integration & End-to-End Verification
