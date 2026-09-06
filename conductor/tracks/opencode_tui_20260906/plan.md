@@ -12,7 +12,7 @@
 
 ### Phase 3: OpenCode Tool Cards & Syntax Diffs
 - [x] Task: Write tests for OpenCode tool card formatting (`$`, `→`, `←`, `✱`) and unified diff renderer in `tests/test_tool_cards.py` 8e298b8
-- [~] Task: Implement tool card renderers with inline/block states, output collapse, and colored diff badges
+- [x] Task: Implement tool card renderers with inline/block states, output collapse, and colored diff badges 7e27ee9
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ### Phase 4: OpenCode Statusline, Prompt & Slash Palette
