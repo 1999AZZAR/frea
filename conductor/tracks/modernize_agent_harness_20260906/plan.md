@@ -34,10 +34,10 @@
 - [x] Task: Write tests for interactive command parser and session manager [0fa3ba8]
     - [x] Create unit tests for slash commands (`/help`, `/model`, `/clear`, `/exit`)
     - [x] Create unit tests for rotating log management and session history
-- [ ] Task: Implement interactive TUI and command palette
-    - [ ] Implement readline-powered REPL with multi-line input support
-    - [ ] Implement slash command handlers and model switcher
-    - [ ] Integrate ANSI progress spinners and formatted output
+- [x] Task: Implement interactive TUI and command palette [dfcf48f]
+    - [x] Implement readline-powered REPL with multi-line input support
+    - [x] Implement slash command handlers and model switcher
+    - [x] Integrate ANSI progress spinners and formatted output
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 5: End-to-End Integration & Regression Testing
