@@ -16,10 +16,12 @@ except ImportError:
     mock_openai.OpenAI = MockOpenAIClient
     sys.modules["openai"] = mock_openai
 
+from src.agent import ModelResponse
 from src.providers import (
     GeminiProvider,
     KiloCodeProvider,
     OpenAIProvider,
+    OpenRouterProvider,
     OpencodeProvider,
     get_provider,
 )
@@ -74,3 +76,50 @@ def test_get_provider_keyless_fallback(monkeypatch):
         # Even with zero keys, default provider resolves cleanly and can instantiate
         provider = get_provider("opencode")
         assert provider.client.api_key == "public"
+
+
+def test_openrouter_falls_back_to_opencode():
+    provider = OpenRouterProvider(
+        api_key="test-key",
+        model="openrouter/auto",
+        fallback_model="openrouter/free",
+    )
+
+    with patch.object(
+        OpenAIProvider, "generate", side_effect=RuntimeError("OpenRouter failed")
+    ):
+        with patch.object(
+            OpencodeProvider,
+            "generate",
+            return_value=ModelResponse(content="opencode success", tool_calls=[]),
+        ) as mock_opencode_gen:
+            resp = provider.generate([{"role": "user", "content": "hi"}])
+            assert resp.content == "opencode success"
+            mock_opencode_gen.assert_called_once()
+
+
+def test_keyless_agent_loop_execution(monkeypatch):
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+    monkeypatch.delenv("KILOCODE_API_KEY", raising=False)
+
+    from src.agent import AgentLoop
+    from src.executor import ToolExecutor
+
+    with patch("src.providers.get_vault_secret", return_value=None):
+        provider = get_provider("opencode")
+        executor = ToolExecutor(auto_approve=True)
+        agent = AgentLoop(provider=provider, executor=executor)
+
+        with patch.object(
+            OpencodeProvider,
+            "generate",
+            return_value=ModelResponse(
+                content="I am Frea, ready to assist.", tool_calls=[]
+            ),
+        ):
+            result = agent.run("hello")
+            assert result.success is True
+            assert "ready to assist" in result.final_answer

@@ -139,7 +139,11 @@ class OpenRouterProvider(OpenAIProvider):
                     return super().generate(messages, tools=tools)
                 except Exception:
                     self.model = original_model
-                    raise exc
+            try:
+                free_provider = OpencodeProvider()
+                return free_provider.generate(messages, tools=tools)
+            except Exception:
+                pass
             raise exc
 
 
