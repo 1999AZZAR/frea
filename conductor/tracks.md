@@ -10,5 +10,5 @@
   *Link: [./tracks/minimal_reqs_and_user_config_20260906/index.md](./tracks/minimal_reqs_and_user_config_20260906/index.md)*
 - [x] **Track: Bake Persona from `/home/azzar/agent_persona` & Migrate `src/config` to `~/.config/frea`**
   *Link: [./tracks/bake_persona_and_user_config_20260906/index.md](./tracks/bake_persona_and_user_config_20260906/index.md)*
-- [~] **Track: Add OpenCode & KiloCode Free Models & Purge Gemini/GenAI Dependency**
+- [x] **Track: Add OpenCode & KiloCode Free Models & Purge Gemini/GenAI Dependency**
   *Link: [./tracks/free_models_and_purge_genai_20260906/index.md](./tracks/free_models_and_purge_genai_20260906/index.md)*

@@ -3,7 +3,7 @@
 ## Core Platform
 - **Language**: Python >= 3.10
 - **Virtual Environment**: `.venv`
-- **Dependencies**: Native standard library + `rich`, `prompt_toolkit`, `openai`, `google.generativeai` (Zero LangChain dependencies)
+- **Dependencies**: Exactly 3 production dependencies: `openai`, `rich`, `prompt_toolkit` (Zero LangChain, Zero Google GenAI SDK)
 - **Operating System**: Linux (POSIX terminal environments)
 
 ## CLI & Terminal User Interface
@@ -12,10 +12,12 @@
 - **Terminal Control**: POSIX terminal cursor manipulation, signal handlers (`SIGINT`, `SIGTERM`) for safe interruption
 
 ## AI Providers & Model Integration
-- **OpenRouter (Default)**: `openrouter/auto` with automatic fallback to `openrouter/free`
-- **Google GenAI**: `google-genai` / `google-generativeai`
-- **OpenAI**: `openai` (GPT-4o, o3-mini)
-- **Groq**: `groq` / OpenAI-compatible endpoint for ultra-low latency inference
+- **OpenRouter (Default)**: `openrouter/auto` with fallback to `openrouter/free` and free `opencode` gateway
+- **OpenCode Free Gateway**: Keyless out-of-the-box provider (`https://api.opencode.ai/v1`, models `kimi-k2.5-free`, `deepseek-v4-flash:free`, `glm-4.7-flash-free`)
+- **KiloCode Gateway**: Keyless out-of-the-box provider (`https://api.kilo.ai/api/gateway`, models `kilocode/kilo-auto/balanced`, `kilo/free`)
+- **Google Gemini**: Direct OpenAI-compatible endpoint (`https://generativelanguage.googleapis.com/v1beta/openai/`) without `google-generativeai` SDK
+- **OpenAI**: Standard `openai` endpoints (GPT-4o, o3-mini)
+- **Groq**: Ultra-low latency inference via OpenAI-compatible endpoint
 - **Model Switching**: Dynamic provider switching via config or runtime slash command (`/model`)
 
 ## Agent Harness Architecture
