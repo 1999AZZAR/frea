@@ -66,8 +66,8 @@ def test_frea_ascii_logo_spelling():
 
     # Line 1: F R E A tops
     assert l1 == "█▀▀▀ █▀▀█ █▀▀▀ █▀▀█"
-    # Line 2: F R E A middles (R has diagonal leg █▄▄▀, E has middle bar █▀▀)
-    assert l2 == "█▀▀  █▄▄▀ █▀▀  █▀▀█"
+    # Line 2: F R E A middles (R has diagonal leg █▄▄▀, E has middle bar █▀▀, A has crossbar █▄▄█)
+    assert l2 == "█▀▀  █▄▄▀ █▀▀  █▄▄█"
     # Line 3: F R E A bottoms (E has bottom bar ▀▀▀▀, R and A have split legs ▀  ▀)
     assert l3 == "▀    ▀  ▀ ▀▀▀▀ ▀  ▀"
 
@@ -203,10 +203,12 @@ def test_opencode_tui_mouse_and_hover():
     # Check that bg color is applied when hovered
     assert any(f"bg:{repl.theme.background_panel}" in tok[0] for tok in tokens)
 
-    # Find token with mouse handler
-    tokens_with_handler = [tok for tok in tokens if callable(tok[2])]
-    assert len(tokens_with_handler) > 0
-    handler = tokens_with_handler[0][2]
+    # Find token with mouse handler on the card
+    card_tokens_with_handler = [
+        tok for tok in tokens if callable(tok[2]) and "Assistant" in tok[1]
+    ]
+    assert len(card_tokens_with_handler) > 0
+    handler = card_tokens_with_handler[0][2]
 
     # Click toggles card collapsed state in-place
     click_event = MouseEvent(

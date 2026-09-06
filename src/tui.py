@@ -9,7 +9,14 @@ from prompt_toolkit.document import Document
 from prompt_toolkit.styles import Style
 from src.agent import AgentLoop
 from src.commands import SessionState, handle_slash_command
-from src.ui import THEME, Theme, console, render_header, render_statusline
+from src.ui import (
+    THEME,
+    Theme,
+    console,
+    get_header_tokens,
+    get_statusline_tokens,
+    render_header,
+)
 
 
 class SlashCommandCompleter(Completer):
@@ -71,7 +78,9 @@ class OpenCodeTUI:
         self.cards: List[TranscriptCard] = []
         self._next_id: int = 1
         self.hovered_card_id: Optional[int] = None
-        self.vertical_scroll: int = 0
+        self.is_running: bool = False
+        self._user_scrolled_line: Optional[int] = None
+        self._total_lines: int = 0
         self.app: Optional[Any] = None
 
         from prompt_toolkit.buffer import Buffer
@@ -150,6 +159,35 @@ class OpenCodeTUI:
             if self.app:
                 self.app.invalidate()
 
+    def scroll_up(self, amount: int = 3) -> None:
+        total = max(1, self._total_lines)
+        curr = (
+            self._user_scrolled_line
+            if self._user_scrolled_line is not None
+            else (total - 1)
+        )
+        self._user_scrolled_line = max(0, curr - amount)
+        if self.app:
+            self.app.invalidate()
+
+    def scroll_down(self, amount: int = 3) -> None:
+        if self._user_scrolled_line is not None:
+            self._user_scrolled_line += amount
+            if self._user_scrolled_line >= self._total_lines - 1:
+                self._user_scrolled_line = None
+        if self.app:
+            self.app.invalidate()
+
+    def _get_cursor_position(self) -> Any:
+        from prompt_toolkit.data_structures import Point
+
+        total = max(1, self._total_lines)
+        if self._user_scrolled_line is None:
+            target = total - 1
+        else:
+            target = max(0, min(self._user_scrolled_line, total - 1))
+        return Point(0, target)
+
     def _get_transcript_tokens(self) -> List[Tuple[str, str, Any]]:
         from prompt_toolkit.mouse_events import MouseEvent, MouseEventType
 
@@ -157,28 +195,26 @@ class OpenCodeTUI:
 
         def _bg_mouse(e: MouseEvent) -> None:
             if e.event_type == MouseEventType.SCROLL_UP:
-                self.vertical_scroll = max(0, self.vertical_scroll - 3)
-                if self.app:
-                    self.app.invalidate()
+                self.scroll_up(3)
             elif e.event_type == MouseEventType.SCROLL_DOWN:
-                self.vertical_scroll += 3
-                if self.app:
-                    self.app.invalidate()
+                self.scroll_down(3)
             elif e.event_type == MouseEventType.MOUSE_MOVE:
                 if self.hovered_card_id is not None:
                     self.hovered_card_id = None
                     if self.app:
                         self.app.invalidate()
 
-        if not self.cards:
-            tokens.append(
-                (
-                    f"fg:{self.theme.text_muted}",
-                    "\n  Type a question or slash command (/help, /model, /status, /exit) to begin.\n\n",
-                    _bg_mouse,
-                )
-            )
-            return tokens
+        # Render greeting header at top of transcript
+        tools_cnt, mcp_cnt = self.repl.get_stats()
+        header_tokens = get_header_tokens(
+            self.session.current_model,
+            os.getcwd(),
+            tools_count=tools_cnt,
+            mcp_count=mcp_cnt,
+            theme=self.theme,
+        )
+        for style, text in header_tokens:
+            tokens.append((style, text, _bg_mouse))
 
         for card in self.cards:
             is_hovered = self.hovered_card_id == card.id
@@ -194,13 +230,9 @@ class OpenCodeTUI:
                             if self.app:
                                 self.app.invalidate()
                     elif e.event_type == MouseEventType.SCROLL_UP:
-                        self.vertical_scroll = max(0, self.vertical_scroll - 3)
-                        if self.app:
-                            self.app.invalidate()
+                        self.scroll_up(3)
                     elif e.event_type == MouseEventType.SCROLL_DOWN:
-                        self.vertical_scroll += 3
-                        if self.app:
-                            self.app.invalidate()
+                        self.scroll_down(3)
 
                 return _card_mouse
 
@@ -214,20 +246,34 @@ class OpenCodeTUI:
                 total_lines = len(card.body.splitlines()) if card.body else 0
                 model_tag = f" ({card.model})" if card.model else ""
 
-                if card.status:
-                    pill = f" [{card.status}]"
-                elif card.collapsed and total_lines > 2:
-                    hidden = total_lines - 2
-                    pill = f"   [▶ Expand (+{hidden} lines) · Ctrl+O / click]"
-                else:
-                    pill = "   [▼ Collapse · Ctrl+O / click]"
-
                 tokens.append(
                     (bg + f"fg:{self.theme.primary} bold", "\n▌ Assistant", cm)
                 )
-                tokens.append(
-                    (bg + f"fg:{self.theme.text_muted}", f"{model_tag}{pill}\n", cm)
-                )
+
+                if card.status:
+                    tokens.append((bg + f"fg:{self.theme.info}", f"{model_tag} ", cm))
+                    tokens.append(
+                        (bg + f"fg:{self.theme.warning}", f"[{card.status}]\n", cm)
+                    )
+                elif card.collapsed and total_lines > 2:
+                    hidden = total_lines - 2
+                    pill = f"   [▶ Expand (+{hidden} lines) · Ctrl+O / click]"
+                    tokens.append(
+                        (
+                            bg + f"fg:{self.theme.text_muted}",
+                            f"{model_tag}{pill}\n",
+                            cm,
+                        )
+                    )
+                else:
+                    pill = "   [▼ Collapse · Ctrl+O / click]" if total_lines > 2 else ""
+                    tokens.append(
+                        (
+                            bg + f"fg:{self.theme.text_muted}",
+                            f"{model_tag}{pill}\n",
+                            cm,
+                        )
+                    )
 
                 if card.collapsed and total_lines > 2:
                     lines = card.body.splitlines()
@@ -255,9 +301,12 @@ class OpenCodeTUI:
                 tokens.append(
                     (bg + f"fg:{self.theme.secondary} bold", f"\n▌ {card.title} ", cm)
                 )
-                tokens.append(
-                    (bg + f"fg:{self.theme.text_muted}", f"{card.status or ''}\n", cm)
+                status_style = (
+                    f"fg:{self.theme.success}"
+                    if "completed" in (card.status or "")
+                    else f"fg:{self.theme.warning}"
                 )
+                tokens.append((bg + status_style, f"[{card.status or ''}]\n", cm))
                 if not card.collapsed and lines:
                     for line in lines:
                         tokens.append((bg + f"fg:{self.theme.secondary}", "▌ ", cm))
@@ -278,14 +327,26 @@ class OpenCodeTUI:
                 color = (
                     self.theme.error if card.kind == "error" else self.theme.text_muted
                 )
-                tokens.append((bg + f"fg:{color}", f"\n▌ {card.body}\n", cm))
+                tokens.append((bg + f"fg:{color} bold", f"\n▌ {card.title} ", cm))
+                tokens.append((bg + f"fg:{color}", f"{card.body}\n", cm))
 
+        self._total_lines = sum(text.count("\n") for _, text, *_ in tokens)
         return tokens
 
     def _on_input_accept(self, buffer: Any) -> bool:
         text = buffer.text.strip()
         if not text:
             return False
+
+        if self.is_running:
+            self.add_card(
+                "note",
+                "Busy",
+                "Agent is currently processing a task. Please wait.",
+            )
+            if self.app:
+                self.app.invalidate()
+            return True
 
         buffer.reset()
 
@@ -406,32 +467,55 @@ class OpenCodeTUI:
     async def _run_agent_task(self, text: str) -> None:
         import asyncio
 
+        self.is_running = True
+        self._user_scrolled_line = None
+
         self.add_card("user", "You", text)
         asst_card = self.add_card(
             "assistant",
             "Assistant",
             "",
-            status=f"Thinking… ({self.session.current_model})",
+            status=f"⠋ Thinking… ({self.session.current_model})",
             model=self.session.current_model,
         )
         if self.app:
             self.app.invalidate()
 
+        spinner_frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+
+        async def _spinner_ticker() -> None:
+            idx = 0
+            while self.is_running:
+                frame = spinner_frames[idx % len(spinner_frames)]
+                idx += 1
+                if asst_card.status and "…" in asst_card.status:
+                    pure = asst_card.status.lstrip("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏ ")
+                    asst_card.status = f"{frame} {pure}"
+                if self.app:
+                    self.app.invalidate()
+                await asyncio.sleep(0.08)
+
+        ticker_task = asyncio.create_task(_spinner_ticker())
+
         def on_call(name: str, args: Dict[str, Any]) -> None:
-            asst_card.status = f"Running {name}…"
+            asst_card.status = f"⠋ Running {name}…"
             args_str = " ".join(f"{k}={v}" for k, v in args.items())
-            self.add_card("tool", f"$ {name} {args_str}".strip(), "", status="running…")
+            self.add_card(
+                "tool", f"$ {name} {args_str}".strip(), "", status="⠋ running…"
+            )
+            self._user_scrolled_line = None
             if self.app:
                 self.app.invalidate()
 
         def on_result(name: str, args: Dict[str, Any], result: str) -> None:
-            asst_card.status = f"Processing… ({self.session.current_model})"
+            asst_card.status = f"⠋ Processing… ({self.session.current_model})"
             for c in reversed(self.cards):
-                if c.kind == "tool" and c.status == "running…":
+                if c.kind == "tool" and c.status and "running" in c.status:
                     c.status = "✓ completed"
                     c.body = result
                     c.collapsed = True
                     break
+            self._user_scrolled_line = None
             if self.app:
                 self.app.invalidate()
 
@@ -450,8 +534,11 @@ class OpenCodeTUI:
             asst_card.status = None
             self.add_card("error", "Error", str(exc))
         finally:
+            self.is_running = False
+            ticker_task.cancel()
             self.agent_loop.on_tool_call = old_on_call
             self.agent_loop.on_tool_result = old_on_res
+            self._user_scrolled_line = None
             if self.app:
                 self.app.invalidate()
 
@@ -459,6 +546,7 @@ class OpenCodeTUI:
         from prompt_toolkit.application import Application
         from prompt_toolkit.key_binding import KeyBindings
         from prompt_toolkit.layout import HSplit, Layout, VSplit, Window
+        from prompt_toolkit.layout.containers import WindowAlign
         from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
 
         kb = KeyBindings()
@@ -481,41 +569,27 @@ class OpenCodeTUI:
 
         @kb.add("pageup")
         def _pageup(event: Any) -> None:
-            self.vertical_scroll = max(0, self.vertical_scroll - 10)
-            event.app.invalidate()
+            self.scroll_up(10)
 
         @kb.add("pagedown")
         def _pagedown(event: Any) -> None:
-            self.vertical_scroll += 10
-            event.app.invalidate()
+            self.scroll_down(10)
 
         tools_cnt, mcp_cnt = self.repl.get_stats()
 
-        header_window = Window(
-            content=FormattedTextControl(
-                lambda: [
-                    (
-                        "",
-                        render_header(
-                            self.session.current_model,
-                            os.getcwd(),
-                            tools_count=tools_cnt,
-                            mcp_count=mcp_cnt,
-                            theme=self.theme,
-                        )
-                        + "\n",
-                    )
-                ]
-            ),
-            height=5,
-            dont_extend_height=True,
+        transcript_control = FormattedTextControl(
+            self._get_transcript_tokens,
+            focusable=False,
+            get_cursor_position=self._get_cursor_position,
         )
 
         transcript_window = Window(
-            content=FormattedTextControl(self._get_transcript_tokens, focusable=False),
+            content=transcript_control,
             wrap_lines=True,
             always_hide_cursor=True,
         )
+
+        input_window = Window(BufferControl(buffer=self.input_buffer), height=1)
 
         prompt_window = VSplit(
             [
@@ -524,48 +598,61 @@ class OpenCodeTUI:
                     width=2,
                     dont_extend_width=True,
                 ),
-                Window(BufferControl(buffer=self.input_buffer), height=1),
+                input_window,
             ]
         )
 
-        status_window = Window(
-            content=FormattedTextControl(
-                lambda: [
-                    (
-                        "class:bottom-toolbar",
-                        render_statusline(
-                            os.getcwd(),
-                            model=self.session.current_model,
-                            tools_count=tools_cnt,
-                            mcp_count=mcp_cnt,
-                            theme=self.theme,
-                        ),
-                    )
-                ]
-            ),
+        def get_left_status() -> List[Tuple[str, str]]:
+            l_toks, _ = get_statusline_tokens(
+                os.getcwd(),
+                model=self.session.current_model,
+                tools_count=tools_cnt,
+                mcp_count=mcp_cnt,
+                theme=self.theme,
+            )
+            return l_toks
+
+        def get_right_status() -> List[Tuple[str, str]]:
+            _, r_toks = get_statusline_tokens(
+                os.getcwd(),
+                model=self.session.current_model,
+                tools_count=tools_cnt,
+                mcp_count=mcp_cnt,
+                theme=self.theme,
+            )
+            return r_toks
+
+        status_left = Window(
+            content=FormattedTextControl(get_left_status),
+            align=WindowAlign.LEFT,
             height=1,
-            style=f"bg:{self.theme.background_panel} {self.theme.text_muted}",
+            style=f"bg:{self.theme.background_panel}",
         )
+        status_right = Window(
+            content=FormattedTextControl(get_right_status),
+            align=WindowAlign.RIGHT,
+            height=1,
+            style=f"bg:{self.theme.background_panel}",
+        )
+        status_bar = VSplit([status_left, status_right], height=1)
 
         root = HSplit(
             [
-                header_window,
                 transcript_window,
-                Window(height=1, char="─", style=f"fg:{self.theme.text_muted}"),
+                Window(height=1, char="─", style=f"fg:{self.theme.border_subtle}"),
                 prompt_window,
-                status_window,
+                status_bar,
             ]
         )
 
         pt_style = Style.from_dict(
             {
                 "prompt": f"{self.theme.primary} bold",
-                "bottom-toolbar": f"bg:{self.theme.background_panel} {self.theme.text_muted}",
             }
         )
 
         self.app = Application(
-            layout=Layout(root, focused_element=prompt_window),
+            layout=Layout(root, focused_element=input_window),
             key_bindings=kb,
             style=pt_style,
             mouse_support=True,

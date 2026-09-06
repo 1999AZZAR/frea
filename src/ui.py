@@ -78,7 +78,7 @@ LOGO_LEFT = [
 LOGO_RIGHT = [
     "          ",
     " █▀▀▀ █▀▀█",
-    " █^^  █^^█",
+    " █^^  █,,█",
     " ▀▀▀▀ ▀  ▀",
 ]
 
@@ -220,3 +220,84 @@ def render_statusline(
 
     spacing = max(2, width - len(left) - len(right))
     return f"{left}{' ' * spacing}{right}"
+
+
+def get_header_tokens(
+    model: str,
+    directory: str,
+    tools_count: int = 6,
+    mcp_count: int = 0,
+    version: str = "0.2.0",
+    theme: Theme = THEME,
+) -> List[Tuple[str, str]]:
+    """Return prompt_toolkit formatted text tokens for the greeting header."""
+    cwd_disp = format_path(directory)
+    l1_left = clean_glyph_line(LOGO_LEFT[1])
+    l1_right = clean_glyph_line(LOGO_RIGHT[1])
+    l2_left = clean_glyph_line(LOGO_LEFT[2])
+    l2_right = clean_glyph_line(LOGO_RIGHT[2])
+    l3_left = clean_glyph_line(LOGO_LEFT[3])
+    l3_right = clean_glyph_line(LOGO_RIGHT[3])
+
+    tokens: List[Tuple[str, str]] = [
+        (f"fg:{theme.text_muted}", f"\n{l1_left}"),
+        (f"fg:{theme.primary} bold", l1_right),
+        ("", "   "),
+        (f"fg:{theme.accent} bold", f"frea v{version}\n"),
+        (f"fg:{theme.text_muted}", l2_left),
+        (f"fg:{theme.primary} bold", l2_right),
+        ("", "   "),
+        (f"fg:{theme.text}", "Model: "),
+        (f"fg:{theme.info}", f"{model}\n"),
+        (f"fg:{theme.text_muted}", l3_left),
+        (f"fg:{theme.primary} bold", l3_right),
+        ("", "   "),
+        (f"fg:{theme.text}", "Directory: "),
+        (f"fg:{theme.text_muted}", f"{cwd_disp} · {tools_count} tools"),
+    ]
+
+    if mcp_count > 0:
+        tokens.append((f"fg:{theme.success}", f" · ⊙ {mcp_count} MCP"))
+
+    tokens.append(("", "\n\n"))
+    tokens.append((f"fg:{theme.text_muted}", "Type "))
+    tokens.append((f"fg:{theme.accent} bold", "/help"))
+    tokens.append((f"fg:{theme.text_muted}", " for commands, "))
+    tokens.append((f"fg:{theme.accent} bold", "/model"))
+    tokens.append((f"fg:{theme.text_muted}", " to switch, "))
+    tokens.append((f"fg:{theme.accent} bold", "/status"))
+    tokens.append((f"fg:{theme.text_muted}", " for details, "))
+    tokens.append((f"fg:{theme.accent} bold", "/exit"))
+    tokens.append((f"fg:{theme.text_muted}", " to quit.\n\n"))
+
+    return tokens
+
+
+def get_statusline_tokens(
+    directory: str,
+    model: str = "",
+    tools_count: int = 6,
+    mcp_count: int = 0,
+    permissions_count: int = 0,
+    theme: Theme = THEME,
+) -> Tuple[List[Tuple[str, str]], List[Tuple[str, str]]]:
+    """Return prompt_toolkit formatted text tokens (left_tokens, right_tokens) for statusline."""
+    left = format_path(directory)
+    left_tokens = [(f"fg:{theme.text_muted}", f" {left} ")]
+
+    right_tokens: List[Tuple[str, str]] = []
+    if permissions_count > 0:
+        right_tokens.append(
+            (
+                f"fg:{theme.warning}",
+                f"△ {permissions_count} Permission{'s' if permissions_count > 1 else ''}   ",
+            )
+        )
+    if model:
+        right_tokens.append((f"fg:{theme.info}", f"• {model}   "))
+    right_tokens.append((f"fg:{theme.text_muted}", f"• {tools_count} Tools   "))
+    if mcp_count > 0:
+        right_tokens.append((f"fg:{theme.success}", f"⊙ {mcp_count} MCP   "))
+    right_tokens.append((f"fg:{theme.text_muted}", "^O: fold   /status   /help "))
+
+    return left_tokens, right_tokens

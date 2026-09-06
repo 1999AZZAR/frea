@@ -54,3 +54,40 @@ def test_render_logo_rich_text():
     text = render_logo(raw=False)
     assert isinstance(text, Text)
     assert len(text.plain) > 0
+
+
+def test_get_header_tokens():
+    from src.ui import get_header_tokens
+
+    tokens = get_header_tokens(
+        "openrouter/auto", "/home/user/project", tools_count=6, mcp_count=2
+    )
+    combined_text = "".join(t[1] for t in tokens)
+    assert "frea v0.2.0" in combined_text
+    assert "openrouter/auto" in combined_text
+    assert "project" in combined_text
+    assert "6 tools" in combined_text
+    assert "2 MCP" in combined_text
+    assert "/help" in combined_text
+    # Ensure no raw rich markup tags leaked into token text
+    assert "[#" not in combined_text
+    assert "[/]" not in combined_text
+
+
+def test_get_statusline_tokens():
+    from src.ui import get_statusline_tokens
+
+    left_toks, right_toks = get_statusline_tokens(
+        "/home/user/project",
+        model="openrouter/auto",
+        tools_count=6,
+        mcp_count=2,
+    )
+    left_str = "".join(t[1] for t in left_toks)
+    right_str = "".join(t[1] for t in right_toks)
+
+    assert "project" in left_str
+    assert "openrouter/auto" in right_str
+    assert "6 Tools" in right_str
+    assert "2 MCP" in right_str
+    assert "^O: fold" in right_str
