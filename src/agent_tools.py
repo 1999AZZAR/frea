@@ -1,13 +1,21 @@
 import re
 import subprocess
-import wikipediaapi
-from color import Color
+
+try:
+    from src.color import Color
+except ImportError:
+    from color import Color
 import os
 import shutil
 
 
 # Wikipedia lookup tool
 def wiki(query, sentences=3):
+    try:
+        import wikipediaapi
+    except ImportError:
+        return "No Wikipedia module installed. Install wikipedia-api to use wiki tool."
+
     wiki_wiki = wikipediaapi.Wikipedia(language="en", user_agent="frea-tools/1.0")
     page = wiki_wiki.page(query)
     if not page.exists():

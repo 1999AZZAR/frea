@@ -1,7 +1,4 @@
-google.generativeai
-emoji
-openai
-wikipedia-api
-fpdf2
+openai>=1.0.0
+google-generativeai>=0.8.0
 rich>=13.0.0
 prompt_toolkit>=3.0.0

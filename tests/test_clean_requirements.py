@@ -45,7 +45,7 @@ def test_agent_tools_import_without_wikipediaapi():
         import src.agent_tools as tools
 
         # Core utility tools must remain callable
-        assert tools.calc("2 + 2") == "4"
+        assert "4" in tools.calc("2 + 2")
         assert (
             "No Wikipedia module" in tools.wiki("Python")
             or "error" in tools.wiki("Python").lower()

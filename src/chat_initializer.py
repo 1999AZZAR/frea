@@ -1,7 +1,6 @@
 import os
 import openai
 from chat_config import ChatConfig
-import wikipediaapi
 from functools import lru_cache
 import re
 
@@ -159,6 +158,11 @@ class ChatInitializer:
         Returns:
             str: A concise summary limited to `sentences`, or None if page not found.
         """
+        try:
+            import wikipediaapi
+        except ImportError:
+            return None
+
         wiki_wiki = wikipediaapi.Wikipedia(language="en", user_agent=self.USER_AGENT)
         page = wiki_wiki.page(query)
         if not page.exists():
