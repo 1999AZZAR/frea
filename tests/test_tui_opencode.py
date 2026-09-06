@@ -241,3 +241,77 @@ def test_opencode_tui_non_foldable():
     assert tui.expand_last() is False
     assert tui.toggle_card(short_card.id) is False
     assert tui.toggle_card(user_card.id) is False
+
+
+async def test_opencode_tui_slash_command_help():
+    state = SessionState(current_model="openrouter/auto")
+    repl = OpenCodeREPL(session_state=state)
+    tui = OpenCodeTUI(repl)
+
+    await tui._handle_slash_command("/help")
+    assert len(tui.cards) == 1
+    assert tui.cards[0].kind == "note"
+    assert "Available commands:" in tui.cards[0].body
+    assert tui._user_scrolled_line is None
+
+
+async def test_opencode_tui_slash_command_model_direct():
+    state = SessionState(current_model="openrouter/auto")
+    repl = OpenCodeREPL(session_state=state)
+    tui = OpenCodeTUI(repl)
+
+    await tui._handle_slash_command("/model gpt-4o")
+    assert state.current_model == "gpt-4o"
+    assert len(tui.cards) == 1
+    assert "Switched model → gpt-4o" in tui.cards[0].body
+
+
+async def test_opencode_tui_slash_command_model_popup():
+    from unittest.mock import patch
+
+    state = SessionState(current_model="openrouter/auto")
+    repl = OpenCodeREPL(session_state=state)
+    tui = OpenCodeTUI(repl)
+
+    with patch(
+        "src.popup.model_select_popup_async", return_value="kilo-auto/free"
+    ):
+        await tui._handle_slash_command("/model")
+        assert state.current_model == "kilo-auto/free"
+        assert len(tui.cards) == 1
+        assert "Switched model → kilo-auto/free" in tui.cards[0].body
+
+
+async def test_opencode_tui_slash_command_exit():
+    from unittest.mock import MagicMock, patch
+
+    state = SessionState(current_model="openrouter/auto")
+    repl = OpenCodeREPL(session_state=state)
+    tui = OpenCodeTUI(repl)
+    mock_app = MagicMock()
+    tui.app = mock_app
+
+    with patch("src.popup.ConfirmPopup.run_async", return_value=True):
+        await tui._handle_slash_command("/exit")
+        mock_app.exit.assert_called_once()
+
+
+def test_opencode_tui_input_accept_dispatches_slash_command():
+    from unittest.mock import MagicMock
+    from prompt_toolkit.buffer import Buffer
+
+    state = SessionState(current_model="openrouter/auto")
+    repl = OpenCodeREPL(session_state=state)
+    tui = OpenCodeTUI(repl)
+    mock_app = MagicMock()
+    tui.app = mock_app
+
+    buf = Buffer()
+    buf.text = "/help"
+    handled = tui._on_input_accept(buf)
+    assert handled is True
+    assert buf.text == ""
+    mock_app.create_background_task.assert_called_once()
+    coro = mock_app.create_background_task.call_args[0][0]
+    coro.close()
+

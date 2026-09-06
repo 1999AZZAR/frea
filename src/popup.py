@@ -213,8 +213,7 @@ class SelectPopup(Generic[T]):
     # Public entry point
     # ------------------------------------------------------------------
 
-    def run(self) -> Optional[T]:
-        """Block until user selects or cancels. Returns value or None."""
+    def _build_app(self) -> Application[None]:
         search_area = TextArea(
             text="",
             multiline=False,
@@ -323,14 +322,24 @@ class SelectPopup(Generic[T]):
             ],
         )
 
-        app: Application[None] = Application(
+        return Application(
             layout=Layout(root_container, focused_element=search_area),
             key_bindings=merge_key_bindings([kb_global, kb_search]),
             style=POPUP_STYLE,
             mouse_support=True,
             full_screen=True,
         )
+
+    def run(self) -> Optional[T]:
+        """Block until user selects or cancels. Returns value or None."""
+        app = self._build_app()
         _run_app_safely(app)
+        return None if self._cancelled else self._result
+
+    async def run_async(self) -> Optional[T]:
+        """Async entry point for prompt_toolkit event loop. Returns value or None."""
+        app = self._build_app()
+        await app.run_async()
         return None if self._cancelled else self._result
 
 
@@ -351,13 +360,13 @@ class ConfirmPopup:
         self._choice: bool = False
         self._focus_yes = True  # Tab toggles focus
 
-    def run(self) -> bool:
+    def _build_app(self) -> Application[None]:
         kb = KeyBindings()
 
         @kb.add("left")
         @kb.add("right")
         @kb.add("tab")
-        @kb.add("shift+tab")
+        @kb.add("s-tab")
         def _toggle(event: Any) -> None:
             self._focus_yes = not self._focus_yes
 
@@ -419,13 +428,21 @@ class ConfirmPopup:
             content=Window(style="class:popup-backdrop"),
             floats=[Float(content=dialog, xcursor=False, ycursor=False)],
         )
-        app: Application[None] = Application(
+        return Application(
             layout=Layout(root),
             key_bindings=kb,
             style=POPUP_STYLE,
             full_screen=True,
         )
+
+    def run(self) -> bool:
+        app = self._build_app()
         _run_app_safely(app)
+        return self._choice
+
+    async def run_async(self) -> bool:
+        app = self._build_app()
+        await app.run_async()
         return self._choice
 
 
@@ -441,7 +458,7 @@ class AlertPopup:
         self.title = title
         self.message = message
 
-    def run(self) -> None:
+    def _build_app(self) -> Application[None]:
         kb = KeyBindings()
 
         @kb.add("enter")
@@ -476,13 +493,20 @@ class AlertPopup:
             content=Window(style="class:popup-backdrop"),
             floats=[Float(content=dialog, xcursor=False, ycursor=False)],
         )
-        app: Application[None] = Application(
+        return Application(
             layout=Layout(root),
             key_bindings=kb,
             style=POPUP_STYLE,
             full_screen=True,
         )
+
+    def run(self) -> None:
+        app = self._build_app()
         _run_app_safely(app)
+
+    async def run_async(self) -> None:
+        app = self._build_app()
+        await app.run_async()
 
 
 # ---------------------------------------------------------------------------
@@ -501,7 +525,7 @@ class InputPopup:
         self.placeholder = placeholder
         self._result: Optional[str] = None
 
-    def run(self) -> Optional[str]:
+    def _build_app(self) -> Application[None]:
         text_area = TextArea(
             multiline=False,
             style="class:search-input",
@@ -540,13 +564,21 @@ class InputPopup:
             content=Window(style="class:popup-backdrop"),
             floats=[Float(content=body, xcursor=False, ycursor=False)],
         )
-        app: Application[None] = Application(
+        return Application(
             layout=Layout(root, focused_element=text_area),
             key_bindings=kb,
             style=POPUP_STYLE,
             full_screen=True,
         )
+
+    def run(self) -> Optional[str]:
+        app = self._build_app()
         _run_app_safely(app)
+        return self._result
+
+    async def run_async(self) -> Optional[str]:
+        app = self._build_app()
+        await app.run_async()
         return self._result
 
 
@@ -636,8 +668,7 @@ class McpPopup:
 
         return tokens
 
-    def run(self) -> bool:
-        """Run interactive MCP manager. Returns True if any toggles occurred."""
+    def _build_app(self) -> Application[None]:
         list_control = FormattedTextControl(
             text=self._build_text,
             focusable=True,
@@ -706,20 +737,40 @@ class McpPopup:
             floats=[Float(content=dialog, xcursor=False, ycursor=False)],
         )
 
-        app: Application[None] = Application(
+        return Application(
             layout=Layout(root, focused_element=list_win),
             key_bindings=kb,
             style=POPUP_STYLE,
             mouse_support=True,
             full_screen=True,
         )
+
+    def run(self) -> bool:
+        """Run interactive MCP manager. Returns True if any toggles occurred."""
+        app = self._build_app()
         _run_app_safely(app)
+        return self._has_changed
+
+    async def run_async(self) -> bool:
+        """Async interactive MCP manager. Returns True if any toggles occurred."""
+        app = self._build_app()
+        await app.run_async()
         return self._has_changed
 
 
 def mcp_popup() -> bool:
     """Open the MCP server toggle dialog. Returns True if any server was toggled."""
     return McpPopup().run()
+
+
+async def mcp_popup_async() -> bool:
+    """Open the MCP server toggle dialog asynchronously."""
+    return await McpPopup().run_async()
+
+
+async def confirm_popup_async(title: str, message: str) -> bool:
+    """Async yes/no confirmation dialog."""
+    return await ConfirmPopup(title=title, message=message).run_async()
 
 
 # ---------------------------------------------------------------------------
@@ -936,3 +987,25 @@ def model_select_popup(
         placeholder="Search models…",
     )
     return popup.run()
+
+
+async def model_select_popup_async(
+    current_model: str,
+    extra_options: Optional[Iterable[SelectOption[str]]] = None,
+) -> Optional[str]:
+    """Open the model-switcher popup asynchronously.
+
+    Returns selected model string or None if cancelled.
+    """
+    options = fetch_gateway_models()
+    if extra_options:
+        options.extend(extra_options)
+
+    popup = SelectPopup(
+        title="Switch Model",
+        options=options,
+        current=current_model,
+        placeholder="Search models…",
+    )
+    return await popup.run_async()
+

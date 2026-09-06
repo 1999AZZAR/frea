@@ -154,3 +154,76 @@ def test_mcp_popup_toggle():
         assert popup._servers[0]["enabled"] is False
         assert popup._has_changed is True
         mock_toggle.assert_called_once_with("server-a")
+
+
+async def test_select_popup_run_async_mocked():
+    opts = [SelectOption("opt1", "val1")]
+    popup = SelectPopup(title="Async Test", options=opts)
+
+    with patch("src.popup.Application") as MockApp:
+        mock_app = MagicMock()
+        mock_app.run_async = MagicMock()
+        # Mock run_async returning a completed coroutine
+        async def _mock_run():
+            popup._result = "val1"
+            popup._cancelled = False
+        mock_app.run_async.side_effect = _mock_run
+        MockApp.return_value = mock_app
+
+        res = await popup.run_async()
+        assert res == "val1"
+
+
+async def test_confirm_popup_run_async_mocked():
+    from src.popup import ConfirmPopup, confirm_popup_async
+
+    with patch("src.popup.Application") as MockApp:
+        mock_app = MagicMock()
+        async def _mock_run():
+            pass
+        mock_app.run_async.side_effect = _mock_run
+        MockApp.return_value = mock_app
+
+        popup = ConfirmPopup("Exit", "Really?")
+        popup._choice = True
+        res = await popup.run_async()
+        assert res is True
+
+        res2 = await confirm_popup_async("Exit", "Really?")
+        assert res2 is False
+
+
+async def test_mcp_popup_run_async_mocked():
+    from src.popup import McpPopup, mcp_popup_async
+
+    with patch("src.mcp.get_all_mcp_servers_config") as mock_cfg, patch(
+        "src.popup.Application"
+    ) as MockApp:
+        mock_cfg.return_value = {}
+        mock_app = MagicMock()
+        async def _mock_run():
+            pass
+        mock_app.run_async.side_effect = _mock_run
+        MockApp.return_value = mock_app
+
+        popup = McpPopup("MCP")
+        popup._has_changed = True
+        res = await popup.run_async()
+        assert res is True
+
+        res2 = await mcp_popup_async()
+        assert res2 is False
+
+
+async def test_model_select_popup_async_mocked():
+    from src.popup import model_select_popup_async
+
+    with patch("src.popup.SelectPopup") as MockSelect:
+        mock_instance = MagicMock()
+        async def _mock_run():
+            return "kilo-auto/free"
+        mock_instance.run_async.side_effect = _mock_run
+        MockSelect.return_value = mock_instance
+
+        res = await model_select_popup_async("openrouter/auto")
+        assert res == "kilo-auto/free"

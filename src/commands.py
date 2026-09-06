@@ -60,13 +60,12 @@ def handle_slash_command(user_input: str, session: SessionState) -> CommandResul
         turns = len(session.history) // 2
         mcp_servers = []
         try:
-            from src.mcp import load_user_mcp_servers
+            from src.mcp import get_all_mcp_servers_config
 
-            servers = load_user_mcp_servers()
-            for name, client in servers.items():
-                status = "Connected" if client.is_connected() else "Disconnected"
+            specs = get_all_mcp_servers_config()
+            for name, spec in specs.items():
+                status = "Connected" if spec.get("enabled", True) else "Disabled"
                 mcp_servers.append((name, status))
-                client.stop()
         except Exception:
             pass
 
@@ -104,10 +103,10 @@ def handle_slash_command(user_input: str, session: SessionState) -> CommandResul
         return CommandResult(handled=True, output="\n".join(status_lines))
     elif cmd == "/mcp":
         try:
-            from src.mcp import load_user_mcp_servers
+            from src.mcp import get_all_mcp_servers_config
 
-            servers = load_user_mcp_servers()
-            if not servers:
+            specs = get_all_mcp_servers_config()
+            if not specs:
                 return CommandResult(
                     handled=True,
                     output=(
@@ -116,28 +115,18 @@ def handle_slash_command(user_input: str, session: SessionState) -> CommandResul
                     ),
                 )
 
-            lines = [f"MCP Servers ({len(servers)}):"]
-            for name, client in servers.items():
-                is_conn = client.is_connected()
-                status_text = "Connected" if is_conn else "Disconnected"
+            lines = [f"MCP Servers ({len(specs)}):"]
+            for name, spec in specs.items():
+                status_text = (
+                    "Connected" if spec.get("enabled", True) else "Disabled"
+                )
                 lines.append(f"  • {name} [{status_text}]")
-                try:
-                    tools = client.list_tools()
-                    if tools:
-                        lines.append(f"    Tools ({len(tools)}):")
-                        for t in tools:
-                            t_name = t.get("name", "unknown")
-                            t_desc = (t.get("description") or "").split("\n")[0]
-                            desc_str = f" - {t_desc}" if t_desc else ""
-                            lines.append(f"      • {t_name}{desc_str}")
-                    else:
-                        lines.append("    No tools advertised")
-                except Exception as err:
-                    lines.append(f"    Error listing tools: {err}")
-                finally:
-                    client.stop()
 
             return CommandResult(handled=True, output="\n".join(lines))
+        except Exception as e:
+            return CommandResult(
+                handled=True, output=f"Failed to inspect MCP servers: {e}"
+            )
 
         except Exception as exc:
             return CommandResult(

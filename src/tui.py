@@ -115,6 +115,9 @@ class OpenCodeTUI:
             model=model,
         )
         self.cards.append(card)
+        self._user_scrolled_line = None
+        est_lines = (card.body.count("\n") + 2) if card.body else 3
+        self._total_lines += est_lines
         return card
 
     def toggle_card(self, card_id: int) -> bool:
@@ -336,8 +339,14 @@ class OpenCodeTUI:
                 color = (
                     self.theme.error if card.kind == "error" else self.theme.text_muted
                 )
-                tokens.append((bg + f"fg:{color} bold", f"\n▌ {card.title} ", cm))
-                tokens.append((bg + f"fg:{color}", f"{card.body}\n", cm))
+                lines = card.body.splitlines() if card.body else [""]
+                if len(lines) <= 1:
+                    tokens.append((bg + f"fg:{color} bold", f"\n▌ {card.title} ", cm))
+                    tokens.append((bg + f"fg:{color}", f"{card.body}\n", cm))
+                else:
+                    tokens.append((bg + f"fg:{color} bold", f"\n▌ {card.title}\n", cm))
+                    for line in lines:
+                        tokens.append((bg + f"fg:{color}", f"  {line}\n", cm))
 
         self._total_lines = sum(text.count("\n") for _, text, *_ in tokens)
         return tokens
@@ -360,7 +369,12 @@ class OpenCodeTUI:
         buffer.reset()
 
         if text.startswith("/"):
-            self._handle_slash_command(text)
+            if self.app:
+                self.app.create_background_task(self._handle_slash_command(text))
+            else:
+                import asyncio
+
+                asyncio.create_task(self._handle_slash_command(text))
             return True
 
         if not self.agent_loop:
@@ -373,7 +387,7 @@ class OpenCodeTUI:
             self.app.create_background_task(self._run_agent_task(text))
         return True
 
-    def _handle_slash_command(self, text: str) -> None:
+    async def _handle_slash_command(self, text: str) -> None:
         parts = text.split(maxsplit=1)
         cmd = parts[0].lower()
         arg = parts[1].strip() if len(parts) > 1 else ""
@@ -381,18 +395,18 @@ class OpenCodeTUI:
         if cmd in ("/exit", "/quit"):
             from src.popup import ConfirmPopup
 
-            confirmed = ConfirmPopup(
+            confirmed = await ConfirmPopup(
                 title="Exit Frea", message="End this session?"
-            ).run()
+            ).run_async()
             if confirmed and self.app:
                 self.app.exit()
             return
 
         if cmd == "/model":
             if not arg:
-                from src.popup import model_select_popup
+                from src.popup import model_select_popup_async
 
-                chosen = model_select_popup(self.session.current_model)
+                chosen = await model_select_popup_async(self.session.current_model)
                 if chosen:
                     try:
                         self.repl._switch_model(chosen)
@@ -414,9 +428,9 @@ class OpenCodeTUI:
             return
 
         if cmd == "/mcp":
-            from src.popup import mcp_popup
+            from src.popup import mcp_popup_async
 
-            changed = mcp_popup()
+            changed = await mcp_popup_async()
             if changed and self.agent_loop and hasattr(self.agent_loop, "executor"):
                 self.agent_loop.executor.reload_mcp_servers()
                 tools_cnt, mcp_cnt = self.repl.get_stats()
@@ -432,6 +446,7 @@ class OpenCodeTUI:
         if cmd == "/collapse":
             if not self.collapse_last():
                 self.add_card("note", "Info", "Nothing to collapse.")
+            self._user_scrolled_line = None
             if self.app:
                 self.app.invalidate()
             return
@@ -439,12 +454,15 @@ class OpenCodeTUI:
         if cmd == "/expand":
             if not self.expand_last():
                 self.add_card("note", "Info", "Nothing to expand.")
+            self._user_scrolled_line = None
             if self.app:
                 self.app.invalidate()
             return
 
         if cmd == "/clear":
             self.cards.clear()
+            self._total_lines = 0
+            self._user_scrolled_line = None
             if self.app:
                 self.app.invalidate()
             return
@@ -461,6 +479,7 @@ class OpenCodeTUI:
                 "Compact",
                 f"Compacted history from {initial_len} to {len(self.session.history)} items.",
             )
+            self._user_scrolled_line = None
             if self.app:
                 self.app.invalidate()
             return
@@ -470,6 +489,7 @@ class OpenCodeTUI:
             self.add_card("note", "Command", res.output)
         if res.exit_requested and self.app:
             self.app.exit()
+        self._user_scrolled_line = None
         if self.app:
             self.app.invalidate()
 
