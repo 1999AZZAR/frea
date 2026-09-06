@@ -1,7 +1,7 @@
 """Interactive slash commands and session management for Frea harness."""
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 from src.providers import compact_history
 
 
@@ -17,6 +17,9 @@ class SessionState:
     current_model: str = "openrouter/auto"
     current_provider: str = "openrouter"
     history: List[Dict[str, Any]] = field(default_factory=list)
+    on_model_switch: Optional[Callable[[str], None]] = field(
+        default=None, repr=False, compare=False
+    )
 
     def record_turn(self, user: str, assistant: str) -> None:
         self.history.append({"role": "user", "content": user})
@@ -162,11 +165,29 @@ def handle_slash_command(user_input: str, session: SessionState) -> CommandResul
         return CommandResult(handled=True, output="\033[2J\033[H")
     elif cmd == "/model":
         if arg:
+            old = session.current_model
             session.current_model = arg
-            return CommandResult(handled=True, output=f"Switched model to: {arg}")
-        return CommandResult(
-            handled=True, output=f"Current model: {session.current_model}"
-        )
+            if session.on_model_switch:
+                try:
+                    session.on_model_switch(arg)
+                except Exception as exc:
+                    session.current_model = old
+                    return CommandResult(
+                        handled=True,
+                        output=f"Failed to switch model: {exc}",
+                    )
+            return CommandResult(handled=True, output=f"Switched model → {arg}")
+        preset_lines = [
+            f"Current model: {session.current_model}",
+            "",
+            "Presets (free / no key required):",
+            "  openrouter/auto              - OpenRouter smart routing",
+            "  kimi-k2.5-free               - Kimi K2.5 via opencode gateway",
+            "  kilocode/kilo-auto/balanced  - KiloCode balanced routing",
+            "",
+            "Usage: /model <name>",
+        ]
+        return CommandResult(handled=True, output="\n".join(preset_lines))
     elif cmd == "/compact":
         initial_len = len(session.history)
         session.history = compact_history(session.history, max_messages=10)

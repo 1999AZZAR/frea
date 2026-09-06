@@ -16,16 +16,34 @@ def test_handle_slash_command_help():
 
 def test_handle_slash_command_model():
     session = SessionState(current_model="gemini-2.5-flash")
-    # Query current model
+    # Query current model – shows preset list
     res1 = handle_slash_command("/model", session)
     assert res1.handled is True
     assert "gemini-2.5-flash" in res1.output
+    assert "Presets" in res1.output
 
-    # Switch model
+    # Switch model with no callback – just updates session
     res2 = handle_slash_command("/model gpt-4o", session)
     assert res2.handled is True
     assert session.current_model == "gpt-4o"
     assert "Switched model" in res2.output
+
+    # Switch model with a working callback
+    switched = []
+    session.on_model_switch = lambda m: switched.append(m)
+    handle_slash_command("/model openrouter/auto", session)
+    assert session.current_model == "openrouter/auto"
+    assert switched == ["openrouter/auto"]
+
+    # Switch model with a failing callback – should rollback
+    def _bad_switch(m):
+        raise RuntimeError("API error")
+
+    session.on_model_switch = _bad_switch
+    prev = session.current_model
+    res_fail = handle_slash_command("/model bad-model", session)
+    assert "Failed to switch model" in res_fail.output
+    assert session.current_model == prev  # rolled back
 
 
 def test_handle_slash_command_exit():

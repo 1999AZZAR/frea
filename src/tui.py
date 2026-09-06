@@ -55,12 +55,32 @@ class OpenCodeREPL:
         self.theme = theme
         self._active_out_stream: Optional[TextIO] = None
 
+        # Register model switcher so /model propagates to live provider
+        self.session.on_model_switch = self._switch_model
+
         # Wire live tool execution streaming into agent loop
         if self.agent_loop:
             if not getattr(self.agent_loop, "on_tool_call", None):
                 self.agent_loop.on_tool_call = self._on_tool_call
             if not getattr(self.agent_loop, "on_tool_result", None):
                 self.agent_loop.on_tool_result = self._on_tool_result
+
+    def _switch_model(self, model_name: str) -> None:
+        """Hot-swap the underlying provider when the user types /model <name>."""
+        from src.providers import get_provider
+
+        # Detect provider family from model name
+        if "openrouter" in model_name.lower():
+            provider_key = "openrouter"
+        elif "/" in model_name:
+            provider_key = model_name.split("/")[0]
+        else:
+            provider_key = model_name  # e.g. "kimi-k2.5-free" → OpencodeProvider
+
+        new_provider = get_provider(provider_key, model=model_name)
+        if self.agent_loop:
+            self.agent_loop.provider = new_provider
+        self.session.current_provider = provider_key
 
     def _on_tool_call(self, name: str, args: Dict[str, Any]) -> None:
         from src.cards import render_tool_call
@@ -190,19 +210,17 @@ class OpenCodeREPL:
             completer=SlashCommandCompleter(),
             style=pt_style,
         )
-
         while True:
             try:
-                statusline = render_statusline(
-                    os.getcwd(),
-                    model=self.session.current_model,
-                    tools_count=tools_cnt,
-                    mcp_count=mcp_cnt,
-                    theme=self.theme,
-                )
                 user_input = prompt_session.prompt(
                     self.get_prompt_tokens(),
-                    bottom_toolbar=lambda: statusline,
+                    bottom_toolbar=lambda: render_statusline(
+                        os.getcwd(),
+                        model=self.session.current_model,
+                        tools_count=tools_cnt,
+                        mcp_count=mcp_cnt,
+                        theme=self.theme,
+                    ),
                 )
 
                 should_exit, message = self.handle_input(user_input)
