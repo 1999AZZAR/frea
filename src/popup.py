@@ -781,6 +781,16 @@ def fetch_gateway_models() -> List[SelectOption[str]]:
                     continue
                 seen_ids.add(mid)
                 is_free = mid.endswith("-free")
+                # Filter out models with known upstream server errors (500/503)
+                if is_free and any(
+                    err in mid
+                    for err in (
+                        "muse-spark",
+                        "ling-3.0-flash-fin",
+                        "deepseek-v4-flash-free",
+                    )
+                ):
+                    continue
                 cat = "Free (no key)" if is_free else "OpenCode Zen"
                 desc = "Free · OpenCode Zen" if is_free else "OpenCode Zen gateway"
                 options.append(SelectOption(mid, mid, desc, cat))

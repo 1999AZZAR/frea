@@ -119,6 +119,24 @@ class OpenAIProvider(BaseModelProvider):
             raise FreaProviderError(
                 f"Cannot reach API for '{self.model}': {exc}"
             ) from exc
+        except (openai.InternalServerError, openai.APIStatusError) as exc:
+            status = getattr(exc, "status_code", 500)
+            if self.model != "kilo-auto/free":
+                try:
+                    fallback = KiloCodeProvider(model="kilo-auto/free")
+                    res = fallback.generate(messages, tools=tools)
+                    if res.content:
+                        res.content = (
+                            f"[Note: '{self.model}' was unavailable upstream ({status}). Auto-routed to kilo-auto/free]\n\n"
+                            + res.content
+                        )
+                    return res
+                except Exception:
+                    pass
+            raise FreaProviderError(
+                f"Upstream provider error for '{self.model}' ({status}): {exc}\n"
+                "Try /model to switch to a healthy model like kilo-auto/free or nemotron-3.5-lightning-free."
+            ) from exc
 
         choice = response.choices[0].message
         content = choice.content
