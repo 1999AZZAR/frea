@@ -41,9 +41,15 @@ class AgentRunResult:
     success: bool
 
 
-DEFAULT_SYSTEM_PROMPT = """You are Frea, an advanced Linux terminal-native AI coding agent harness.
-You solve coding, refactoring, debugging, and system tasks autonomously using available tools.
-Follow the ReAct protocol: think clearly, invoke tools with precise parameters, inspect outputs, and conclude with concise, direct answers."""
+try:
+    from src.persona import load_frea_persona
+except ImportError:
+    from persona import load_frea_persona
+
+
+def get_default_system_prompt() -> str:
+    """Return canonical Frea persona as system prompt."""
+    return load_frea_persona()
 
 
 class AgentLoop:
@@ -59,7 +65,7 @@ class AgentLoop:
         self.provider = provider
         self.executor = executor
         self.max_steps = max_steps
-        self.system_prompt = system_prompt or DEFAULT_SYSTEM_PROMPT
+        self.system_prompt = system_prompt or get_default_system_prompt()
 
     def run(self, user_prompt: str) -> AgentRunResult:
         messages: List[Dict[str, Any]] = [

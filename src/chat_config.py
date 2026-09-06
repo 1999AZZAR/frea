@@ -3,7 +3,11 @@ import sys
 import configparser
 import google.generativeai as genai
 import subprocess
-from color import Color
+
+try:
+    from src.color import Color
+except ImportError:
+    from color import Color
 
 
 class ChatConfig:
@@ -204,23 +208,19 @@ class ChatConfig:
 
     @staticmethod
     def chat_instruction(instruction_file):
-        """
-        Loads chat instructions from a file or falls back to default.
+        """Loads chat instructions from file or falls back to canonical Frea persona."""
+        try:
+            from src.persona import load_frea_persona
+        except ImportError:
+            from persona import load_frea_persona
 
-        Args:
-            instruction_file (str): The path to the instruction file.
-
-        Returns:
-            str: The chat instructions.
-        """
-        if os.path.exists(instruction_file):
-            with open(instruction_file, "r") as file:
-                return file.read()
-        else:
-            print(
-                f"{Color.BRIGHTRED}Instruction file not found. Using fallback instructions.{Color.ENDC}"
-            )
-            return "You are frea (freak robotic entity with amusement), a helpful assistant."
+        if instruction_file and os.path.exists(instruction_file):
+            try:
+                with open(instruction_file, "r", encoding="utf-8") as file:
+                    return file.read()
+            except OSError:
+                pass
+        return load_frea_persona()
 
     @staticmethod
     def clear_screen():
