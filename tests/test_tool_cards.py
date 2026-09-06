@@ -1,5 +1,6 @@
 from src.cards import (
     render_permission_prompt,
+    render_response_card,
     render_tool_call,
     render_tool_result,
     render_unified_diff,
@@ -64,3 +65,31 @@ def test_render_permission_prompt():
     assert "△" in prompt
     assert "Permission" in prompt
     assert "rm -rf tmp" in prompt
+
+
+def test_render_response_card():
+    # Empty response
+    assert render_response_card("") == ""
+    assert render_response_card("   \n\n  ") == ""
+
+    # Normal expanded response
+    short_resp = "Line 1\nLine 2\nLine 3"
+    card = render_response_card(short_resp, collapsed=False, model="openrouter/auto")
+    assert "▌ Assistant" in card
+    assert "(openrouter/auto)" in card
+    assert "▼ Compact · Ctrl+O / /compact" in card
+    assert "│[/] Line 1" in card
+    assert "│[/] Line 2" in card
+    assert "│[/] Line 3" in card
+
+    # Collapsed response with > 4 lines
+    long_resp = "\n".join([f"Line {i}" for i in range(10)])
+    collapsed_card = render_response_card(
+        long_resp, collapsed=True, peek_lines=4, model="openrouter/auto"
+    )
+    assert "▌ Assistant" in collapsed_card
+    assert "▶ Expand (+6 lines) · Ctrl+O / /expand" in collapsed_card
+    assert "│[/] Line 0" in collapsed_card
+    assert "│[/] Line 3" in collapsed_card
+    assert "│[/] Line 4" not in collapsed_card
+    assert "6 more lines folded · Ctrl+O or /expand to view" in collapsed_card

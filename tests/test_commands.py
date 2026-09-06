@@ -79,3 +79,37 @@ def test_handle_slash_command_skills():
     res = handle_slash_command("/skills", session)
     assert res.handled is True
     assert "Skills" in res.output
+
+
+def test_handle_slash_command_expand_compact_collapse():
+    session = SessionState(current_model="openrouter/auto")
+    # Empty last response
+    res_comp_empty = handle_slash_command("/compact", session)
+    assert res_comp_empty.handled is True
+    assert session.response_collapsed is True
+    assert "Compact mode enabled" in res_comp_empty.output
+
+    res_exp_empty = handle_slash_command("/expand", session)
+    assert res_exp_empty.handled is True
+    assert session.response_collapsed is False
+    assert "Expanded mode enabled" in res_exp_empty.output
+
+    # With last response
+    session.last_response = "\n".join([f"Output line {i}" for i in range(10)])
+
+    res_compact = handle_slash_command("/compact", session)
+    assert res_compact.handled is True
+    assert session.response_collapsed is True
+    assert "▶ Expand" in res_compact.output
+    assert "more lines folded" in res_compact.output
+
+    res_expand = handle_slash_command("/expand", session)
+    assert res_expand.handled is True
+    assert session.response_collapsed is False
+    assert "▼ Compact" in res_expand.output
+    assert "Output line 9" in res_expand.output
+
+    res_collapse = handle_slash_command("/collapse", session)
+    assert res_collapse.handled is True
+    assert session.response_collapsed is True
+    assert "▶ Expand" in res_collapse.output

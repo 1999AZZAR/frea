@@ -181,7 +181,7 @@ def render_header(
     mcp_info = f" · {c_suc}⊙ {mcp_count} MCP{end}" if mcp_count > 0 else ""
 
     lines = [
-        f"{c1}{l1_left}{end}{c2}{l1_right}{end}   {c_sub}frea v{version}{end} {c_mut}(OpenCode Edition){end}",
+        f"{c1}{l1_left}{end}{c2}{l1_right}{end}   {c_sub}frea v{version}{end}",
         f"{c1}{l2_left}{end}{c2}{l2_right}{end}   {c_txt}Model:{end} {c_info}{model}{end}",
         f"{c1}{l3_left}{end}{c2}{l3_right}{end}   {c_txt}Directory:{end} {c_mut}{cwd_disp}{end} · {c_mut}{tools_count} tools{end}{mcp_info}",
         f"\n{c_mut}Type {end}[bold {theme.accent}]/help{end}{c_mut} for commands, {end}[bold {theme.accent}]/model{end}{c_mut} to switch, {end}[bold {theme.accent}]/status{end}{c_mut} for details, {end}[bold {theme.accent}]/exit{end}{c_mut} to quit.{end}\n",
@@ -213,6 +213,7 @@ def render_statusline(
     right_parts.append(f"• {tools_count} Tools")
     if mcp_count > 0:
         right_parts.append(f"⊙ {mcp_count} MCP")
+    right_parts.append("^O: fold")
     right_parts.append("/status")
     right_parts.append("/help")
     right = "   ".join(right_parts)

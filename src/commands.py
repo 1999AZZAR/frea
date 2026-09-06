@@ -17,6 +17,8 @@ class SessionState:
     current_model: str = "kilo-auto/free"
     current_provider: str = "kilo"
     history: List[Dict[str, Any]] = field(default_factory=list)
+    response_collapsed: bool = False
+    last_response: str = ""
 
     on_model_switch: Optional[Callable[[str], None]] = field(
         default=None, repr=False, compare=False
@@ -25,16 +27,18 @@ class SessionState:
     def record_turn(self, user: str, assistant: str) -> None:
         self.history.append({"role": "user", "content": user})
         self.history.append({"role": "assistant", "content": assistant})
+        self.last_response = assistant
 
 
 HELP_TEXT = """Available commands:
   /help                 - Display this help message
   /status               - View session status, MCP servers, and active model
-  /mcp                  - Inspect MCP servers and registered tools
+  /mcp                  - Inspect and toggle MCP servers
   /skills               - List discovered agent skills
   /model <name>         - View or switch current model
+  /expand               - Expand folded response (full view)
+  /compact or /collapse - Fold response into compact peek
   /clear                - Clear terminal screen
-  /compact              - Compress conversation history
   /exit or /quit        - Exit interactive session
 """
 
@@ -164,6 +168,40 @@ def handle_slash_command(user_input: str, session: SessionState) -> CommandResul
         )
     elif cmd == "/clear":
         return CommandResult(handled=True, output="\033[2J\033[H")
+    elif cmd == "/expand":
+        session.response_collapsed = False
+        if session.last_response:
+            from src.cards import render_response_card
+
+            return CommandResult(
+                handled=True,
+                output=render_response_card(
+                    session.last_response,
+                    collapsed=False,
+                    model=session.current_model,
+                ),
+            )
+        return CommandResult(
+            handled=True,
+            output="Expanded mode enabled. No previous response to display.",
+        )
+    elif cmd in ("/compact", "/collapse"):
+        session.response_collapsed = True
+        if session.last_response:
+            from src.cards import render_response_card
+
+            return CommandResult(
+                handled=True,
+                output=render_response_card(
+                    session.last_response,
+                    collapsed=True,
+                    model=session.current_model,
+                ),
+            )
+        return CommandResult(
+            handled=True,
+            output="Compact mode enabled. No previous response to display.",
+        )
     elif cmd == "/model":
         if arg:
             old = session.current_model

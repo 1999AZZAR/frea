@@ -35,6 +35,7 @@ def test_render_statusline():
     assert "project" in status
     assert "openrouter/auto" in status
     assert "6" in status
+    assert "^O: fold" in status
     assert "/status" in status
 
 

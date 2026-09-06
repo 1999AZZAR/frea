@@ -21,7 +21,9 @@ class SlashCommandCompleter(Completer):
         ("/mcp", "Inspect MCP servers and registered tools"),
         ("/skills", "List discovered agent skills"),
         ("/model", "Switch or view current model"),
-        ("/compact", "Compress conversation history"),
+        ("/compact", "Fold response into compact peek"),
+        ("/collapse", "Fold response into compact peek"),
+        ("/expand", "Expand folded response into full view"),
         ("/clear", "Clear terminal screen"),
         ("/exit", "Exit interactive session"),
         ("/quit", "Exit interactive session"),
@@ -213,7 +215,46 @@ class OpenCodeREPL:
             agent_result = self.agent_loop.run(text)
 
         self.session.record_turn(text, agent_result.final_answer)
-        return False, agent_result.final_answer
+        from src.cards import render_response_card
+
+        card = render_response_card(
+            agent_result.final_answer,
+            collapsed=self.session.response_collapsed,
+            model=self.session.current_model,
+            theme=self.theme,
+        )
+        return False, card
+
+    def _build_key_bindings(self) -> Any:
+        """Create prompt_toolkit KeyBindings supporting Ctrl+O response fold/expand."""
+        from prompt_toolkit.application import run_in_terminal
+        from prompt_toolkit.key_binding import KeyBindings
+
+        kb = KeyBindings()
+
+        @kb.add("c-o")
+        def _toggle_fold(event: Any) -> None:
+            self.session.response_collapsed = not self.session.response_collapsed
+            if self.session.last_response:
+                from src.cards import render_response_card
+
+                card = render_response_card(
+                    self.session.last_response,
+                    collapsed=self.session.response_collapsed,
+                    model=self.session.current_model,
+                    theme=self.theme,
+                )
+                run_in_terminal(lambda: console.print(card))
+            else:
+                mode = "Compact" if self.session.response_collapsed else "Expanded"
+                run_in_terminal(
+                    lambda: console.print(
+                        f"[{self.theme.text_muted}]{mode} mode enabled. No previous response to display.[/]"
+                    )
+                )
+            event.app.invalidate()
+
+        return kb
 
     def run_repl(
         self,
@@ -280,6 +321,7 @@ class OpenCodeREPL:
         prompt_session: PromptSession[str] = PromptSession(
             completer=SlashCommandCompleter(),
             style=pt_style,
+            key_bindings=self._build_key_bindings(),
         )
         while True:
             try:

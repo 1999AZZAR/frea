@@ -195,3 +195,45 @@ def render_permission_prompt(
     """Render interactive permission prompt asking user confirmation."""
     target = args.get("command") or args.get("path") or str(args)
     return f"[{theme.warning}]△ Permission needed:[/] Run [{theme.text}]{tool_name}[/] on [{theme.info}]{target}[/]? [y/N]: "
+
+
+def render_response_card(
+    response: str,
+    collapsed: bool = False,
+    peek_lines: int = 4,
+    model: str = "",
+    theme: Theme = THEME,
+) -> str:
+    """Render Assistant response matching Kamui's card design with fold & hover controls.
+
+    Features:
+      - Left colored vertical border rail
+      - Header pill with model and fold control action ([▼ Compact] / [▶ Expand])
+      - Peek preview when collapsed (top lines + '… N more lines · /expand or Ctrl+O')
+      - On-hover hints ([Click or Ctrl+O to fold/expand])
+    """
+    clean_resp = response.rstrip()
+    if not clean_resp:
+        return ""
+
+    lines = clean_resp.splitlines()
+    total_lines = len(lines)
+    model_tag = f" [dim]({model})[/]" if model else ""
+
+    if collapsed and total_lines > peek_lines:
+        hidden = total_lines - peek_lines
+        control_pill = (
+            f"[{theme.text_muted}][▶ Expand (+{hidden} lines) · Ctrl+O / /expand][/]"
+        )
+        header = f"[{theme.primary} bold]▌ Assistant[/]{model_tag}   {control_pill}"
+
+        peek_body = "\n".join(
+            f"[{theme.text_muted}]│[/] {line}" for line in lines[:peek_lines]
+        )
+        footer = f"[{theme.text_muted}]│ … {hidden} more lines folded · Ctrl+O or /expand to view[/]"
+        return f"\n{header}\n{peek_body}\n{footer}\n"
+    else:
+        control_pill = f"[{theme.text_muted}][▼ Compact · Ctrl+O / /compact][/]"
+        header = f"[{theme.primary} bold]▌ Assistant[/]{model_tag}   {control_pill}"
+        body = "\n".join(f"[{theme.text_muted}]│[/] {line}" for line in lines)
+        return f"\n{header}\n{body}\n"
