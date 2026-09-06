@@ -2,7 +2,7 @@
 
 ### Phase 1: Environment & Dependency Hygiene
 - [x] Task: Write tests verifying absence of LangChain imports and verifying environment requirements in `tests/test_dependencies.py` b7b2b82
-- [~] Task: Purge LangChain from `requirements.txt` and `.venv`, add `rich` and `prompt_toolkit` to requirements
+- [x] Task: Purge LangChain from `requirements.txt` and `.venv`, add `rich` and `prompt_toolkit` to requirements 5e0fcf7
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ### Phase 2: OpenCode Theme, Block Logo & Header
