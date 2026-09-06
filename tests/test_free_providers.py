@@ -30,9 +30,11 @@ from src.providers import (
 def test_opencode_provider_defaults():
     provider = OpencodeProvider()
     assert isinstance(provider, OpenAIProvider)
-    assert "api.opencode.ai" in str(provider.client.base_url)
+    # Confirmed base URL from models.dev: opencode.ai/zen/v1
+    assert "opencode.ai/zen/v1" in str(provider.client.base_url)
     assert provider.client.api_key == "public"
-    assert "free" in provider.model.lower() or "kimi" in provider.model.lower()
+    # Default free model (cost.input=0 confirmed)
+    assert provider.model == "deepseek-v4-flash"
 
 
 def test_kilocode_provider_defaults():
