@@ -11,8 +11,8 @@
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) 44a6b7a
 
 ### Phase 3: OpenCode Tool Cards & Syntax Diffs
-- [~] Task: Write tests for OpenCode tool card formatting (`$`, `→`, `←`, `✱`) and unified diff renderer in `tests/test_tool_cards.py`
-- [ ] Task: Implement tool card renderers with inline/block states, output collapse, and colored diff badges
+- [x] Task: Write tests for OpenCode tool card formatting (`$`, `→`, `←`, `✱`) and unified diff renderer in `tests/test_tool_cards.py` 8e298b8
+- [~] Task: Implement tool card renderers with inline/block states, output collapse, and colored diff badges
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ### Phase 4: OpenCode Statusline, Prompt & Slash Palette
