@@ -10,6 +10,12 @@ except ImportError:
     from color import Color
 
 
+try:
+    from src.config import get_config_dir
+except ImportError:
+    from config import get_config_dir
+
+
 class ChatConfig:
     # Command constants
     EXIT_COMMAND = "exit"
@@ -23,14 +29,14 @@ class ChatConfig:
     RECONFIGURE_COMMAND = "recon"
     HELP_COMMAND = "help"
 
-    # Configuration file paths
-    CONFIG_FILE = "./config/config.ini"
-    LOG_FOLDER = "logs"
-    EXPORT_FOLDER = "exports"
+    # Configuration file paths rooted in ~/.config/frea
+    CONFIG_FILE = str(get_config_dir() / "config.ini")
+    LOG_FOLDER = str(get_config_dir() / "logs")
+    EXPORT_FOLDER = str(get_config_dir() / "exports")
 
     # Default settings
     DEFAULT_LOADING_STYLE = "L1"
-    DEFAULT_INSTRUCTION_FILE = "./config/instruction.txt"
+    DEFAULT_INSTRUCTION_FILE = str(get_config_dir() / "instruction.txt")
     DEFAULT_GEMINI_MODEL = "gemini-1.5-flash"  # Default model for Gemini
     DEFAULT_GROQ_MODEL = "llama3-8b-8192"  # Default model for Groq
     DEFAULT_AI_SERVICE = "gemini"  # Default AI service
@@ -92,6 +98,7 @@ class ChatConfig:
             or default_model,
         }
 
+        os.makedirs(os.path.dirname(ChatConfig.CONFIG_FILE), exist_ok=True)
         with open(ChatConfig.CONFIG_FILE, "w") as configfile:
             config.write(configfile)
 
@@ -156,6 +163,7 @@ class ChatConfig:
         Args:
             config (configparser.ConfigParser): The configuration object to save.
         """
+        os.makedirs(os.path.dirname(ChatConfig.CONFIG_FILE), exist_ok=True)
         with open(ChatConfig.CONFIG_FILE, "w") as configfile:
             config.write(configfile)
         print(

@@ -29,9 +29,16 @@ import os  # Added to handle file commands
 import agent_tools as tools
 import json
 
+try:
+    from src.config import get_config_dir
+except ImportError:
+    from config import get_config_dir
+
 # Configure logging with RotatingFileHandler
+_log_dir = get_config_dir() / "logs"
+_log_dir.mkdir(parents=True, exist_ok=True)
 log_handler = RotatingFileHandler(
-    "./logs/error.log", maxBytes=0.5 * 1024 * 1024, backupCount=3
+    _log_dir / "error.log", maxBytes=0.5 * 1024 * 1024, backupCount=3
 )
 log_handler.setLevel(logging.INFO)
 log_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))

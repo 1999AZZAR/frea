@@ -69,7 +69,6 @@ logs/
 *.log
 src/logs/*
 !src/logs/null
-src/config/*.ini
 config.ini
 src/*.wav
 *.wav

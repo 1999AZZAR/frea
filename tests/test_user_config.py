@@ -18,6 +18,9 @@ def test_ensure_config_scaffold(tmp_path):
     cfg_path, tui_path = ensure_config_scaffold(tmp_path)
     assert cfg_path.exists()
     assert tui_path.exists()
+    assert (tmp_path / "logs").is_dir()
+    assert (tmp_path / "exports").is_dir()
+    assert (tmp_path / "persona").exists()
 
     cfg_data = load_frea_config(cfg_path)
     assert cfg_data["model"] == "openrouter/auto"

@@ -35,7 +35,7 @@ def get_config_dir() -> Path:
 def ensure_config_scaffold(
     config_dir: Optional[Path] = None,
 ) -> Tuple[Path, Path]:
-    """Ensure ~/.config/frea directory and default json files exist."""
+    """Ensure ~/.config/frea directory, default json files, and subfolders exist."""
     target_dir = config_dir or get_config_dir()
     target_dir.mkdir(parents=True, exist_ok=True)
 
@@ -46,6 +46,20 @@ def ensure_config_scaffold(
     tui_path = target_dir / "tui.json"
     if not tui_path.exists():
         tui_path.write_text(json.dumps(DEFAULT_TUI_CONFIG, indent=2))
+
+    (target_dir / "logs").mkdir(exist_ok=True)
+    (target_dir / "exports").mkdir(exist_ok=True)
+
+    persona_dir = target_dir / "persona"
+    if not persona_dir.exists():
+        canonical = Path("/home/azzar/agent_persona")
+        if canonical.exists():
+            try:
+                persona_dir.symlink_to(canonical, target_is_directory=True)
+            except OSError:
+                persona_dir.mkdir(exist_ok=True)
+        else:
+            persona_dir.mkdir(exist_ok=True)
 
     return config_path, tui_path
 
