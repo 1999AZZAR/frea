@@ -1,6 +1,6 @@
 from prompt_toolkit.document import Document
 from src.commands import SessionState
-from src.tui import OpenCodeREPL, SlashCommandCompleter
+from src.tui import OpenCodeREPL, OpenCodeTUI, SlashCommandCompleter
 
 
 def test_command_completer():
@@ -141,3 +141,100 @@ def test_repl_handle_input_renders_response_card():
     should_exit, output_collapsed = repl.handle_input("hello again")
     assert "▶ Expand (+4 lines) · Ctrl+O / /expand" in output_collapsed
     assert "… 4 more line(s) · ctrl+o or /expand" in output_collapsed
+
+
+def test_opencode_tui_in_place_fold_and_expand():
+    state = SessionState(current_model="openrouter/auto")
+    repl = OpenCodeREPL(session_state=state)
+    tui = OpenCodeTUI(repl)
+
+    # Empty initial state
+    assert len(tui.cards) == 0
+    assert tui.collapse_last() is False
+    assert tui.expand_last() is False
+
+    # Add card with 5 lines
+    card = tui.add_card(
+        kind="assistant",
+        title="Assistant",
+        body="Line 1\nLine 2\nLine 3\nLine 4\nLine 5",
+    )
+    assert len(tui.cards) == 1
+    assert card.collapsed is False
+    assert card.is_foldable() is True
+
+    # Collapse in-place
+    assert tui.collapse_last() is True
+    assert card.collapsed is True
+    assert len(tui.cards) == 1  # No duplicate card added
+
+    # Expand in-place
+    assert tui.expand_last() is True
+    assert card.collapsed is False
+    assert len(tui.cards) == 1
+
+    # Toggle in-place
+    assert tui.toggle_last_foldable() is True
+    assert card.collapsed is True
+    assert len(tui.cards) == 1
+
+    assert tui.toggle_last_foldable() is True
+    assert card.collapsed is False
+    assert len(tui.cards) == 1
+
+
+def test_opencode_tui_mouse_and_hover():
+    from prompt_toolkit.mouse_events import MouseButton, MouseEvent, MouseEventType
+
+    state = SessionState(current_model="openrouter/auto")
+    repl = OpenCodeREPL(session_state=state)
+    tui = OpenCodeTUI(repl)
+
+    card = tui.add_card(
+        kind="assistant",
+        title="Assistant",
+        body="Line 1\nLine 2\nLine 3\nLine 4",
+    )
+
+    tui.set_hovered_card(card.id)
+    assert tui.hovered_card_id == card.id
+
+    tokens = tui._get_transcript_tokens()
+    # Check that bg color is applied when hovered
+    assert any(f"bg:{repl.theme.background_panel}" in tok[0] for tok in tokens)
+
+    # Find token with mouse handler
+    tokens_with_handler = [tok for tok in tokens if callable(tok[2])]
+    assert len(tokens_with_handler) > 0
+    handler = tokens_with_handler[0][2]
+
+    # Click toggles card collapsed state in-place
+    click_event = MouseEvent(
+        position=(0, 0),
+        event_type=MouseEventType.MOUSE_DOWN,
+        button=MouseButton.LEFT,
+        modifiers=set(),
+    )
+    handler(click_event)
+    assert card.collapsed is True
+
+    # Another click expands it
+    handler(click_event)
+    assert card.collapsed is False
+
+
+def test_opencode_tui_non_foldable():
+    state = SessionState(current_model="openrouter/auto")
+    repl = OpenCodeREPL(session_state=state)
+    tui = OpenCodeTUI(repl)
+
+    short_card = tui.add_card(kind="assistant", title="Assistant", body="Single line")
+    assert short_card.is_foldable() is False
+
+    user_card = tui.add_card(kind="user", title="You", body="Long\nUser\nPrompt\nLines")
+    assert user_card.is_foldable() is False
+
+    assert tui.collapse_last() is False
+    assert tui.expand_last() is False
+    assert tui.toggle_card(short_card.id) is False
+    assert tui.toggle_card(user_card.id) is False

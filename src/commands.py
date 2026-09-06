@@ -171,37 +171,19 @@ def handle_slash_command(user_input: str, session: SessionState) -> CommandResul
         return CommandResult(handled=True, output="\033[2J\033[H")
     elif cmd == "/expand":
         session.response_collapsed = False
-        if session.last_response:
-            from src.cards import render_response_card
-
-            return CommandResult(
-                handled=True,
-                output=render_response_card(
-                    session.last_response,
-                    collapsed=False,
-                    model=session.current_model,
-                ),
-            )
         return CommandResult(
             handled=True,
-            output="Expanded mode enabled. No previous response to display.",
+            output="Expanded response."
+            if session.last_response
+            else "Nothing to expand.",
         )
     elif cmd == "/collapse":
         session.response_collapsed = True
-        if session.last_response:
-            from src.cards import render_response_card
-
-            return CommandResult(
-                handled=True,
-                output=render_response_card(
-                    session.last_response,
-                    collapsed=True,
-                    model=session.current_model,
-                ),
-            )
         return CommandResult(
             handled=True,
-            output="Collapsed mode enabled. No previous response to display.",
+            output="Collapsed response."
+            if session.last_response
+            else "Nothing to collapse.",
         )
     elif cmd == "/model":
         if arg:

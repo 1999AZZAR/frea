@@ -36,6 +36,33 @@ from prompt_toolkit.widgets import Box, Frame, TextArea
 
 T = TypeVar("T")
 
+
+def _run_app_safely(app: Application[Any]) -> None:
+    """Run a prompt_toolkit Application safely, even if an event loop is active."""
+    import asyncio
+
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop and loop.is_running():
+        import concurrent.futures
+
+        def _runner() -> None:
+            new_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(new_loop)
+            try:
+                new_loop.run_until_complete(app.run_async())
+            finally:
+                new_loop.close()
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            pool.submit(_runner).result()
+    else:
+        app.run()
+
+
 # ---------------------------------------------------------------------------
 # Shared style — matches Frea's OpenCode-derived color palette
 # ---------------------------------------------------------------------------
@@ -303,7 +330,7 @@ class SelectPopup(Generic[T]):
             mouse_support=True,
             full_screen=True,
         )
-        app.run()
+        _run_app_safely(app)
         return None if self._cancelled else self._result
 
 
@@ -398,7 +425,7 @@ class ConfirmPopup:
             style=POPUP_STYLE,
             full_screen=True,
         )
-        app.run()
+        _run_app_safely(app)
         return self._choice
 
 
@@ -455,7 +482,7 @@ class AlertPopup:
             style=POPUP_STYLE,
             full_screen=True,
         )
-        app.run()
+        _run_app_safely(app)
 
 
 # ---------------------------------------------------------------------------
@@ -519,7 +546,7 @@ class InputPopup:
             style=POPUP_STYLE,
             full_screen=True,
         )
-        app.run()
+        _run_app_safely(app)
         return self._result
 
 
@@ -686,7 +713,7 @@ class McpPopup:
             mouse_support=True,
             full_screen=True,
         )
-        app.run()
+        _run_app_safely(app)
         return self._has_changed
 
 
