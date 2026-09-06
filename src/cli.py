@@ -8,7 +8,7 @@ from typing import Optional, Sequence
 @dataclass
 class CLIConfig:
     prompt: Optional[str] = None
-    model: Optional[str] = None
+    model: str = "openrouter/auto"
     yes: bool = False
     config_path: Optional[str] = None
 
@@ -35,8 +35,8 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> CLIConfig:
         "-m",
         "--model",
         dest="model",
-        help="Target AI model identifier",
-        default=None,
+        help="Target AI model identifier (default: openrouter/auto)",
+        default="openrouter/auto",
     )
     parser.add_argument(
         "-y",

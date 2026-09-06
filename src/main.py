@@ -800,12 +800,16 @@ def main() -> int:
         return 0
 
     def headless_run(config: CLIConfig) -> int:
-        model_name = config.model or "gemini-2.5-flash"
-        provider_key = model_name.split("/")[0] if "/" in model_name else "gemini"
+        model_name = config.model or "openrouter/auto"
+        provider_key = (
+            "openrouter"
+            if "openrouter" in model_name.lower()
+            else (model_name.split("/")[0] if "/" in model_name else "openrouter")
+        )
         try:
             provider = get_provider(provider_key, model=model_name)
         except Exception:
-            provider = get_provider("gemini", model=model_name)
+            provider = get_provider("openrouter", model=model_name)
         executor = ToolExecutor(auto_approve=config.yes)
         agent = AgentLoop(provider=provider, executor=executor)
         result = agent.run(config.prompt)
@@ -813,8 +817,12 @@ def main() -> int:
         return 0 if result.success else 1
 
     def interactive_run(config: CLIConfig) -> int:
-        model_name = config.model or "gemini-2.5-flash"
-        provider_key = model_name.split("/")[0] if "/" in model_name else "gemini"
+        model_name = config.model or "openrouter/auto"
+        provider_key = (
+            "openrouter"
+            if "openrouter" in model_name.lower()
+            else (model_name.split("/")[0] if "/" in model_name else "openrouter")
+        )
         try:
             provider = get_provider(provider_key, model=model_name)
         except Exception:

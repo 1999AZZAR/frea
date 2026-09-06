@@ -2,8 +2,32 @@
 
 import json
 import os
+import subprocess
 from typing import Any, Dict, List, Optional
 from src.agent import BaseModelProvider, ModelResponse, ToolCall
+
+
+def get_vault_secret(service_name: str = "openrouter_01") -> Optional[str]:
+    """Retrieve secret from local mema-vault securely."""
+    vault_script = os.path.expanduser(
+        "~/.gemini/config/skills/mema-vault/scripts/vault.py"
+    )
+    if not os.path.exists(vault_script):
+        return None
+    try:
+        proc = subprocess.run(
+            ["python3", vault_script, "get", service_name, "--show"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if proc.returncode == 0:
+            for line in proc.stdout.splitlines():
+                if line.startswith("Pass: "):
+                    return line[6:].strip()
+    except Exception:
+        pass
+    return None
 
 
 def compact_history(
@@ -18,7 +42,6 @@ def compact_history(
     )
     remaining_budget = max_messages - (1 if system_msg else 0)
 
-    # Retain the most recent messages
     recent_messages = messages[-remaining_budget:]
     compacted = [system_msg] if system_msg else []
     compacted.extend(recent_messages)
@@ -33,12 +56,18 @@ class OpenAIProvider(BaseModelProvider):
         api_key: Optional[str] = None,
         model: str = "gpt-4o",
         base_url: Optional[str] = None,
+        default_headers: Optional[Dict[str, str]] = None,
     ):
         import openai
 
         self.api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
         self.model = model
-        self.client = openai.OpenAI(api_key=self.api_key, base_url=base_url)
+        kwargs: Dict[str, Any] = {"api_key": self.api_key}
+        if base_url:
+            kwargs["base_url"] = base_url
+        if default_headers:
+            kwargs["default_headers"] = default_headers
+        self.client = openai.OpenAI(**kwargs)
 
     def generate(
         self,
@@ -67,6 +96,51 @@ class OpenAIProvider(BaseModelProvider):
                 )
 
         return ModelResponse(content=choice.content, tool_calls=tool_calls)
+
+
+class OpenRouterProvider(OpenAIProvider):
+    """OpenRouter provider supporting auto model routing and fallback."""
+
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model: str = "openrouter/auto",
+        fallback_model: str = "openrouter/free",
+    ):
+        key = (
+            api_key
+            or os.environ.get("OPENROUTER_API_KEY")
+            or get_vault_secret("openrouter_01")
+            or ""
+        )
+        self.fallback_model = fallback_model
+        super().__init__(
+            api_key=key,
+            model=model,
+            base_url="https://openrouter.ai/api/v1",
+            default_headers={
+                "HTTP-Referer": "https://github.com/1999AZZAR/frea",
+                "X-Title": "Frea",
+            },
+        )
+
+    def generate(
+        self,
+        messages: List[Dict[str, Any]],
+        tools: Optional[List[Dict[str, Any]]] = None,
+    ) -> ModelResponse:
+        try:
+            return super().generate(messages, tools=tools)
+        except Exception as exc:
+            if self.fallback_model and self.model != self.fallback_model:
+                original_model = self.model
+                self.model = self.fallback_model
+                try:
+                    return super().generate(messages, tools=tools)
+                except Exception:
+                    self.model = original_model
+                    raise exc
+            raise exc
 
 
 class GroqProvider(OpenAIProvider):
@@ -121,13 +195,23 @@ def get_provider(
     api_key: Optional[str] = None,
     model: Optional[str] = None,
 ) -> BaseModelProvider:
-    """Factory resolver for AI providers."""
+    """Factory resolver for AI providers with OpenRouter default."""
     name = provider_name.lower().strip()
-    if name in ("openai", "gpt"):
+    if "openrouter" in name or name == "default":
+        return OpenRouterProvider(
+            api_key=api_key,
+            model=model or "openrouter/auto",
+            fallback_model="openrouter/free",
+        )
+    elif name in ("openai", "gpt"):
         return OpenAIProvider(api_key=api_key, model=model or "gpt-4o")
     elif name in ("groq", "llama"):
         return GroqProvider(api_key=api_key, model=model or "llama-3.3-70b-versatile")
     elif name in ("gemini", "google"):
         return GeminiProvider(api_key=api_key, model=model or "gemini-2.5-flash")
     else:
-        raise ValueError(f"Unsupported provider: {provider_name}")
+        return OpenRouterProvider(
+            api_key=api_key,
+            model=model or provider_name,
+            fallback_model="openrouter/free",
+        )

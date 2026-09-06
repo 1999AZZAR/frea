@@ -14,7 +14,7 @@ class CommandResult:
 
 @dataclass
 class SessionState:
-    current_model: str = "gemini-2.5-flash"
+    current_model: str = "openrouter/auto"
     history: List[Dict[str, Any]] = field(default_factory=list)
 
     def record_turn(self, user: str, assistant: str) -> None:
