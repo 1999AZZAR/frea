@@ -28,7 +28,7 @@
 - **Context Management**: Token-aware message history, prompt compaction, and rotating session logs
 
 ## Configuration & Persistence
-- **Config Management**: `configparser` (`config.ini`) for user preferences, API keys, and model defaults
+- **Config Management**: OpenCode-compliant JSON configuration (`~/.config/frea/config.json` and `~/.config/frea/tui.json`, respecting `$XDG_CONFIG_HOME`) with CLI `--config` override, with fallback to legacy `config.ini`
 - **Logging**: Python `logging` with `RotatingFileHandler` writing to `logs/`
 - **Session State**: JSON-based session history and checkpointing
 

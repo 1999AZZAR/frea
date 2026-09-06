@@ -10,7 +10,7 @@
 - [x] Task: Implement `src/config.py` managing `~/.config/frea/config.json` and `~/.config/frea/tui.json` cd8b4e2
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) cd8b4e2
 
-### Phase 3: CLI Integration & End-to-End Verification
-- [ ] Task: Wire `src/cli.py` and `src/main.py` to default to `~/.config/frea/config.json` with CLI `--config` override
-- [ ] Task: Run full test suite, verify clean pre-commit hooks, and verify live scaffolding
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+### Phase 3: CLI Integration & End-to-End Verification [checkpoint: 38a2417]
+- [x] Task: Wire `src/cli.py` and `src/main.py` to default to `~/.config/frea/config.json` with CLI `--config` override 38a2417
+- [x] Task: Run full test suite, verify clean pre-commit hooks, and verify live scaffolding 38a2417
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) 38a2417
