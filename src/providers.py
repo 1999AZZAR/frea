@@ -62,7 +62,7 @@ class OpenAIProvider(BaseModelProvider):
 
         self.api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
         self.model = model
-        kwargs: Dict[str, Any] = {"api_key": self.api_key}
+        kwargs: Dict[str, Any] = {"api_key": self.api_key or "dummy"}
         if base_url:
             kwargs["base_url"] = base_url
         if default_headers:
@@ -159,35 +159,60 @@ class GroqProvider(OpenAIProvider):
         )
 
 
-class GeminiProvider(BaseModelProvider):
-    """Google Gemini model provider."""
+class OpencodeProvider(OpenAIProvider):
+    """OpenCode gateway provider with free out-of-the-box models."""
+
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model: str = "kimi-k2.5-free",
+    ):
+        key = api_key or os.environ.get("OPENCODE_API_KEY") or "public"
+        super().__init__(
+            api_key=key,
+            model=model,
+            base_url="https://api.opencode.ai/v1",
+            default_headers={
+                "HTTP-Referer": "https://opencode.ai/",
+                "X-Title": "opencode",
+            },
+        )
+
+
+class KiloCodeProvider(OpenAIProvider):
+    """KiloCode gateway provider supporting smart free routing."""
+
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model: str = "kilocode/kilo-auto/balanced",
+    ):
+        key = api_key or os.environ.get("KILOCODE_API_KEY") or "public"
+        super().__init__(
+            api_key=key,
+            model=model,
+            base_url="https://api.kilo.ai/api/gateway",
+            default_headers={
+                "HTTP-Referer": "https://opencode.ai/",
+                "X-Title": "opencode",
+            },
+        )
+
+
+class GeminiProvider(OpenAIProvider):
+    """Google Gemini model provider using standard OpenAI-compatible endpoint."""
 
     def __init__(
         self,
         api_key: Optional[str] = None,
         model: str = "gemini-2.5-flash",
     ):
-        self.api_key = api_key or os.environ.get("GEMINI_API_KEY", "")
-        self.model = model
-
-    def generate(
-        self,
-        messages: List[Dict[str, Any]],
-        tools: Optional[List[Dict[str, Any]]] = None,
-    ) -> ModelResponse:
-        try:
-            import google.generativeai as genai
-
-            if self.api_key:
-                genai.configure(api_key=self.api_key)
-            model_instance = genai.GenerativeModel(self.model)
-            prompt_text = "\n".join(
-                f"{m.get('role', 'user')}: {m.get('content', '')}" for m in messages
-            )
-            response = model_instance.generate_content(prompt_text)
-            return ModelResponse(content=response.text, tool_calls=[])
-        except Exception:
-            return ModelResponse(content="Gemini provider ready.", tool_calls=[])
+        key = api_key or os.environ.get("GEMINI_API_KEY", "")
+        super().__init__(
+            api_key=key,
+            model=model,
+            base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+        )
 
 
 def get_provider(
@@ -195,9 +220,15 @@ def get_provider(
     api_key: Optional[str] = None,
     model: Optional[str] = None,
 ) -> BaseModelProvider:
-    """Factory resolver for AI providers with OpenRouter default."""
+    """Factory resolver for AI providers with free model support."""
     name = provider_name.lower().strip()
-    if "openrouter" in name or name == "default":
+    if name in ("opencode", "opencode/free"):
+        return OpencodeProvider(api_key=api_key, model=model or "kimi-k2.5-free")
+    elif name in ("kilo", "kilocode"):
+        return KiloCodeProvider(
+            api_key=api_key, model=model or "kilocode/kilo-auto/balanced"
+        )
+    elif "openrouter" in name or name == "default":
         return OpenRouterProvider(
             api_key=api_key,
             model=model or "openrouter/auto",
@@ -209,6 +240,8 @@ def get_provider(
         return GroqProvider(api_key=api_key, model=model or "llama-3.3-70b-versatile")
     elif name in ("gemini", "google"):
         return GeminiProvider(api_key=api_key, model=model or "gemini-2.5-flash")
+    elif "kimi" in name or "free" in name:
+        return OpencodeProvider(api_key=api_key, model=model or provider_name)
     else:
         return OpenRouterProvider(
             api_key=api_key,
