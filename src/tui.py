@@ -18,6 +18,8 @@ class SlashCommandCompleter(Completer):
     COMMANDS = [
         ("/help", "Display available commands"),
         ("/status", "Show active model and session status"),
+        ("/mcp", "Inspect MCP servers and registered tools"),
+        ("/skills", "List discovered agent skills"),
         ("/model", "Switch or view current model"),
         ("/compact", "Compress conversation history"),
         ("/clear", "Clear terminal screen"),

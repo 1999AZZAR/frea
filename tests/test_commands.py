@@ -47,3 +47,17 @@ def test_session_state_history():
     assert len(session.history) == 2
     assert session.history[0]["content"] == "hello"
     assert session.history[1]["content"] == "hi there"
+
+
+def test_handle_slash_command_mcp():
+    session = SessionState()
+    res = handle_slash_command("/mcp", session)
+    assert res.handled is True
+    assert "MCP" in res.output
+
+
+def test_handle_slash_command_skills():
+    session = SessionState()
+    res = handle_slash_command("/skills", session)
+    assert res.handled is True
+    assert "Skills" in res.output
