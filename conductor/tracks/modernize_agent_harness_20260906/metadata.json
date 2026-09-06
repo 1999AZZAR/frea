@@ -1,0 +1,8 @@
+{
+  "track_id": "modernize_agent_harness_20260906",
+  "type": "feature",
+  "status": "new",
+  "description": "Modernize Frea into an OpenCode / Claude-Code style CLI Agent Harness",
+  "created_at": "2026-09-06T14:45:00+07:00",
+  "updated_at": "2026-09-06T14:45:00+07:00"
+}
