@@ -15,12 +15,12 @@
 - [x] Task: Implement tool card renderers with inline/block states, output collapse, and colored diff badges 7e27ee9
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) 7e27ee9
 
-### Phase 4: OpenCode Statusline, Prompt & Slash Palette
+### Phase 4: OpenCode Statusline, Prompt & Slash Palette [checkpoint: 048c057]
 - [x] Task: Write tests for OpenCode statusline footer, prompt_toolkit autocompletion, and slash command palette in `tests/test_tui_opencode.py` 503e2a7
 - [x] Task: Implement OpenCode bottom statusline (`directory`, `model`, `tools`), `prompt_toolkit` interactive prompt (`❯ `), and command palette 048c057
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) 048c057
 
 ### Phase 5: End-to-End Integration & Final Polish
-- [ ] Task: Write full integration tests covering interactive REPL turns, batch mode (`-p`), and OpenCode permission alerts
+- [~] Task: Write full integration tests covering interactive REPL turns, batch mode (`-p`), and OpenCode permission alerts
 - [ ] Task: Verify 100% test pass rate across system python and `.venv`, verify pre-commit hooks
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
