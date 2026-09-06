@@ -16,11 +16,12 @@ DESTRUCTIVE_TOOLS = {"bash_run", "file_write", "file_patch"}
 
 def default_confirm(tool_name: str, args: Dict[str, Any]) -> bool:
     """Prompt user on terminal for confirmation to execute high-impact tool."""
-    print("\n[Tool Execution Permission Required]")
-    print(f"Tool: {tool_name}")
-    for k, v in args.items():
-        print(f"  {k}: {v}")
-    response = input("Allow execution? (y/N): ").strip().lower()
+    from src.cards import render_permission_prompt
+    from src.ui import console
+
+    prompt = render_permission_prompt(tool_name, args)
+    console.print(prompt, end="")
+    response = input().strip().lower()
     return response in ("y", "yes")
 
 

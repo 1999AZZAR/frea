@@ -817,6 +817,8 @@ def main() -> int:
         return 0 if result.success else 1
 
     def interactive_run(config: CLIConfig) -> int:
+        from src.commands import SessionState
+
         model_name = config.model or "openrouter/auto"
         provider_key = (
             "openrouter"
@@ -831,7 +833,8 @@ def main() -> int:
             return 0
         executor = ToolExecutor(auto_approve=config.yes)
         agent = AgentLoop(provider=provider, executor=executor)
-        repl = InteractiveREPL(agent_loop=agent)
+        session = SessionState(current_model=model_name, current_provider=provider_key)
+        repl = InteractiveREPL(agent_loop=agent, session=session)
         return repl.run_repl()
 
     return run_cli(

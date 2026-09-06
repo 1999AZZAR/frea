@@ -1,5 +1,7 @@
 from io import StringIO
+from unittest.mock import patch
 from src.agent import AgentLoop, ModelResponse, ToolCall
+from src.commands import SessionState
 from src.executor import ToolExecutor
 from src.runner import run_cli
 from src.tui import InteractiveREPL
@@ -52,9 +54,10 @@ def test_e2e_interactive_run():
     provider = MockE2EProvider()
     executor = ToolExecutor(auto_approve=True)
     agent = AgentLoop(provider=provider, executor=executor)
-    repl = InteractiveREPL(agent_loop=agent)
+    session = SessionState(current_model="openrouter/auto")
+    repl = InteractiveREPL(agent_loop=agent, session=session)
 
-    in_stream = StringIO("/exit\n")
+    in_stream = StringIO("/status\n/exit\n")
     out_stream = StringIO()
 
     exit_code = run_cli(
@@ -64,4 +67,19 @@ def test_e2e_interactive_run():
         ),
     )
     assert exit_code == 0
-    assert "Exiting Frea session" in out_stream.getvalue()
+    output = out_stream.getvalue()
+    assert "openrouter/auto" in output
+    assert "Exiting Frea session" in output
+
+
+def test_e2e_permission_prompt_rendering():
+    from src.executor import default_confirm
+
+    with patch("builtins.input", return_value="y"), patch(
+        "src.ui.console.print"
+    ) as mock_print:
+        allowed = default_confirm("bash_run", {"command": "echo test"})
+        assert allowed is True
+        mock_print.assert_called_once()
+        call_args = str(mock_print.call_args)
+        assert "Permission" in call_args or "△" in call_args
