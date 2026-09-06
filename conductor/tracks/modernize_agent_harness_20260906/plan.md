@@ -4,9 +4,9 @@
 - [x] Task: Write tests for CLI argument parser and mode dispatcher [472c704]
     - [x] Create tests for `-p` / `--run` headless flag handling
     - [x] Create tests for `--model`, `--yes` flags and default interactive mode
-- [ ] Task: Implement modular CLI runner and signal handlers
-    - [ ] Implement argument parsing with `argparse`
-    - [ ] Implement POSIX signal handlers (`SIGINT`, `SIGTERM`) with terminal cursor safety
+- [x] Task: Implement modular CLI runner and signal handlers [d223ee4]
+    - [x] Implement argument parsing with `argparse`
+    - [x] Implement POSIX signal handlers (`SIGINT`, `SIGTERM`) with terminal cursor safety
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2: Core Tool Execution Engine & Safety Guardrails
