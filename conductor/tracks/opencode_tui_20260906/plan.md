@@ -16,8 +16,8 @@
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) 7e27ee9
 
 ### Phase 4: OpenCode Statusline, Prompt & Slash Palette
-- [~] Task: Write tests for OpenCode statusline footer, prompt_toolkit autocompletion, and slash command palette in `tests/test_tui_opencode.py`
-- [ ] Task: Implement OpenCode bottom statusline (`directory`, `model`, `tools`), `prompt_toolkit` interactive prompt (`❯ `), and command palette
+- [x] Task: Write tests for OpenCode statusline footer, prompt_toolkit autocompletion, and slash command palette in `tests/test_tui_opencode.py` 503e2a7
+- [~] Task: Implement OpenCode bottom statusline (`directory`, `model`, `tools`), `prompt_toolkit` interactive prompt (`❯ `), and command palette
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ### Phase 5: End-to-End Integration & Final Polish
