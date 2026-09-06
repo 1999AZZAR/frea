@@ -6,8 +6,9 @@ from src.tui import InteractiveREPL
 
 
 class MockE2EProvider:
-    def __init__(self):
+    def __init__(self, target_path: str = "test_e2e.txt"):
         self.step = 0
+        self.target_path = target_path
 
     def generate(self, messages, tools=None):
         if self.step == 0:
@@ -18,7 +19,7 @@ class MockE2EProvider:
                     ToolCall(
                         id="call_e2e_1",
                         name="file_write",
-                        arguments={"path": "test_e2e.txt", "content": "hello e2e"},
+                        arguments={"path": self.target_path, "content": "hello e2e"},
                     )
                 ],
             )
@@ -27,7 +28,8 @@ class MockE2EProvider:
 
 
 def test_e2e_headless_run(tmp_path):
-    provider = MockE2EProvider()
+    target_file = str(tmp_path / "test_e2e.txt")
+    provider = MockE2EProvider(target_path=target_file)
     executor = ToolExecutor(auto_approve=True)
     agent = AgentLoop(provider=provider, executor=executor)
 
